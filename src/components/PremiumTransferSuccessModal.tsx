@@ -155,16 +155,16 @@ export default function PremiumTransferSuccessModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 180 }}
-          className="relative w-full max-w-md bg-[#0c0f14] border border-[#a4d100]/20 rounded-[2.5rem] p-8 shadow-[0_0_50px_rgba(164,209,0,0.15)] overflow-hidden text-center"
+          className="relative w-full max-w-md bg-white dark:bg-[#0c0f14] border border-slate-200 dark:border-[#009e42]/20 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden text-center"
         >
           {/* Subtle background overlay glows */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-[#a4d100]/5 rounded-full blur-[40px] pointer-events-none" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-[#009e42]/5 rounded-full blur-[40px] pointer-events-none" />
 
           {/* Close X Button in Top Right */}
           <button 
             type="button"
             onClick={handleDismiss}
-            className="absolute top-6 right-6 text-white/30 hover:text-white/80 transition-colors cursor-pointer"
+            className="absolute top-6 right-6 text-slate-400 hover:text-slate-700 dark:text-white/30 dark:hover:text-white/80 transition-colors cursor-pointer"
           >
             <X size={20} />
           </button>
@@ -173,61 +173,61 @@ export default function PremiumTransferSuccessModal({
           <div className="relative mx-auto w-28 h-28 flex items-center justify-center mb-6">
             {/* The dotted circle with 3 rolling dots */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="orbit-dot-1 absolute w-2 h-2 rounded-full bg-[#a4d100] shadow-[0_0_10px_#a4d100]" />
-              <div className="orbit-dot-2 absolute w-2 h-2 rounded-full bg-[#a4d100] shadow-[0_0_10px_#a4d100]" />
-              <div className="orbit-dot-3 absolute w-2 h-2 rounded-full bg-[#a4d100] shadow-[0_0_10px_#a4d100]" />
+              <div className="orbit-dot-1 absolute w-2 h-2 rounded-full bg-[#009e42] shadow-[0_0_10px_#009e42]" />
+              <div className="orbit-dot-2 absolute w-2 h-2 rounded-full bg-[#009e42] shadow-[0_0_10px_#009e42]" />
+              <div className="orbit-dot-3 absolute w-2 h-2 rounded-full bg-[#009e42] shadow-[0_0_10px_#009e42]" />
             </div>
 
             {/* Subtle inner static thin border dashed circle */}
-            <div className="absolute inset-2 rounded-full border border-dashed border-[#a4d100]/20" />
+            <div className="absolute inset-2 rounded-full border border-dashed border-[#009e42]/20" />
 
             {/* Glowing success circle containing the checkmark */}
-            <div className="w-20 h-20 bg-[#a4d100]/10 border border-[#a4d100]/30 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(164,209,0,0.1)]">
-              <Check size={36} className="text-[#a4d100]" strokeWidth={3} />
+            <div className="w-20 h-20 bg-[#009e42]/10 border border-[#009e42]/30 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(0,158,66,0.1)]">
+              <Check size={36} className="text-[#009e42]" strokeWidth={3} />
             </div>
           </div>
 
           {/* Title Area */}
-          <h2 className="text-2xl font-bold tracking-tight text-white mb-2">
-            Transfer <span className="text-[#a4d100]">Successful</span>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
+            Transfer <span className="text-[#009e42]">Successful</span>
           </h2>
 
           {/* Thin horizontal glowing divider with center green dot */}
           <div className="relative flex items-center justify-center my-5 px-12">
-            <div className="w-full h-[1px] bg-white/10" />
-            <div className="absolute w-2 h-2 rounded-full bg-[#a4d100] shadow-[0_0_8px_#a4d100]" />
+            <div className="w-full h-[1px] bg-slate-200 dark:bg-white/10" />
+            <div className="absolute w-2 h-2 rounded-full bg-[#009e42] shadow-[0_0_8px_#009e42]" />
           </div>
 
           {/* Message text */}
-          <p className="text-sm text-gray-300 mb-6 font-medium">
+          <p className="text-sm text-slate-600 dark:text-gray-300 mb-6 font-medium">
             Your transfer is being processed.
           </p>
 
           {/* Processing box/bar */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between mb-4 text-left">
+          <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex items-center justify-between mb-4 text-left">
             <div className="flex items-center gap-3">
-              <Clock size={18} className="text-[#a4d100] shrink-0" />
+              <Clock size={18} className="text-[#009e42] shrink-0" />
               <div>
-                <p className="text-xs font-bold text-white leading-tight">Processing...</p>
-                <p className="text-[10px] text-gray-400 mt-0.5 leading-none">This may take 15 to 45 minutes.</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">Processing...</p>
+                <p className="text-[10px] text-slate-500 dark:text-gray-400 mt-0.5 leading-none">This may take 15 to 45 minutes.</p>
               </div>
             </div>
             {/* The persistent countdown */}
-            <span className="text-base font-black font-mono text-[#a4d100] tracking-wider shrink-0">
+            <span className="text-base font-black font-mono text-[#009e42] tracking-wider shrink-0">
               {formatTime(timeLeft)}
             </span>
           </div>
 
           {/* Email notify tag */}
-          <div className="flex items-center justify-center gap-2 text-[11px] text-gray-500 mb-8 font-medium">
-            <Mail size={12} className="text-gray-500" />
+          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 dark:text-gray-500 mb-8 font-medium">
+            <Mail size={12} className="text-slate-400 dark:text-gray-500" />
             <span>You'll be notified via email once completed.</span>
           </div>
 
           {/* Progress bar visual aid */}
-          <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden mb-6">
+          <div className="w-full bg-slate-100 dark:bg-white/5 h-1 rounded-full overflow-hidden mb-6">
             <div 
-              className="h-full bg-[#a4d100] shadow-[0_0_4px_#a4d100] transition-all duration-1000"
+              className="h-full bg-[#009e42] shadow-[0_0_4px_#009e42] transition-all duration-1000"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -236,7 +236,7 @@ export default function PremiumTransferSuccessModal({
           <button
             type="button"
             onClick={handleDismiss}
-            className="w-full py-4 bg-[#a4d100] hover:bg-[#bce600] text-black font-extrabold uppercase tracking-wider text-xs rounded-2xl transition-all shadow-[0_4px_20px_rgba(164,209,0,0.25)] hover:shadow-[0_4px_25px_rgba(164,209,0,0.4)] active:scale-[0.98] cursor-pointer"
+            className="w-full py-4 bg-[#009e42] hover:bg-[#02d147] text-white font-extrabold uppercase tracking-wider text-xs rounded-2xl transition-all shadow-[0_4px_20px_rgba(0,158,66,0.25)] hover:shadow-[0_4px_25px_rgba(0,158,66,0.4)] active:scale-[0.98] cursor-pointer"
           >
             OK
           </button>

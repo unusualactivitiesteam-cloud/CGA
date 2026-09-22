@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Building2, 
@@ -47,6 +47,9 @@ import TopInvestorsSection from './TopInvestorsSection';
 import WhyChooseSection from './WhyChooseSection';
 import { ROIEngineStats } from './ROIEngineDisplay';
 import LiveActivityNotification from './LiveActivityNotification';
+import { useMode } from '../contexts/ModeContext';
+import MobilePullDownGesture from './MobilePullDownGesture';
+import BetaHomeCustomizer from './BetaHomeCustomizer';
 
 const MemoizedTopInvestorsSection = React.memo(TopInvestorsSection);
 const MemoizedWhyChooseSection = React.memo(WhyChooseSection);
@@ -54,7 +57,8 @@ const MemoizedWhyChooseSection = React.memo(WhyChooseSection);
 export default function Homepage() {
   const { user, profile } = useAuth();
   const { t } = useLanguage();
-  const { requestPopup, closePopup, activePopupId } = useUI();
+  const { mode, isLite, isBeta } = useMode();
+  const { requestPopup, closePopup, activePopupId, openTransferModal } = useUI();
   const navigate = useNavigate();
   const [showBalance, setShowBalance] = useState(() => localStorage.getItem('show_homepage_balance') !== 'false');
   
@@ -101,6 +105,71 @@ export default function Homepage() {
 
   const [showGreeting, setShowGreeting] = useState(false);
   const [showExploreModal, setShowExploreModal] = useState(false);
+
+  // CGA Beta Mobile Home Screen Edit Mode Long-Press Controller
+  const [isBetaHomeEditing, setIsBetaHomeEditing] = useState(false);
+  const homeLongPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const homeTouchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const homeDidTriggerLongPressRef = useRef(false);
+
+  const cancelHomeLongPress = useCallback(() => {
+    if (homeLongPressTimerRef.current) {
+      clearTimeout(homeLongPressTimerRef.current);
+      homeLongPressTimerRef.current = null;
+    }
+    homeTouchStartPosRef.current = null;
+  }, []);
+
+  const handleHomeTouchStart = useCallback((clientX: number, clientY: number, target: EventTarget | null) => {
+    if (isBetaHomeEditing) return;
+    if (target instanceof HTMLElement && target.closest('[data-no-longpress="true"]')) {
+      return;
+    }
+
+    homeTouchStartPosRef.current = { x: clientX, y: clientY };
+    homeDidTriggerLongPressRef.current = false;
+
+    if (homeLongPressTimerRef.current) {
+      clearTimeout(homeLongPressTimerRef.current);
+    }
+
+    homeLongPressTimerRef.current = setTimeout(() => {
+      homeDidTriggerLongPressRef.current = true;
+      setIsBetaHomeEditing(true);
+
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try {
+          navigator.vibrate([40, 40]);
+        } catch (_) {}
+      }
+    }, 600);
+  }, [isBetaHomeEditing]);
+
+  const handleHomeTouchMove = useCallback((clientX: number, clientY: number) => {
+    if (!homeTouchStartPosRef.current || !homeLongPressTimerRef.current) return;
+    const dx = Math.abs(clientX - homeTouchStartPosRef.current.x);
+    const dy = Math.abs(clientY - homeTouchStartPosRef.current.y);
+    if (dx > 8 || dy > 8) {
+      cancelHomeLongPress();
+    }
+  }, [cancelHomeLongPress]);
+
+  const handleHomeTouchEnd = useCallback(() => {
+    cancelHomeLongPress();
+    if (homeDidTriggerLongPressRef.current) {
+      setTimeout(() => {
+        homeDidTriggerLongPressRef.current = false;
+      }, 300);
+    }
+  }, [cancelHomeLongPress]);
+
+  useEffect(() => {
+    return () => {
+      if (homeLongPressTimerRef.current) {
+        clearTimeout(homeLongPressTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -556,14 +625,14 @@ export default function Homepage() {
         "relative w-full h-[155px] border rounded-[24px] overflow-hidden group select-none transition-all duration-300",
         isLight 
           ? "bg-white border-slate-200/80 shadow-[0_10px_30px_rgba(0,0,0,0.03),0_0_25px_rgba(255,255,255,0.95)]" 
-          : "bg-[#0B0D13]/90 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] hover:border-[#A6FF00]/40 hover:shadow-[0_0_35px_rgba(166,255,0,0.04)] backdrop-blur-md"
+          : "bg-[#0B0D13]/90 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] hover:border-[#009e42]/40 hover:shadow-[0_0_35px_rgba(0,158,66,0.06)] backdrop-blur-md"
       )}>
         {/* Background Tech Accent */}
         <div className={cn(
           "absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none",
           isLight && "bg-[linear-gradient(to_right,#00000003_1px,transparent_1px),linear-gradient(to_bottom,#00000003_1px,transparent_1px)]"
         )} />
-        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#A6FF00]/25 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#009e42]/25 to-transparent pointer-events-none" />
         
         {/* Swipeable Area */}
         <div className="w-full h-full relative p-6 flex flex-col justify-between">
@@ -617,8 +686,8 @@ export default function Homepage() {
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1 border rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer z-30 flex-shrink-0",
                   isLight 
-                    ? "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600 hover:text-emerald-600 shadow-sm" 
-                    : "bg-white/5 hover:bg-white/10 border-white/5 hover:border-[#A6FF00]/25 text-zinc-400 hover:text-[#A6FF00]"
+                    ? "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600 hover:text-[#009e42] shadow-sm" 
+                    : "bg-white/5 hover:bg-white/10 border-white/5 hover:border-[#009e42]/25 text-zinc-400 hover:text-[#009e42]"
                 )}
               >
                 <History size={11} />
@@ -635,12 +704,19 @@ export default function Homepage() {
                   baseSizeDesktop="lg:text-4xl"
                   className={cn(
                     "font-sans font-black transition-colors tracking-tight",
-                    isLight ? "text-emerald-600" : "text-white"
+                    isLight ? "text-[#009e42]" : "text-white"
                   )}
                   containerClassName="justify-start"
                 />
               ) : (
-                <div className="text-2xl lg:text-3xl font-bold tracking-[0.2em] text-zinc-500 py-1">****</div>
+                <div className="w-full flex items-center justify-start min-h-[1.5em] py-1 select-none">
+                  <span className={cn(
+                    "text-lg lg:text-xl font-bold tracking-tight leading-none",
+                    isLight ? "text-slate-400" : "text-zinc-500"
+                  )}>
+                    *****
+                  </span>
+                </div>
               )}
             </div>
           </motion.div>
@@ -654,7 +730,7 @@ export default function Homepage() {
                 className={cn(
                   "w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer",
                   activeSlide === idx 
-                    ? (isLight ? "bg-emerald-600 w-4.5" : "bg-[#A6FF00] w-4.5") 
+                    ? "bg-[#009e42] w-4.5" 
                     : (isLight ? "bg-slate-200 hover:bg-slate-300" : "bg-white/10 hover:bg-white/25")
                 )}
                 aria-label={`Go to card ${idx + 1}`}
@@ -667,23 +743,25 @@ export default function Homepage() {
   };
 
   const exploreItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: Layout },
-    { label: 'Invest', path: '/invest', icon: TrendingUp },
-    { label: 'Fund', path: '/fund/deposit', icon: Wallet },
-    { label: 'Withdraw', path: '/fund/withdraw', icon: ArrowUpRight },
-    { label: 'History', path: '/fund/transactions', icon: History },
-    { label: 'Reward', path: '/rewards', icon: Gift },
-    { label: 'Token', path: '/token', icon: Coins },
-    { label: 'Mining', path: '/mining', icon: Cpu },
-    { label: 'AI', path: '/ai-marketplace', icon: Bot },
-    { label: 'Referrals', path: '/referrals', icon: Users },
-    { label: 'Settings', path: '/settings', icon: Settings },
-    { label: 'Daily Points', path: '/daily-points', icon: Zap }
-  ];
+    { label: 'Dashboard', path: '/dashboard', icon: Layout, betaOnly: false },
+    { label: 'Invest', path: '/invest', icon: TrendingUp, betaOnly: false },
+    { label: 'Fund', path: '/fund/deposit', icon: Wallet, betaOnly: false },
+    { label: 'Withdraw', path: '/fund/withdraw', icon: ArrowUpRight, betaOnly: false },
+    { label: 'History', path: '/fund/transactions', icon: History, betaOnly: false },
+    { label: 'Reward', path: '/rewards', icon: Gift, betaOnly: false },
+    { label: 'Token', path: '/token', icon: Coins, betaOnly: true },
+    { label: 'Mining', path: '/mining', icon: Cpu, betaOnly: true },
+    { label: 'AI', path: '/ai-marketplace', icon: Bot, betaOnly: true },
+    { label: 'Referrals', path: '/referrals', icon: Users, betaOnly: false },
+    { label: 'Settings', path: '/settings', icon: Settings, betaOnly: false },
+    { label: 'Daily Points', path: '/daily-points', icon: Zap, betaOnly: true }
+  ].filter(item => !item.betaOnly || isBeta);
 
   return (
     <div className="w-full flex flex-col items-center pt-0 md:pt-4 px-3 lg:px-0">
-      
+      {/* Mobile Two-Stage Pull-Down Gesture (Refresh & Mode Switch) */}
+      <MobilePullDownGesture />
+
       {/* Live Social Proof Activity Feed - Hidden per user request */}
       {/*
       <div className="py-1 md:py-5 lg:py-7 w-full flex justify-center">
@@ -694,66 +772,147 @@ export default function Homepage() {
       {/* Main Content Sections wrapped to maintain spacing */}
       <div className="w-full flex flex-col items-center space-y-1 md:space-y-6 lg:space-y-10">
         
-        {/* --- DYNAMIC GREETING --- */}
-        <div className="w-full max-w-xl md:max-w-5xl mx-auto px-1 select-none">
-          <AnimatePresence>
-            {showGreeting && (
-              <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="text-center md:text-left py-1"
-              >
-                <h2 className="text-xl md:text-2xl font-bold tracking-tight">
-                  <span className="text-[#A6FF00]">{getGreeting()}</span>, <span className="text-white">{toTitleCase((profile?.name ? profile.name.trim().split(/\s+/)[0] : '') || 'User')}</span>
-                </h2>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* --- DYNAMIC GREETING: Desktop only --- */}
+        {isBeta && (
+          <div className="hidden md:block w-full max-w-5xl mx-auto px-1 select-none">
+            <AnimatePresence>
+              {showGreeting && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  className="text-left py-1"
+                >
+                  <h2 className="text-xl md:text-2xl font-bold tracking-tight">
+                    <span className="text-[#009e42]">{getGreeting()}</span>, <span className={cn(isLight ? "text-[#111827]" : "text-white")}>{toTitleCase((profile?.name ? profile.name.trim().split(/\s+/)[0] : '') || 'User')}</span>
+                  </h2>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
 
         {/* --- MOBILE LAYOUT (Stacked) --- */}
-        <div className="w-full flex flex-col items-center space-y-6 md:hidden">
-          {/* Swipeable Balance Board */}
-          <div className="w-full max-w-xl mx-auto px-1">
-            {renderBalanceBoard()}
-          </div>
+        {isBeta ? (
+          <div 
+            id="beta-mobile-home-container"
+            className="w-full flex flex-col items-center md:hidden select-none"
+            onTouchStartCapture={(e) => {
+              if (e.touches.length === 1) {
+                handleHomeTouchStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
+              } else {
+                cancelHomeLongPress();
+              }
+            }}
+            onTouchMoveCapture={(e) => {
+              if (e.touches.length === 1) {
+                handleHomeTouchMove(e.touches[0].clientX, e.touches[0].clientY);
+              } else {
+                cancelHomeLongPress();
+              }
+            }}
+            onTouchEndCapture={handleHomeTouchEnd}
+            onTouchCancelCapture={cancelHomeLongPress}
+            onMouseDownCapture={(e) => {
+              if (e.button === 0) {
+                handleHomeTouchStart(e.clientX, e.clientY, e.target);
+              }
+            }}
+            onMouseMoveCapture={(e) => {
+              handleHomeTouchMove(e.clientX, e.clientY);
+            }}
+            onMouseUpCapture={handleHomeTouchEnd}
+            onClickCapture={(e) => {
+              if (homeDidTriggerLongPressRef.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                homeDidTriggerLongPressRef.current = false;
+              }
+            }}
+          >
+            {/* Dynamic Greeting on Mobile */}
+            <div className="w-full max-w-xl mx-auto px-1 select-none">
+              <AnimatePresence>
+                {showGreeting && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className="text-center md:text-left py-1"
+                  >
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight">
+                      <span className="text-[#009e42]">{getGreeting()}</span>, <span className={cn(isLight ? "text-[#111827]" : "text-white")}>{toTitleCase((profile?.name ? profile.name.trim().split(/\s+/)[0] : '') || 'User')}</span>
+                    </h2>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-          {/* Horizontal Button Group */}
-          <div className="grid grid-cols-3 gap-3 w-full max-w-xl mx-auto px-1">
-            <button
-              onClick={() => navigate('/invest')}
-              className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-widest text-zinc-300 bg-zinc-900/80 border border-white/10 hover:border-blue-500/30 hover:text-white transition-all duration-200 active:scale-95 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
-            >
-              <TrendingUp size={16} className="text-blue-400" />
-              <span>Invest</span>
-            </button>
-            <button
-              onClick={() => navigate('/fund/deposit')}
-              className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-widest text-black bg-gradient-to-r from-[#A6FF00] to-[#88D400] border border-[#A6FF00]/10 shadow-[0_4px_15px_rgba(166,255,0,0.15)] hover:shadow-[0_4px_22px_rgba(166,255,0,0.25)] active:scale-95 transition-all duration-200 cursor-pointer"
-            >
-              <Wallet size={16} className="text-black" />
-              <span>Fund</span>
-            </button>
-            <button
-              onClick={() => navigate('/fund/withdraw')}
-              className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-widest text-zinc-300 bg-zinc-900/80 border border-white/10 hover:border-red-500/30 hover:text-white transition-all duration-200 active:scale-95 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
-            >
-              <ArrowUpRight size={16} className="text-red-400" />
-              <span>Withdraw</span>
-            </button>
-          </div>
-
-          {/* ROI Engine Stats */}
-          <div className="w-full max-w-xl mx-auto px-1">
-            <ROIEngineStats 
-              investments={investments}
-              profile={profile}
+            <BetaHomeCustomizer
               user={user}
-              variant="home"
+              profile={profile}
+              investments={investments}
+              isLight={isLight}
+              renderBalanceBoard={renderBalanceBoard}
+              openTransferModal={openTransferModal}
+              navigate={navigate}
+              isEditing={isBetaHomeEditing}
+              setIsEditing={setIsBetaHomeEditing}
             />
           </div>
-        </div>
+        ) : (
+          <div className="w-full flex flex-col items-center space-y-6 md:hidden">
+            {/* Swipeable Balance Board */}
+            <div className="w-full max-w-xl mx-auto px-1">
+              {renderBalanceBoard()}
+            </div>
+
+            {/* Horizontal Button Group */}
+            <div className="grid grid-cols-3 gap-3 w-full max-w-xl mx-auto px-1">
+              <button
+                onClick={() => navigate('/invest')}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1.5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all duration-200 active:scale-95 cursor-pointer shadow-sm",
+                  (isLite || isLight)
+                    ? "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-[0_4px_12px_rgba(0,0,0,0.04)]"
+                    : "text-zinc-300 bg-zinc-900/80 border border-white/10 hover:border-blue-500/30 hover:text-white shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
+                )}
+              >
+                <TrendingUp size={16} className="text-blue-500" />
+                <span>Invest</span>
+              </button>
+              <button
+                onClick={() => navigate('/fund/deposit')}
+                className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-widest text-white bg-[#009e42] hover:bg-[#02d147] border border-[#009e42]/20 shadow-[0_4px_15px_rgba(0,158,66,0.25)] hover:shadow-[0_4px_22px_rgba(0,158,66,0.35)] active:scale-95 transition-all duration-200 cursor-pointer"
+              >
+                <Wallet size={16} className="text-white" />
+                <span>Fund</span>
+              </button>
+              <button
+                onClick={() => navigate('/fund/withdraw')}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1.5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all duration-200 active:scale-95 cursor-pointer shadow-sm",
+                  (isLite || isLight)
+                    ? "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-[0_4px_12px_rgba(0,0,0,0.04)]"
+                    : "text-zinc-300 bg-zinc-900/80 border border-white/10 hover:border-red-500/30 hover:text-white shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
+                )}
+              >
+                <ArrowUpRight size={16} className="text-red-500" />
+                <span>Withdraw</span>
+              </button>
+            </div>
+
+            {/* ROI Engine Stats */}
+            <div className="w-full max-w-xl mx-auto px-1">
+              <ROIEngineStats 
+                investments={investments}
+                profile={profile}
+                user={user}
+                variant="home"
+              />
+            </div>
+          </div>
+        )}
 
         {/* --- DESKTOP LAYOUT (Side-by-Side Grid & Expanded Buttons) --- */}
         <div className="hidden md:flex flex-col w-full max-w-5xl mx-auto space-y-6 lg:space-y-10">
@@ -776,7 +935,7 @@ export default function Homepage() {
           </div>
 
           {/* Row of Action Buttons (Desktop Only) */}
-          <div className="grid grid-cols-7 gap-3 w-full">
+          <div className={cn("grid gap-3 w-full", isBeta ? "grid-cols-7" : "grid-cols-6")}>
             {/* INVEST */}
             <button
               onClick={() => navigate('/invest')}
@@ -789,54 +948,81 @@ export default function Homepage() {
             {/* FUND */}
             <button
               onClick={() => navigate('/fund/deposit')}
-              className="flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-black uppercase tracking-widest text-black bg-gradient-to-r from-[#A6FF00] to-[#88D400] border border-[#A6FF00]/10 hover:brightness-110 hover:shadow-[0_0_25px_rgba(166,255,0,0.25)] active:scale-95 transition-all duration-200 cursor-pointer text-center"
+              className="flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-black uppercase tracking-widest text-white bg-[#009e42] hover:bg-[#02d147] border border-[#009e42]/20 hover:brightness-110 hover:shadow-[0_0_25px_rgba(0,158,66,0.3)] active:scale-95 transition-all duration-200 cursor-pointer text-center"
             >
-              <Wallet size={14} className="text-black" />
+              <Wallet size={14} className="text-white" />
               <span>Fund</span>
             </button>
 
             {/* WITHDRAW */}
             <button
               onClick={() => navigate('/fund/withdraw')}
-              className="flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-bold uppercase tracking-widest text-zinc-300 bg-zinc-900/80 border border-white/5 hover:border-red-500/40 hover:text-white hover:bg-zinc-800/80 active:scale-95 transition-all duration-200 cursor-pointer text-center shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
+              className={cn(
+                "flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-bold uppercase tracking-widest active:scale-95 transition-all duration-200 cursor-pointer text-center shadow-sm",
+                isLight
+                  ? "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                  : "text-zinc-300 bg-zinc-900/80 border border-white/5 hover:border-red-500/40 hover:text-white hover:bg-zinc-800/80 shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
+              )}
             >
-              <ArrowUpRight size={14} className="text-red-400" />
+              <ArrowUpRight size={14} className={isLight ? "text-slate-600" : "text-red-400"} />
               <span>Withdraw</span>
             </button>
 
             {/* HISTORY */}
             <button
               onClick={() => navigate('/fund/transactions')}
-              className="flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-bold uppercase tracking-widest text-zinc-400 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:text-white active:scale-95 transition-all duration-200 cursor-pointer text-center"
+              className={cn(
+                "flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-bold uppercase tracking-widest active:scale-95 transition-all duration-200 cursor-pointer text-center shadow-sm",
+                isLight
+                  ? "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                  : "text-zinc-400 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:text-white"
+              )}
             >
-              <History size={14} className="text-zinc-500" />
+              <History size={14} className={isLight ? "text-slate-600" : "text-zinc-500"} />
               <span>History</span>
             </button>
 
-            {/* AI MARKETPLACE */}
-            <button
-              onClick={() => navigate('/ai-marketplace')}
-              className="flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-bold uppercase tracking-widest text-zinc-400 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:text-white active:scale-95 transition-all duration-200 cursor-pointer text-center"
-            >
-              <Bot size={14} className="text-purple-400" />
-              <span>AI Market</span>
-            </button>
+            {/* AI MARKETPLACE (Beta Only) */}
+            {isBeta && (
+              <button
+                onClick={() => navigate('/ai-marketplace')}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-bold uppercase tracking-widest active:scale-95 transition-all duration-200 cursor-pointer text-center shadow-sm",
+                  isLight
+                    ? "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                    : "text-zinc-400 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:text-white"
+                )}
+              >
+                <Bot size={14} className={isLight ? "text-slate-600" : "text-purple-400"} />
+                <span>AI Market</span>
+              </button>
+            )}
 
             {/* REWARD */}
             <button
               onClick={() => navigate('/rewards')}
-              className="flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-bold uppercase tracking-widest text-zinc-400 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:text-white active:scale-95 transition-all duration-200 cursor-pointer text-center"
+              className={cn(
+                "flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-bold uppercase tracking-widest active:scale-95 transition-all duration-200 cursor-pointer text-center shadow-sm",
+                isLight
+                  ? "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                  : "text-zinc-400 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:text-white"
+                )}
             >
-              <Gift size={14} className="text-pink-400" />
+              <Gift size={14} className={isLight ? "text-slate-600" : "text-pink-400"} />
               <span>Reward</span>
             </button>
 
             {/* EXPLORE */}
             <button
               onClick={() => setShowExploreModal(true)}
-              className="flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-black uppercase tracking-widest text-[#A6FF00] bg-[#A6FF00]/5 border border-[#A6FF00]/20 hover:bg-[#A6FF00]/10 active:scale-95 transition-all duration-200 cursor-pointer text-center shadow-[0_0_15px_rgba(166,255,0,0.05)]"
+              className={cn(
+                "flex flex-col items-center justify-center gap-2 py-4 rounded-[20px] text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all duration-200 cursor-pointer text-center",
+                isLight
+                  ? "text-[#009e42] bg-[#009e42]/5 border border-[#009e42]/20 hover:bg-[#009e42]/10 shadow-sm"
+                  : "text-[#009e42] bg-[#009e42]/5 border border-[#009e42]/20 hover:bg-[#009e42]/10 shadow-[0_0_15px_rgba(0,158,66,0.1)]"
+              )}
             >
-              <Compass size={14} className="text-[#A6FF00] animate-spin-slow" />
+              <Compass size={14} className={cn("animate-spin-slow", isLight ? "text-[#009e42]" : "text-[#009e42]")} />
               <span>Explore</span>
             </button>
           </div>
@@ -872,21 +1058,29 @@ export default function Homepage() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 15 }}
                 transition={{ type: 'spring', duration: 0.4 }}
-                className="w-full bg-[#050608]/80 border border-white/10 hover:border-white/20 backdrop-blur-md rounded-2xl px-6 py-10 text-center shadow-[0_15px_35px_rgba(0,0,0,0.5)] relative overflow-hidden"
+                className={cn(
+                  "w-full rounded-2xl px-6 py-10 text-center relative overflow-hidden transition-all duration-300",
+                  isLight
+                    ? "bg-white border border-slate-200 shadow-[0_15px_35px_rgba(0,0,0,0.08)]"
+                    : "bg-[#050608]/80 border border-white/10 hover:border-white/20 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.5)]"
+                )}
               >
                 {/* Decorative Accent Glow */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-28 bg-[#10B981]/5 rounded-full blur-xl pointer-events-none" />
                 
                 {/* Visual Icon Badge */}
-                <div className="mb-5 inline-flex w-12 h-12 rounded-xl bg-white/5 border border-white/10 items-center justify-center text-[#10B981] shadow-inner">
+                <div className={cn(
+                  "mb-5 inline-flex w-12 h-12 rounded-xl items-center justify-center shadow-inner",
+                  isLight ? "bg-emerald-50 border border-emerald-200 text-emerald-600" : "bg-white/5 border border-white/10 text-[#10B981]"
+                )}>
                   <Coins size={22} className="animate-bounce" />
                 </div>
                 
-                <h3 className="text-sm font-black italic uppercase tracking-wider text-white mb-3 font-sans">
+                <h3 className={cn("text-sm font-black italic uppercase tracking-wider mb-3 font-sans", isLight ? "text-slate-900" : "text-white")}>
                   Daily Check-In
                 </h3>
                 
-                <p className="text-[10px] text-[#8E8A9E] leading-relaxed max-w-[200px] mx-auto">
+                <p className={cn("text-[10px] leading-relaxed max-w-[200px] mx-auto", isLight ? "text-slate-600" : "text-[#8E8A9E]")}>
                   Acknowledge your daily attendance to receive <span className="text-[#10B981] font-black tracking-wide">+1 TWN Point</span> instantly credited to your active wallet node.
                 </p>
               </motion.div>
@@ -900,10 +1094,10 @@ export default function Homepage() {
                 onClick={handleDailyClaim}
                 disabled={claimStatus !== 'idle'}
                 className={cn(
-                  "px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] text-white shadow-lg transition-all italic duration-200 cursor-pointer w-auto min-w-[150px] text-center rounded-xl",
+                  "px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] text-white shadow-lg transition-all italic duration-200 cursor-pointer w-auto min-w-[150px] text-center",
                   claimStatus === 'idle' && "bg-gradient-to-r from-[#10B981] to-[#059669] hover:brightness-110 active:scale-95 shadow-[0_8px_20px_rgba(16,185,129,0.2)]",
-                  claimStatus === 'claiming' && "bg-[#1F1D2B]/50 border border-white/5 opacity-80 cursor-wait",
-                  claimStatus === 'claimed' && "bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 shadow-[0_4px_15px_rgba(16,185,129,0.15)] italic font-black uppercase"
+                  claimStatus === 'claiming' && (isLight ? "bg-slate-200 text-slate-500 cursor-wait" : "bg-[#1F1D2B]/50 border border-white/5 opacity-80 cursor-wait"),
+                  claimStatus === 'claimed' && "bg-emerald-500/25 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 shadow-[0_4px_15px_rgba(16,185,129,0.15)] italic font-black uppercase"
                 )}
               >
                 {claimStatus === 'idle' && "Claim"}
@@ -924,7 +1118,7 @@ export default function Homepage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowExploreModal(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+              className={cn("absolute inset-0 backdrop-blur-md", isLight ? "bg-slate-900/40" : "bg-black/80")}
             />
             
             <motion.div 
@@ -933,19 +1127,19 @@ export default function Homepage() {
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ type: 'spring', duration: 0.5 }}
               className={cn(
-                "relative max-w-3xl w-full max-h-[85vh] overflow-y-auto rounded-3xl p-6 transition-all duration-300 flex flex-col z-10",
+                "relative max-w-3xl w-full max-h-[85vh] overflow-y-auto rounded-3xl p-6 sm:p-8 transition-all duration-300 flex flex-col z-10",
                 isLight 
-                  ? "bg-white border border-slate-200/80 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.1),0_0_25px_rgba(255,255,255,0.95)]" 
+                  ? "bg-white border border-slate-200 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)]" 
                   : "bg-[#070b13] border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]"
               )}
             >
               {/* Header */}
               <div className={cn("flex items-center justify-between border-b pb-4 mb-6", isLight ? "border-slate-100" : "border-white/5")}>
                 <div className="flex items-center gap-2.5">
-                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-colors", isLight ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-[#a4d100]/10 border border-[#a4d100]/20 text-[#a4d100]")}>
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-colors", isLight ? "bg-emerald-50 text-emerald-600 border border-emerald-200/80" : "bg-[#009e42]/10 border border-[#009e42]/20 text-[#009e42]")}>
                     <Compass size={16} className="animate-spin-slow" />
                   </div>
-                  <h3 className={cn("text-xs font-black uppercase tracking-[0.2em] font-sans transition-colors", isLight ? "text-slate-800" : "text-white")}>
+                  <h3 className={cn("text-xs font-black uppercase tracking-[0.2em] font-sans transition-colors", isLight ? "text-slate-900" : "text-white")}>
                     Explore
                   </h3>
                 </div>
@@ -972,41 +1166,41 @@ export default function Homepage() {
                       navigate(item.path);
                     }}
                     className={cn(
-                      "group flex flex-col items-center justify-between p-3 border rounded-2xl aspect-square w-full transition-all duration-300 active:scale-95 cursor-pointer shadow-sm relative overflow-hidden",
+                      "group flex flex-col items-center justify-between p-3.5 border rounded-2xl aspect-square w-full transition-all duration-300 active:scale-95 cursor-pointer shadow-sm relative overflow-hidden",
                       isLight 
-                        ? "bg-slate-50/50 hover:bg-white border-slate-200/80 hover:border-emerald-500/40 hover:shadow-[0_10px_20px_rgba(16,185,129,0.06)]" 
-                        : "bg-[#101726]/40 hover:bg-[#18233c] border-white/5 hover:border-[#a4d100]/30 hover:shadow-[0_10px_20px_rgba(164,209,0,0.15)]"
+                        ? "bg-white hover:bg-slate-50/80 border-slate-200 hover:border-slate-300 hover:shadow-md" 
+                        : "bg-[#101726]/40 hover:bg-[#18233c] border-white/5 hover:border-[#009e42]/30 hover:shadow-[0_10px_20px_rgba(0,158,66,0.15)]"
                     )}
                   >
                     {/* Hover Glow Accent Background */}
                     <div className={cn(
                       "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br",
                       isLight 
-                        ? "from-emerald-500/5 to-transparent" 
-                        : "from-[#a4d100]/10 to-transparent"
+                        ? "from-slate-100/50 to-transparent" 
+                        : "from-[#009e42]/10 to-transparent"
                     )} />
 
                     {/* Premium Hovering Page Icon wrapper */}
                     <div className={cn(
-                      "flex-1 flex items-center justify-center transition-all duration-300 transform group-hover:scale-115 group-hover:-translate-y-1 group-hover:rotate-3",
+                      "flex-1 flex items-center justify-center transition-all duration-300 transform group-hover:scale-105",
                       isLight 
-                        ? "text-slate-400 group-hover:text-emerald-600" 
-                        : "text-slate-400 group-hover:text-[#a4d100]"
+                        ? "text-slate-700 group-hover:text-slate-900" 
+                        : "text-slate-400 group-hover:text-[#009e42]"
                     )}>
-                      <item.icon size={26} className="transition-all duration-300 filter group-hover:drop-shadow-[0_5px_8px_rgba(16,185,129,0.25)]" />
+                      <item.icon size={26} className="transition-all duration-300" />
                     </div>
 
                     <div className={cn(
-                      "w-full border py-1 px-1.5 text-center transition-all duration-300 relative z-10 rounded-xl",
+                      "w-full border py-1.5 px-1.5 text-center transition-all duration-300 relative z-10 rounded-xl",
                       isLight 
-                        ? "bg-white group-hover:bg-emerald-50 border-slate-100 group-hover:border-emerald-500/20" 
-                        : "bg-white/5 group-hover:bg-[#a4d100]/10 border-white/5 group-hover:border-[#a4d100]/25"
+                        ? "bg-white border-slate-200/90 group-hover:border-slate-300" 
+                        : "bg-white/5 group-hover:bg-[#009e42]/10 border-white/5 group-hover:border-[#009e42]/25"
                     )}>
                       <span className={cn(
                         "block text-[10px] font-bold tracking-wider truncate transition-colors duration-300",
                         isLight 
-                          ? "text-slate-700 group-hover:text-emerald-600" 
-                          : "text-white group-hover:text-[#a4d100]"
+                          ? "text-slate-700 group-hover:text-slate-900" 
+                          : "text-white group-hover:text-[#009e42]"
                       )}>
                         {item.label}
                       </span>
@@ -1049,7 +1243,12 @@ export default function Homepage() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 15 }}
                   transition={{ type: 'spring', duration: 0.4 }}
-                  className="w-full bg-[#050608]/80 border border-white/10 hover:border-white/20 backdrop-blur-md rounded-2xl px-6 py-10 text-center shadow-[0_15px_35px_rgba(0,0,0,0.5)] relative overflow-hidden"
+                  className={cn(
+                    "w-full rounded-2xl px-6 py-10 text-center relative overflow-hidden transition-all duration-300",
+                    isLight 
+                      ? "bg-white border border-slate-200 shadow-[0_15px_35px_rgba(0,0,0,0.08)]"
+                      : "bg-[#050608]/80 border border-white/10 hover:border-white/20 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.5)]"
+                  )}
                 >
                   {/* Decorative Glow */}
                   <div className={cn(
@@ -1060,46 +1259,52 @@ export default function Homepage() {
                   {/* Confirmation Dialogue, Active plan view, selection grid or Intro view */}
                   {isConfirmingSkip ? (
                     <div>
-                      <div className="mb-5 inline-flex w-12 h-12 rounded-xl bg-white/5 border border-white/10 items-center justify-center text-red-400 shadow-inner">
+                      <div className={cn(
+                        "mb-5 inline-flex w-12 h-12 rounded-xl items-center justify-center text-red-500 shadow-inner",
+                        isLight ? "bg-red-50 border border-red-200" : "bg-white/5 border border-white/10"
+                      )}>
                         <Clock size={22} className="animate-pulse" />
                       </div>
                       
-                      <h3 className="text-sm font-black italic uppercase tracking-wider text-white mb-3 font-sans">
+                      <h3 className={cn("text-sm font-black italic uppercase tracking-wider mb-3 font-sans", isLight ? "text-slate-900" : "text-white")}>
                         Skip Compounding?
                       </h3>
                       
-                      <p className="text-[10px] text-[#8E8A9E] leading-relaxed max-w-[200px] mx-auto">
+                      <p className={cn("text-[10px] leading-relaxed max-w-[200px] mx-auto", isLight ? "text-slate-600" : "text-[#8E8A9E]")}>
                         Are you sure you don't want to compound your profits? Reinvesting maximizes your daily ROI potentials.
                       </p>
                     </div>
                   ) : isAutoCompoundActive ? (
                     <div>
-                      <div className="mb-5 inline-flex w-12 h-12 rounded-xl bg-[#10B981]/15 border border-[#10B981]/30 items-center justify-center text-[#10B981] shadow-inner">
+                      <div className={cn(
+                        "mb-5 inline-flex w-12 h-12 rounded-xl items-center justify-center text-[#10B981] shadow-inner",
+                        isLight ? "bg-emerald-50 border border-emerald-200" : "bg-[#10B981]/15 border border-[#10B981]/30"
+                      )}>
                         <Bot size={22} className="animate-pulse" />
                       </div>
                       
-                      <h3 className="text-sm font-black italic uppercase tracking-wider text-white mb-2 font-sans">
+                      <h3 className={cn("text-sm font-black italic uppercase tracking-wider mb-2 font-sans", isLight ? "text-slate-900" : "text-white")}>
                         Auto-Compound Active
                       </h3>
                       
-                      <p className="text-[10px] text-[#8E8A9E] leading-relaxed max-w-[200px] mx-auto mb-4 font-sans">
+                      <p className={cn("text-[10px] leading-relaxed max-w-[200px] mx-auto mb-4 font-sans", isLight ? "text-slate-600" : "text-[#8E8A9E]")}>
                         Your high-yield quant node is configured for <span className="text-[#10B981] font-black">{profile?.auto_compound_duration} Days</span> automated reinvestment.
                       </p>
 
-                      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-left space-y-2 mb-1">
+                      <div className={cn("rounded-xl p-3 text-left space-y-2 mb-1", isLight ? "bg-slate-50 border border-slate-200" : "bg-white/[0.02] border border-white/5")}>
                         <div className="flex justify-between text-[9px] font-sans">
-                          <span className="text-white/40">Duration:</span>
-                          <span className="text-white/80 font-bold">{profile?.auto_compound_duration} Days</span>
+                          <span className={isLight ? "text-slate-500" : "text-white/40"}>Duration:</span>
+                          <span className={cn("font-bold", isLight ? "text-slate-800" : "text-white/80")}>{profile?.auto_compound_duration} Days</span>
                         </div>
                         <div className="flex justify-between text-[9px] font-sans">
-                          <span className="text-white/40">Start Date:</span>
-                          <span className="text-white/80 font-mono text-[8px]">
+                          <span className={isLight ? "text-slate-500" : "text-white/40"}>Start Date:</span>
+                          <span className={cn("font-mono text-[8px]", isLight ? "text-slate-700 font-semibold" : "text-white/80")}>
                             {profile?.auto_compound_start_date ? new Date(profile.auto_compound_start_date).toLocaleDateString() : 'N/A'}
                           </span>
                         </div>
                         <div className="flex justify-between text-[9px] font-sans">
-                          <span className="text-white/40">End Date:</span>
-                          <span className="text-white/80 font-mono text-emerald-400 font-bold text-[8px]">
+                          <span className={isLight ? "text-slate-500" : "text-white/40"}>End Date:</span>
+                          <span className="font-mono text-emerald-500 dark:text-emerald-400 font-bold text-[8px]">
                             {profile?.auto_compound_end_date ? new Date(profile.auto_compound_end_date).toLocaleDateString() : 'N/A'}
                           </span>
                         </div>
@@ -1107,15 +1312,18 @@ export default function Homepage() {
                     </div>
                   ) : showDurationSelector ? (
                     <div className="w-full">
-                      <div className="mb-4 inline-flex w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 items-center justify-center text-purple-400 shadow-inner">
+                      <div className={cn(
+                        "mb-4 inline-flex w-12 h-12 rounded-xl items-center justify-center text-purple-500 dark:text-purple-400 shadow-inner",
+                        isLight ? "bg-purple-50 border border-purple-200" : "bg-purple-500/10 border border-purple-500/20"
+                      )}>
                         <Clock size={22} className="animate-pulse" />
                       </div>
                       
-                      <h3 className="text-sm font-black italic uppercase tracking-wider text-white mb-2 font-sans">
+                      <h3 className={cn("text-sm font-black italic uppercase tracking-wider mb-2 font-sans", isLight ? "text-slate-900" : "text-white")}>
                         Select Duration
                       </h3>
                       
-                      <p className="text-[10px] text-[#8E8A9E] leading-relaxed max-w-[240px] mx-auto mb-5 font-sans">
+                      <p className={cn("text-[10px] leading-relaxed max-w-[240px] mx-auto mb-5 font-sans", isLight ? "text-slate-600" : "text-[#8E8A9E]")}>
                         Choose a duration for automatic daily reinvesting of your ROI earnings.
                       </p>
 
@@ -1126,16 +1334,21 @@ export default function Homepage() {
                             key={days}
                             onClick={() => selectCompoundingDuration(days)}
                             disabled={isCompounding}
-                            className="w-full flex items-center justify-between p-3 bg-white/[0.015] hover:bg-white/[0.04] border border-white/5 hover:border-[#10B981]/30 rounded-xl transition-all duration-200 group text-left cursor-pointer active:scale-[0.99] select-none"
+                            className={cn(
+                              "w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group text-left cursor-pointer active:scale-[0.99] select-none",
+                              isLight 
+                                ? "bg-slate-50 hover:bg-slate-100/80 border border-slate-200 hover:border-emerald-500/40"
+                                : "bg-white/[0.015] hover:bg-white/[0.04] border border-white/5 hover:border-[#10B981]/30"
+                            )}
                           >
                             <div className="flex items-center gap-2.5">
                               <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] opacity-60 group-hover:opacity-100 transition-opacity" />
                               <div>
-                                <span className="text-xs font-black text-white">{days} Days</span>
-                                <p className="text-[8px] text-white/35 mt-0.5 font-sans">Continuous reinvesting protocol</p>
+                                <span className={cn("text-xs font-black", isLight ? "text-slate-900" : "text-white")}>{days} Days</span>
+                                <p className={cn("text-[8px] mt-0.5 font-sans", isLight ? "text-slate-400" : "text-white/35")}>Continuous reinvesting protocol</p>
                               </div>
                             </div>
-                            <span className="text-[9px] font-black text-emerald-400 group-hover:translate-x-0.5 transition-transform">
+                            <span className="text-[9px] font-black text-emerald-500 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">
                               SET &rarr;
                             </span>
                           </button>
@@ -1145,15 +1358,18 @@ export default function Homepage() {
                   ) : (
                     <div>
                       {/* Visual Icon Badge */}
-                      <div className="mb-5 inline-flex w-12 h-12 rounded-xl bg-white/5 border border-white/10 items-center justify-center text-[#10B981] shadow-inner">
+                      <div className={cn(
+                        "mb-5 inline-flex w-12 h-12 rounded-xl items-center justify-center text-[#10B981] shadow-inner",
+                        isLight ? "bg-emerald-50 border border-emerald-200" : "bg-white/5 border border-white/10"
+                      )}>
                         <TrendingUp size={22} className="animate-bounce" />
                       </div>
                       
-                      <h3 className="text-sm font-black italic uppercase tracking-wider text-white mb-3 font-sans">
+                      <h3 className={cn("text-sm font-black italic uppercase tracking-wider mb-3 font-sans", isLight ? "text-slate-900" : "text-white")}>
                         ROI/Profit Compounding
                       </h3>
                       
-                      <p className="text-[10px] text-[#8E8A9E] leading-relaxed max-w-[200px] mx-auto">
+                      <p className={cn("text-[10px] leading-relaxed max-w-[200px] mx-auto", isLight ? "text-slate-600" : "text-[#8E8A9E]")}>
                         Increase your earning potential by reinvesting your accumulated earnings into your active investment.
                       </p>
                     </div>
@@ -1172,7 +1388,10 @@ export default function Homepage() {
                     <>
                       <button
                         onClick={handleSkipConfirmYes}
-                        className="flex-1 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] text-red-400 transition-all duration-200 cursor-pointer italic text-center"
+                        className={cn(
+                          "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] text-red-500 transition-all duration-200 cursor-pointer italic text-center",
+                          isLight ? "bg-red-50 hover:bg-red-100 border border-red-200" : "bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-400"
+                        )}
                       >
                         Yes
                       </button>
@@ -1196,7 +1415,10 @@ export default function Homepage() {
                         closePopup('compound-profits');
                         setShowDurationSelector(false);
                       }}
-                      className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] text-white transition-all duration-200 cursor-pointer italic text-center"
+                      className={cn(
+                        "w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-200 cursor-pointer italic text-center",
+                        isLight ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200" : "bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+                      )}
                     >
                       Exit
                     </button>
@@ -1204,7 +1426,10 @@ export default function Homepage() {
                     <>
                       <button
                         onClick={handleCancelClick}
-                        className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] text-white transition-all duration-200 cursor-pointer italic text-center"
+                        className={cn(
+                          "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-200 cursor-pointer italic text-center",
+                          isLight ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200" : "bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+                        )}
                       >
                         Cancel
                       </button>
@@ -1214,7 +1439,7 @@ export default function Homepage() {
                         className={cn(
                           "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-200 cursor-pointer italic text-center shadow-lg",
                           isCompounding
-                            ? "bg-[#1F1D2B]/50 border border-white/5 opacity-80 cursor-wait text-gray-400"
+                            ? (isLight ? "bg-slate-200 border border-slate-300 text-slate-500 cursor-wait" : "bg-[#1F1D2B]/50 border border-white/5 opacity-80 cursor-wait text-gray-400")
                             : "bg-gradient-to-r from-[#10B981] to-[#059669] hover:brightness-110 active:scale-95 shadow-[0_8px_20px_rgba(16,185,129,0.2)] text-white"
                         )}
                       >
@@ -1248,21 +1473,29 @@ export default function Homepage() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 15 }}
                 transition={{ type: 'spring', duration: 0.4 }}
-                className="w-full bg-[#050608]/80 border border-white/10 hover:border-white/20 backdrop-blur-md rounded-2xl px-6 py-10 text-center shadow-[0_15px_35px_rgba(0,0,0,0.5)] relative overflow-hidden"
+                className={cn(
+                  "w-full rounded-2xl px-6 py-10 text-center relative overflow-hidden transition-all duration-300",
+                  isLight
+                    ? "bg-white border border-slate-200 shadow-[0_15px_35px_rgba(0,0,0,0.08)]"
+                    : "bg-[#050608]/80 border border-white/10 hover:border-white/20 backdrop-blur-md shadow-[0_15px_35px_rgba(0,0,0,0.5)]"
+                )}
               >
                 {/* Decorative Accent Glow */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-28 bg-[#10B981]/5 rounded-full blur-xl pointer-events-none" />
                 
                 {/* Visual Icon Badge */}
-                <div className="mb-5 inline-flex w-12 h-12 rounded-xl bg-white/5 border border-white/10 items-center justify-center text-[#10B981] shadow-inner">
+                <div className={cn(
+                  "mb-5 inline-flex w-12 h-12 rounded-xl items-center justify-center text-[#10B981] shadow-inner",
+                  isLight ? "bg-emerald-50 border border-emerald-200" : "bg-white/5 border border-white/10"
+                )}>
                   <TrendingUp size={22} className="animate-bounce" />
                 </div>
                 
-                <h3 className="text-sm font-black italic uppercase tracking-wider text-white mb-3 font-sans">
+                <h3 className={cn("text-sm font-black italic uppercase tracking-wider mb-3 font-sans", isLight ? "text-slate-900" : "text-white")}>
                   Successfully Compounded!
                 </h3>
                 
-                <div className="text-[10px] text-[#8E8A9E] leading-relaxed max-w-[200px] mx-auto font-sans font-medium space-y-1 text-center">
+                <div className={cn("text-[10px] leading-relaxed max-w-[200px] mx-auto font-sans font-medium space-y-1 text-center", isLight ? "text-slate-600" : "text-[#8E8A9E]")}>
                   <p>Keep Compounding.</p>
                   <p>Keep Earning.</p>
                   <p>Keep Referring.</p>

@@ -34,6 +34,8 @@ import { AnimatePresence } from 'motion/react';
 import TransferModal from './TransferModal';
 import { TransactionTicket } from './TransactionTicket';
 import { useUI } from '../contexts/UIContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { useMode } from '../contexts/ModeContext';
 import { ROIEngineStats } from './ROIEngineDisplay';
 import { DynamicBalance } from './DynamicBalance';
 
@@ -63,10 +65,10 @@ const DashboardCard = React.memo(({ icon: Icon, label, value, subtext, color, hi
         "p-4 lg:p-6 rounded-2xl lg:rounded-[32px] border transition-all duration-500 relative overflow-hidden group flex flex-col justify-between h-full min-h-[110px] lg:min-h-0",
         highlight 
           ? (isLight 
-              ? "bg-emerald-500 border-emerald-500/10 text-white shadow-[0_10px_30px_rgba(16,185,129,0.1)]" 
+              ? "bg-white border-emerald-500/40 text-slate-900 shadow-sm" 
               : "bg-primary border-primary text-white") 
           : (isLight 
-              ? "bg-white border-slate-200/80 text-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.03),0_0_25px_rgba(255,255,255,0.95)]" 
+              ? "bg-white border-slate-200 text-slate-900 shadow-sm hover:border-slate-300" 
               : "bg-[#11141b] border-white/5 text-white hover:border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.3)]")
       )}
     >
@@ -74,9 +76,8 @@ const DashboardCard = React.memo(({ icon: Icon, label, value, subtext, color, hi
         <div className={cn(
           "p-2 lg:p-3 rounded-lg lg:rounded-2xl shadow-inner", 
           highlight 
-            ? "bg-white/20" 
-            : (isLight ? "bg-slate-100" : "bg-white/5"), 
-          isLight && isBalanceCard ? "text-emerald-600" : color
+            ? (isLight ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-white/20") 
+            : (isLight ? "bg-slate-100/80 border border-slate-200/50 text-slate-700" : "bg-white/5 " + color)
         )}>
           <Icon size={16} className="lg:w-5 lg:h-5" />
         </div>
@@ -84,10 +85,8 @@ const DashboardCard = React.memo(({ icon: Icon, label, value, subtext, color, hi
       </div>
       <div className="overflow-hidden">
         <p className={cn(
-          "text-[7px] lg:text-[9px] font-black tracking-[0.2em] mb-1", 
-          highlight 
-            ? "text-white/70" 
-            : (isLight ? "text-slate-400" : "text-aura-muted")
+          "text-[7px] lg:text-[9px] font-black tracking-[0.2em] mb-1 uppercase", 
+          isLight ? "text-slate-500" : (highlight ? "text-white/70" : "text-aura-muted")
         )}>
           {label}
         </p>
@@ -96,7 +95,7 @@ const DashboardCard = React.memo(({ icon: Icon, label, value, subtext, color, hi
           containerClassName="justify-start" 
           className={cn(
             "text-left font-serif italic font-black",
-            isLight && isBalanceCard ? "text-emerald-600" : (isLight ? "text-slate-800" : "text-white")
+            isLight ? "text-slate-800" : "text-white"
           )}
           baseSizeMobile="text-lg"
           baseSizeDesktop="lg:text-2xl"
@@ -104,9 +103,7 @@ const DashboardCard = React.memo(({ icon: Icon, label, value, subtext, color, hi
         {subtext && (
           <p className={cn(
             "text-[6px] lg:text-[8px] font-bold uppercase tracking-widest mt-1", 
-            highlight 
-              ? "text-white/50" 
-              : (isLight ? "text-slate-400" : "text-aura-muted")
+            isLight ? "text-slate-400" : (highlight ? "text-white/50" : "text-aura-muted")
           )}>
             {subtext}
           </p>
@@ -119,6 +116,8 @@ const DashboardCard = React.memo(({ icon: Icon, label, value, subtext, color, hi
 export default function Dashboard() {
   const { user, profile, plans, expectedDailyRoi } = useAuth();
   const { isTransferModalOpen, openTransferModal, closeTransferModal, setMrBActivationPopup, setIsWelcomeBonusDeductedPopupOpen } = useUI();
+  const { isLight } = useTheme();
+  const { isBeta } = useMode();
   const navigate = useNavigate();
   const location = useLocation();
   const [recentTx, setRecentTx] = useState<any[]>([]);
@@ -376,7 +375,7 @@ export default function Dashboard() {
         }
       });
 
-      // Trigger the $5 welcome bonus deduction popup if it was first activation
+      // Trigger the $15 welcome bonus deduction popup if it was first activation
       if (isFirstActivation && !profile.welcome_bonus_deducted) {
         setIsWelcomeBonusDeductedPopupOpen({
           planName: activatedPlanName,
@@ -578,12 +577,14 @@ export default function Dashboard() {
            >
              <User size={14} /> My Profile
            </button>
-           <button 
-             onClick={openTransferModal}
-             className="px-6 py-4 bg-primary text-white font-black uppercase tracking-widest text-[9px] rounded-xl flex items-center gap-2 shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-105 transition-all"
-           >
-             <ArrowRightLeft size={14} /> Transfer
-           </button>
+           {isBeta && (
+             <button 
+               onClick={openTransferModal}
+               className="px-6 py-4 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white font-black uppercase tracking-widest text-[9px] rounded-xl flex items-center gap-2 shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-105 transition-all cursor-pointer"
+             >
+               <ArrowRightLeft size={14} /> Transfer
+             </button>
+           )}
         </div>
       </header>
 
@@ -670,46 +671,66 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <button 
               onClick={() => setShowActiveModal(true)}
-              className="p-8 bg-[#12151c] border border-white/5 rounded-[40px] flex items-center justify-between group hover:border-emerald-500/30 hover:bg-[#161a24] hover:shadow-[0_0_40px_rgba(16,185,129,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-left cursor-pointer relative overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.4)]"
+              className={cn(
+                "p-8 border rounded-[40px] flex items-center justify-between group transition-all duration-300 text-left cursor-pointer relative overflow-hidden",
+                isLight 
+                  ? "bg-white border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.98]" 
+                  : "bg-[#12151c] border-white/5 hover:border-emerald-500/30 hover:bg-[#161a24] hover:shadow-[0_0_40px_rgba(16,185,129,0.1)] hover:scale-[1.02] active:scale-[0.98] shadow-[0_10px_40px_rgba(0,0,0,0.4)]"
+              )}
             >
-               <div className="absolute top-0 right-0 p-1 bg-emerald-500/20 rounded-bl-2xl">
-                 <ArrowUpRight size={12} className="text-emerald-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+               <div className={cn("absolute top-0 right-0 p-1 rounded-bl-2xl", isLight ? "bg-emerald-50 text-emerald-600" : "bg-emerald-500/20 text-emerald-500")}>
+                 <ArrowUpRight size={12} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                </div>
                <div className="relative z-10">
-                  <p className="text-[10px] font-black text-aura-muted uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                  <p className={cn("text-[10px] font-black uppercase tracking-[0.2em] mb-2 flex items-center gap-2", isLight ? "text-slate-500" : "text-aura-muted")}>
                     Active Investments
                     <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
                   </p>
-                  <h4 className="text-5xl font-black text-white italic font-serif group-hover:text-emerald-400 transition-colors">{activeCount}</h4>
+                  <h4 className={cn("text-5xl font-black italic font-serif transition-colors", isLight ? "text-slate-900 group-hover:text-emerald-600" : "text-white group-hover:text-emerald-400")}>{activeCount}</h4>
                   <div className="mt-3 flex items-center gap-2">
-                    <p className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em] bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                    <p className={cn("text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full", isLight ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60" : "bg-emerald-500/10 text-emerald-500")}>
                       Performing Node
                     </p>
-                    <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Tap to View →</span>
+                    <span className={cn("text-[7px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity", isLight ? "text-slate-400" : "text-white/20")}>Tap to View →</span>
                   </div>
                </div>
-               <div className="w-20 h-20 rounded-[32px] bg-emerald-500/5 flex items-center justify-center text-emerald-500/30 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all duration-500 shadow-inner">
+               <div className={cn(
+                 "w-20 h-20 rounded-[32px] flex items-center justify-center transition-all duration-500 shadow-inner",
+                 isLight 
+                  ? "bg-emerald-50/60 text-emerald-600 border border-emerald-100 group-hover:bg-emerald-100/60" 
+                  : "bg-emerald-500/5 text-emerald-500/30 group-hover:text-emerald-500 group-hover:bg-emerald-500/10"
+               )}>
                   <Activity size={44} />
                </div>
             </button>
             <button 
               onClick={() => setShowInactiveModal(true)}
-              className="p-8 bg-[#12151c] border border-white/5 rounded-[40px] flex items-center justify-between group hover:border-yellow-500/30 hover:bg-[#161a24] hover:shadow-[0_0_40px_rgba(234,179,8,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-left cursor-pointer relative overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.4)]"
+              className={cn(
+                "p-8 border rounded-[40px] flex items-center justify-between group transition-all duration-300 text-left cursor-pointer relative overflow-hidden",
+                isLight 
+                  ? "bg-white border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.98]" 
+                  : "bg-[#12151c] border-white/5 hover:border-yellow-500/30 hover:bg-[#161a24] hover:shadow-[0_0_40px_rgba(234,179,8,0.1)] hover:scale-[1.02] active:scale-[0.98] shadow-[0_10px_40px_rgba(0,0,0,0.4)]"
+              )}
             >
-               <div className="absolute top-0 right-0 p-1 bg-yellow-500/20 rounded-bl-2xl">
-                 <ArrowUpRight size={12} className="text-yellow-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+               <div className={cn("absolute top-0 right-0 p-1 rounded-bl-2xl", isLight ? "bg-amber-50 text-amber-600" : "bg-yellow-500/20 text-yellow-500")}>
+                 <ArrowUpRight size={12} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                </div>
                <div className="relative z-10">
-                  <p className="text-[10px] font-black text-aura-muted uppercase tracking-[0.2em] mb-2">Inactive Investments</p>
-                  <h4 className="text-5xl font-black text-white italic font-serif group-hover:text-yellow-400 transition-colors">{inactiveCount}</h4>
+                  <p className={cn("text-[10px] font-black uppercase tracking-[0.2em] mb-2", isLight ? "text-slate-500" : "text-aura-muted")}>Inactive Investments</p>
+                  <h4 className={cn("text-5xl font-black italic font-serif transition-colors", isLight ? "text-slate-900 group-hover:text-amber-600" : "text-white group-hover:text-yellow-400")}>{inactiveCount}</h4>
                   <div className="mt-3 flex items-center gap-2">
-                    <p className="text-[8px] font-black text-yellow-500 uppercase tracking-[0.2em] bg-yellow-500/10 px-2 py-0.5 rounded-full">
+                    <p className={cn("text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full", isLight ? "bg-amber-50 text-amber-700 border border-amber-200/60" : "bg-yellow-500/10 text-yellow-500")}>
                       Ready for Pulse
                     </p>
-                    <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Tap to View →</span>
+                    <span className={cn("text-[7px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity", isLight ? "text-slate-400" : "text-white/20")}>Tap to View →</span>
                   </div>
                </div>
-               <div className="w-20 h-20 rounded-[32px] bg-yellow-500/5 flex items-center justify-center text-yellow-500/30 group-hover:text-yellow-500 group-hover:bg-yellow-500/10 transition-all duration-500 shadow-inner">
+               <div className={cn(
+                 "w-20 h-20 rounded-[32px] flex items-center justify-center transition-all duration-500 shadow-inner",
+                 isLight 
+                  ? "bg-amber-50/60 text-amber-600 border border-amber-100 group-hover:bg-amber-100/60" 
+                  : "bg-yellow-500/5 text-yellow-500/30 group-hover:text-yellow-500 group-hover:bg-yellow-500/10"
+               )}>
                   <Clock size={44} />
                </div>
             </button>
@@ -726,20 +747,23 @@ export default function Dashboard() {
           {/* History */}
           <div id="transactions" className="space-y-6">
             <div className="flex items-center justify-between px-2">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
+              <h3 className={cn("text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2", isLight ? "text-slate-900" : "text-white")}>
                 <History size={16} className="text-primary" /> History
               </h3>
               <button 
                 onClick={() => navigate('/fund/transactions')}
-                className="text-[10px] font-bold uppercase tracking-widest text-aura-muted hover:text-aura-lime transition-all"
+                className={cn("text-[10px] font-bold uppercase tracking-widest transition-all", isLight ? "text-slate-500 hover:text-slate-900" : "text-aura-muted hover:text-aura-lime")}
               >
                 View All <ChevronRight size={12} className="inline" />
               </button>
             </div>
             
-            <div className="bg-[#11141b] border border-white/5 rounded-[40px] overflow-hidden">
+            <div className={cn(
+              "border rounded-[40px] overflow-hidden",
+              isLight ? "bg-white border-slate-200 shadow-sm" : "bg-[#11141b] border-white/5"
+            )}>
               {recentTx.length === 0 ? (
-                <div className="p-12 text-center text-aura-muted text-[10px] font-bold uppercase tracking-[0.2em]">
+                <div className={cn("p-12 text-center text-[10px] font-bold uppercase tracking-[0.2em]", isLight ? "text-slate-400" : "text-aura-muted")}>
                   No transactions yet.
                 </div>
               ) : (
@@ -763,20 +787,31 @@ export default function Dashboard() {
         <div className="lg:col-span-4 space-y-8">
            <button 
              onClick={() => navigate('/rewards#referral-rewards')}
-             className="w-full relative group overflow-hidden rounded-[32px] border border-purple-500/20 p-0.5 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent backdrop-blur-md transition-all duration-300 hover:scale-[1.01] hover:border-purple-500/40 hover:shadow-[0_20px_45px_rgba(168,85,247,0.12)] active:scale-95"
+             className={cn(
+               "w-full relative group overflow-hidden rounded-[32px] border p-0.5 backdrop-blur-md transition-all duration-300 hover:scale-[1.01] active:scale-95",
+               isLight
+                ? "border-purple-200 bg-purple-50/30 hover:border-purple-300 hover:shadow-md"
+                : "border-purple-500/20 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent hover:border-purple-500/40 hover:shadow-[0_20px_45px_rgba(168,85,247,0.12)]"
+             )}
            >
              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-             <div className="relative p-6 px-8 flex items-center justify-between rounded-[30px] bg-[#0b0e14]/75 border border-white/5">
+             <div className={cn(
+               "relative p-6 px-8 flex items-center justify-between rounded-[30px] border",
+               isLight ? "bg-white border-slate-200/90" : "bg-[#0b0e14]/75 border border-white/5"
+             )}>
                 <div className="flex items-center gap-4 text-left">
                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
                       <Gift size={22} className="animate-pulse" />
                    </div>
                    <div>
-                      <span className="text-[10px] font-bold uppercase text-purple-400 tracking-[0.2em] block leading-none mb-1">Earn 5% Bonus</span>
-                      <h4 className="text-sm font-black text-white uppercase tracking-wider">Referral Program</h4>
+                      <span className="text-[10px] font-bold uppercase text-purple-600 dark:text-purple-400 tracking-[0.2em] block leading-none mb-1">Earn 5% Bonus</span>
+                      <h4 className={cn("text-sm font-black uppercase tracking-wider", isLight ? "text-slate-900" : "text-white")}>Referral Program</h4>
                    </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white transition-transform group-hover:translate-x-1">
+                <div className={cn(
+                  "w-8 h-8 rounded-full border flex items-center justify-center transition-transform group-hover:translate-x-1",
+                  isLight ? "bg-slate-100 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white"
+                )}>
                    <ChevronRight size={16} />
                 </div>
              </div>

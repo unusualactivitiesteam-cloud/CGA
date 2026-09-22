@@ -58,7 +58,7 @@ const HowItWorks = () => {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff01_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
         
         {/* Futuristic Glowing Orbs */}
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-64 h-64 bg-[#a4d100]/10 rounded-full blur-[90px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-64 h-64 bg-[#009e42]/10 rounded-full blur-[90px] pointer-events-none" />
         <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-72 h-72 bg-blue-500/5 rounded-full blur-[110px] pointer-events-none" />
         
         {/* Smooth SVG Waves representing Wave Network */}
@@ -75,7 +75,7 @@ const HowItWorks = () => {
             />
             <defs>
               <linearGradient id="wave-gradient-1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#a4d100" stopOpacity="0.08" />
+                <stop offset="0%" stopColor="#009e42" stopOpacity="0.08" />
                 <stop offset="100%" stopColor="#050608" stopOpacity="0.4" />
               </linearGradient>
               <linearGradient id="wave-gradient-2" x1="0" y1="0" x2="0" y2="1">
@@ -92,10 +92,10 @@ const HowItWorks = () => {
             initial={{ opacity: 0, y: -15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="px-3.5 py-1.5 bg-[#a4d100]/10 border border-[#a4d100]/20 rounded-full flex items-center gap-2"
+            className="px-3.5 py-1.5 bg-[#009e42]/10 border border-[#009e42]/20 rounded-full flex items-center gap-2"
           >
-            <Cpu size={12} className="text-[#a4d100] animate-pulse" />
-            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.25em] text-[#a4d100]">Algoprint Mechanics</span>
+            <Cpu size={12} className="text-[#009e42] animate-pulse" />
+            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.25em] text-[#009e42]">Algoprint Mechanics</span>
           </motion.div>
           
           <motion.div
@@ -105,7 +105,7 @@ const HowItWorks = () => {
             className="space-y-2 md:space-y-3"
           >
             <h1 className="text-3xl sm:text-5xl md:text-7xl font-black italic tracking-tighter uppercase font-sans text-white">
-              HOW IT <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#a4d100] via-[#c6ff00] to-white font-serif">WORKS</span>
+              HOW IT <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#009e42] via-[#02d147] to-white font-serif">WORKS</span>
             </h1>
             <p className="text-[9px] sm:text-xs font-black uppercase tracking-[0.3em] text-slate-400">
               The Architecture of Decoupled Algorithmic Yield

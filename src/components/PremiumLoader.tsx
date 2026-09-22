@@ -5,7 +5,7 @@ export default function PremiumLoader() {
   return (
     <div className="fixed inset-0 bg-[#050608] flex items-center justify-center z-[9999] select-none overflow-hidden">
       {/* Ambient Radial Glows */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#a4d100]/5 blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#009e42]/5 blur-[130px] rounded-full pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-emerald-500/5 blur-[90px] rounded-full pointer-events-none" />
 
       {/* Perfectly Centered Circle and Logo */}
@@ -22,7 +22,7 @@ export default function PremiumLoader() {
             cy="50"
             r="46"
             fill="none"
-            stroke="#a4d100"
+            stroke="#009e42"
             strokeWidth="1.5"
             strokeDasharray="10 25 40 25"
             strokeOpacity="0.3"
@@ -41,7 +41,7 @@ export default function PremiumLoader() {
             cy="50"
             r="40"
             fill="none"
-            stroke="#10b981"
+            stroke="#02d147"
             strokeWidth="1"
             strokeDasharray="2 6"
             strokeOpacity="0.5"
@@ -60,28 +60,28 @@ export default function PremiumLoader() {
             cy="50"
             r="34"
             fill="none"
-            stroke="#a4d100"
+            stroke="#009e42"
             strokeWidth="2"
             strokeDasharray="60 120"
             strokeLinecap="round"
             strokeOpacity="0.8"
-            style={{ filter: 'drop-shadow(0px 0px 8px rgba(164, 209, 0, 0.5))' }}
+            style={{ filter: 'drop-shadow(0px 0px 8px rgba(0, 158, 66, 0.5))' }}
           />
         </motion.svg>
 
-        {/* Logo Container with Breathing Pulse Effect */}
+        {/* Logo Container with Breathing Pulse Effect - Transparent background & Proportional sizing */}
         <motion.div 
-          className="absolute w-16 h-16 rounded-full bg-black/40 border border-white/5 flex items-center justify-center backdrop-blur-sm"
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
           animate={{ 
-            scale: [1, 1.05, 1],
-            borderColor: ['rgba(255,255,255,0.05)', 'rgba(164,209,0,0.2)', 'rgba(255,255,255,0.05)']
+            scale: [1, 1.04, 1]
           }}
-          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+          transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
         >
           <img 
-            src="https://i.imgur.com/loFD5nc.png" 
+            src="https://i.imgur.com/BPyaRYZ.png" 
             alt="CGA Logo" 
-            className="w-10 h-10 object-contain brightness-110 drop-shadow-[0_0_12px_rgba(164,209,0,0.3)]"
+            referrerPolicy="no-referrer"
+            className="w-20 h-20 sm:w-[84px] sm:h-[84px] object-contain drop-shadow-[0_0_16px_rgba(0,158,66,0.35)]"
           />
         </motion.div>
       </div>

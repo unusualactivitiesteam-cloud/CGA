@@ -1424,7 +1424,7 @@ export default function SpinAndWin() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.6 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/85 backdrop-blur-xs"
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs"
               onClick={() => setIsNoFundsModalOpen(false)}
             />
 
@@ -1432,7 +1432,7 @@ export default function SpinAndWin() {
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-sm rounded-[24px] bg-[#090b10] border border-red-500/20 shadow-[0_25px_60px_-15px_rgba(239,68,68,0.3)] p-6 overflow-hidden border-l-4 border-l-red-500 pointer-events-auto text-left"
+              className="relative w-full max-w-sm rounded-[24px] bg-white dark:bg-[#090b10] border border-red-500/20 shadow-2xl p-6 overflow-hidden border-l-4 border-l-red-500 pointer-events-auto text-left"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 blur-2xl rounded-full pointer-events-none" />
 
@@ -1441,8 +1441,8 @@ export default function SpinAndWin() {
                   <ShieldAlert size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1.5">Insufficent Funds</h4>
-                  <p className="text-xs text-gray-400 leading-relaxed font-sans font-medium">
+                  <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-1.5">Insufficent Funds</h4>
+                  <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed font-sans font-medium">
                     No funds to spin. Fund your account to Spin & Win.
                   </p>
                   
@@ -1458,7 +1458,7 @@ export default function SpinAndWin() {
                     </button>
                     <button 
                       onClick={() => setIsNoFundsModalOpen(false)}
-                      className="px-4 py-2.5 bg-white/[0.04] text-gray-300 hover:bg-white/10 hover:text-white rounded-xl text-[10px] uppercase font-bold tracking-widest transition-colors cursor-pointer text-center"
+                      className="px-4 py-2.5 bg-slate-100 dark:bg-white/[0.04] text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white rounded-xl text-[10px] uppercase font-bold tracking-widest transition-colors cursor-pointer text-center"
                     >
                       Dismiss
                     </button>
@@ -1478,7 +1478,7 @@ export default function SpinAndWin() {
                initial={{ opacity: 0 }}
                animate={{ opacity: 0.6 }}
                exit={{ opacity: 0 }}
-               className="fixed inset-0 bg-black/85 backdrop-blur-xs"
+               className="fixed inset-0 bg-black/60 backdrop-blur-xs"
                onClick={() => setIsResultModalOpen(false)}
             />
 
@@ -1487,11 +1487,11 @@ export default function SpinAndWin() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               className={cn(
-                "relative w-full max-w-sm rounded-[24px] bg-[#090b10] p-6 overflow-hidden pointer-events-auto text-left border border-white/[0.04] shadow-2xl",
-                modalResult.type === 'try_again' && "border-l-4 border-l-slate-600 shadow-slate-900/50",
-                modalResult.type === 'free_spin' && "border-l-4 border-l-indigo-500 shadow-indigo-950/40",
-                modalResult.type === '1' && "border-l-4 border-l-green-500 shadow-emerald-950/40",
-                modalResult.type === '10' && "border-l-4 border-l-amber-400 shadow-amber-950/40"
+                "relative w-full max-w-sm rounded-[24px] bg-white dark:bg-[#090b10] p-6 overflow-hidden pointer-events-auto text-left border border-slate-200 dark:border-white/[0.04] shadow-2xl",
+                modalResult.type === 'try_again' && "border-l-4 border-l-slate-600 shadow-slate-900/10 dark:shadow-slate-900/50",
+                modalResult.type === 'free_spin' && "border-l-4 border-l-indigo-500 shadow-indigo-950/10 dark:shadow-indigo-950/40",
+                modalResult.type === '1' && "border-l-4 border-l-green-500 shadow-emerald-950/10 dark:shadow-emerald-950/40",
+                modalResult.type === '10' && "border-l-4 border-l-amber-400 shadow-amber-950/10 dark:shadow-amber-950/40"
               )}
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 blur-2xl rounded-full pointer-events-none" />
@@ -1546,7 +1546,7 @@ export default function SpinAndWin() {
                   <motion.div
                     animate={{ y: [0, 4, 0] }}
                     transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                    className="text-6xl select-none filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
+                    className="text-6xl select-none filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
                   >
                     😢
                   </motion.div>
@@ -1583,10 +1583,10 @@ export default function SpinAndWin() {
               <div className="flex gap-4 items-start relative z-10">
                 <div className={cn(
                   "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white",
-                  modalResult.type === 'try_again' && "bg-white/[0.03] text-gray-400 border border-white/10",
-                  modalResult.type === 'free_spin' && "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20",
-                  modalResult.type === '1' && "bg-green-500/10 text-green-400 border border-green-500/20",
-                  modalResult.type === '10' && "bg-amber-500/10 text-amber-300 border border-amber-500/20"
+                  modalResult.type === 'try_again' && "bg-slate-100 text-slate-500 border border-slate-200 dark:bg-white/[0.03] dark:text-gray-400 dark:border-white/10",
+                  modalResult.type === 'free_spin' && "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20",
+                  modalResult.type === '1' && "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20",
+                  modalResult.type === '10' && "bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20"
                 )}>
                   {modalResult.type === 'try_again' ? (
                     <AlertCircle size={18} />
@@ -1598,14 +1598,14 @@ export default function SpinAndWin() {
                   <span className={cn(
                     "text-[8px] uppercase tracking-widest font-bold block mb-1",
                     modalResult.type === 'try_again' && "text-slate-500",
-                    modalResult.type === 'free_spin' && "text-indigo-400",
-                    modalResult.type === '1' && "text-emerald-400",
-                    modalResult.type === '10' && "text-amber-400"
+                    modalResult.type === 'free_spin' && "text-indigo-600 dark:text-indigo-400",
+                    modalResult.type === '1' && "text-emerald-600 dark:text-emerald-400",
+                    modalResult.type === '10' && "text-amber-600 dark:text-amber-400"
                   )}>
                     Spin Result
                   </span>
-                  <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1.5">{modalResult.title}</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed font-sans font-medium">
+                  <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-1.5">{modalResult.title}</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-sans font-medium">
                     {modalResult.message}
                   </p>
                   
@@ -1614,7 +1614,7 @@ export default function SpinAndWin() {
                       onClick={() => setIsResultModalOpen(false)}
                       className={cn(
                         "w-full py-2.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all shadow-lg text-center cursor-pointer block",
-                        modalResult.type === 'try_again' && "bg-white/[0.04] text-gray-300 hover:bg-white/10 hover:text-white border-b-2 border-b-white/5",
+                        modalResult.type === 'try_again' && "bg-slate-100 hover:bg-slate-200 text-slate-800 border-b-2 border-b-slate-300 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white dark:border-b-white/5",
                         modalResult.type === 'free_spin' && "bg-indigo-600 hover:bg-indigo-700 text-white border-b-2 border-b-indigo-800",
                         modalResult.type === '1' && "bg-green-600 hover:bg-green-700 text-white border-b-2 border-b-green-800",
                         modalResult.type === '10' && "bg-amber-500 hover:bg-amber-600 text-slate-950 border-b-2 border-b-amber-700 font-extrabold"

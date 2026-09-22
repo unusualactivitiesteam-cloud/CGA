@@ -148,7 +148,7 @@ export default function AssetMultiplierPage() {
         >
           <div className="flex flex-col md:flex-row gap-8 items-center">
             <div className="space-y-4 flex-1">
-              <div className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[#CCFF00]">
+              <div className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[#009e42]">
                 <ShieldCheck size={12} />
                 Financial Architecture System
               </div>
@@ -166,12 +166,12 @@ export default function AssetMultiplierPage() {
             <div className="w-full md:w-auto flex flex-col gap-3 min-w-[200px]">
               <div className="bg-white/5 rounded-2xl border border-white/5 p-4 text-center">
                 <span className="block text-[10px] text-aura-muted uppercase tracking-wider font-semibold">Yield Rate</span>
-                <span className="block text-2xl font-black font-mono text-[#CCFF00] mt-1">0.5% Daily</span>
+                <span className="block text-2xl font-black font-mono text-[#009e42] mt-1">0.5% Daily</span>
               </div>
               
               <div className="bg-white/5 rounded-2xl border border-white/5 p-4 text-center">
                 <span className="block text-[10px] text-aura-muted uppercase tracking-wider font-semibold">Asset Scaling</span>
-                <span className="block text-2xl font-black font-mono text-[#CCFF00] mt-1">3.0x Multiplier</span>
+                <span className="block text-2xl font-black font-mono text-[#009e42] mt-1">3.0x Multiplier</span>
               </div>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function AssetMultiplierPage() {
           </p>
           <button
             onClick={handleBack}
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-600/15 cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-[#009e42]/20 cursor-pointer transition-all"
           >
             Return to Dashboard
             <ChevronRight size={14} />

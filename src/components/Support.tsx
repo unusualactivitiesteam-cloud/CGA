@@ -418,21 +418,21 @@ export default function Support() {
   return (
     <div className="w-full min-h-screen bg-[#050608] text-white">
       {/* Edge-to-Edge Premium Header Banner with Web App Primary Color gradient and border */}
-      <div className="w-full h-[180px] md:h-[240px] mb-12 relative overflow-hidden bg-gradient-to-r from-[#0a1122] via-[#0d1c10] to-[#0a1122] border-b-2 border-[#a4d100] flex items-center justify-center select-none">
+      <div className="support-header-banner w-full h-[180px] md:h-[240px] mb-12 relative overflow-hidden bg-gradient-to-r from-[#0a1122] via-[#0d1c10] to-[#0a1122] border-b-2 border-[#009e42] flex items-center justify-center select-none">
         {/* Background Grid Accent */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff01_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
         
         {/* Glowing Orbs in Web App Primary Color */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#a4d100]/10 rounded-full blur-[90px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#009e42]/10 rounded-full blur-[90px] pointer-events-none" />
         
         <div className="relative z-10 px-6 max-w-7xl mx-auto w-full flex flex-col items-center md:items-start text-center md:text-left space-y-2">
           <motion.h1 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight uppercase italic font-serif text-white"
+            className="support-header-title text-3xl sm:text-4xl md:text-5xl font-black tracking-tight uppercase italic font-serif text-white"
           >
-            Support <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#a4d100] to-emerald-400 font-serif">Center</span>
+            Support <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#009e42] to-emerald-400 font-serif">Center</span>
           </motion.h1>
         </div>
       </div>
@@ -480,7 +480,7 @@ export default function Support() {
                         placeholder="subjects"
                         value={ticketForm.subject}
                         onChange={(e) => setTicketForm(prev => ({ ...prev, subject: e.target.value }))}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-200 outline-none focus:border-[#a4d100]/50 transition-all"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-200 outline-none focus:border-[#009e42]/50 transition-all"
                       />
                    </div>
                 </div>
@@ -493,7 +493,7 @@ export default function Support() {
                      value={ticketForm.message}
                      onChange={(e) => setTicketForm(prev => ({ ...prev, message: e.target.value }))}
                      rows={6}
-                     className="w-full bg-white/5 border border-white/10 rounded-3xl py-4 px-6 text-sm font-medium text-slate-200 outline-none focus:border-[#a4d100]/50 transition-all resize-none"
+                     className="w-full bg-white/5 border border-white/10 rounded-3xl py-4 px-6 text-sm font-medium text-slate-200 outline-none focus:border-[#009e42]/50 transition-all resize-none"
                    />
                 </div>
 
@@ -506,9 +506,9 @@ export default function Support() {
                       <button
                         type="button"
                         onClick={() => setIsAttachmentMenuOpen(!isAttachmentMenuOpen)}
-                        className="inline-flex items-center gap-2 text-sm font-bold text-[#a4d100] hover:text-[#b2e600] transition-colors cursor-pointer select-none group border-b border-dashed border-[#a4d100]/40 pb-0.5"
+                        className="inline-flex items-center gap-2 text-sm font-bold text-[#009e42] hover:text-[#02d147] transition-colors cursor-pointer select-none group border-b border-dashed border-[#009e42]/40 pb-0.5"
                       >
-                        <Paperclip size={16} className="text-[#a4d100] group-hover:scale-110 transition-transform" />
+                        <Paperclip size={16} className="text-[#009e42] group-hover:scale-110 transition-transform" />
                         <span>Attach files</span>
                       </button>
 
@@ -553,7 +553,7 @@ export default function Support() {
                                 }}
                                 className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/5 rounded-xl text-left transition-all cursor-pointer group text-xs text-slate-200 hover:text-white"
                               >
-                                <FolderOpen size={14} className="text-slate-400 group-hover:text-[#a4d100] transition-colors" />
+                                <FolderOpen size={14} className="text-slate-400 group-hover:text-[#009e42] transition-colors" />
                                 <span className="font-bold">Choose Files</span>
                               </button>
 
@@ -647,11 +647,11 @@ export default function Support() {
                       "w-full py-5 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl active:scale-[0.98] cursor-pointer",
                       isSubmitted 
                         ? "bg-green-500 text-white font-bold uppercase tracking-[0.3em] text-xs" 
-                        : "bg-[#a4d100] hover:bg-[#b5e700] disabled:opacity-40 disabled:bg-[#a4d100]/20"
+                        : "bg-[#009e42] hover:bg-[#02d147] disabled:opacity-40 disabled:bg-[#009e42]/20"
                     )}
                   >
                     {isSubmitting ? (
-                      <span className="text-black/80 font-bold uppercase tracking-[0.3em] text-xs flex items-center gap-2">
+                      <span className="text-white font-bold uppercase tracking-[0.3em] text-xs flex items-center gap-2">
                         <Loader2 className="animate-spin" size={18} /> Submitting ticket...
                       </span>
                     ) : isSubmitted ? (
@@ -659,7 +659,7 @@ export default function Support() {
                         <CheckCircle2 size={18} /> Ticket Submitted
                       </span>
                     ) : (
-                      <span className="text-black font-normal font-sans text-sm tracking-normal normal-case">
+                      <span className="text-white font-normal font-sans text-sm tracking-normal normal-case">
                         Submit Ticket
                       </span>
                     )}
@@ -681,7 +681,7 @@ export default function Support() {
 
              {isLoadingTickets ? (
                <div className="py-12 flex flex-col items-center justify-center text-slate-500 space-y-3">
-                  <Loader2 className="animate-spin text-[#a4d100]" size={24} />
+                  <Loader2 className="animate-spin text-[#009e42]" size={24} />
                   <span className="text-xs uppercase font-bold tracking-widest">Loading Ticket Records...</span>
                </div>
              ) : userTickets.length === 0 ? (
@@ -734,7 +734,7 @@ export default function Support() {
                         {ticket.screenshot && (
                           <div className="pt-2">
                              <details className="group">
-                                <summary className="text-[10px] font-black uppercase tracking-widest text-[#a4d100] cursor-pointer hover:underline list-none flex items-center gap-1.5 select-none">
+                                <summary className="text-[10px] font-black uppercase tracking-widest text-[#009e42] cursor-pointer hover:underline list-none flex items-center gap-1.5 select-none">
                                    <Paperclip size={12} /> View Attachment
                                 </summary>
                                 <div className="mt-3 p-2 bg-black/40 border border-white/10 rounded-xl inline-block max-w-full">
@@ -761,7 +761,7 @@ export default function Support() {
                       <button
                         type="button"
                         onClick={() => setIsViewingAllHistory(true)}
-                        className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-xs font-black uppercase tracking-widest text-[#a4d100] hover:text-[#b4e110] transition-all cursor-pointer"
+                        className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-xs font-black uppercase tracking-widest text-[#009e42] hover:text-[#02d147] transition-all cursor-pointer"
                       >
                         View All Support History
                       </button>
@@ -911,7 +911,7 @@ export default function Support() {
                   <button
                     key={file.id}
                     onClick={() => handleSelectDriveFile(file)}
-                    className="w-full flex items-center justify-between p-3 hover:bg-white/5 border border-white/5 hover:border-[#a4d100]/20 rounded-xl text-left transition-all group cursor-pointer"
+                    className="w-full flex items-center justify-between p-3 hover:bg-white/5 border border-white/5 hover:border-[#009e42]/20 rounded-xl text-left transition-all group cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5 overflow-hidden">
                       <FileText size={16} className="text-slate-400 group-hover:text-blue-400 transition-colors shrink-0" />
@@ -943,40 +943,40 @@ export default function Support() {
       {/* Webcam Live Capture Modal Overlay */}
       <AnimatePresence>
         {isCameraActive && (
-          <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+          <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/60 md:bg-black/80 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#0c1017] border border-white/10 rounded-3xl p-6 max-w-md w-full shadow-2xl relative flex flex-col space-y-4"
+              className="bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-white/10 rounded-3xl p-6 max-w-md w-full shadow-2xl relative flex flex-col space-y-4"
             >
-              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-3">
                 <div className="flex items-center gap-2">
                   <Camera size={18} className="text-pink-500" />
-                  <h3 className="text-sm font-black uppercase tracking-wider text-white">Capture Photo</h3>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">Capture Photo</h3>
                 </div>
                 <button 
                   onClick={stopCamera}
-                  className="p-1 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer"
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all cursor-pointer"
                 >
                   <X size={18} />
                 </button>
               </div>
 
               {cameraError ? (
-                <div className="text-center p-6 text-red-400 space-y-3">
+                <div className="text-center p-6 text-red-500 dark:text-red-400 space-y-3">
                   <AlertCircle className="mx-auto" size={28} />
                   <p className="text-xs font-bold uppercase leading-relaxed">{cameraError}</p>
                   <button
                     onClick={stopCamera}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold text-white uppercase cursor-pointer"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 rounded-xl text-xs font-bold text-slate-800 dark:text-white uppercase cursor-pointer"
                   >
                     Close Camera
                   </button>
                 </div>
               ) : (
                 <>
-                  <div className="relative aspect-video rounded-2xl bg-black overflow-hidden border border-white/10">
+                  <div className="relative aspect-video rounded-2xl bg-black overflow-hidden border border-slate-200 dark:border-white/10">
                     <video 
                       ref={videoRef} 
                       playsInline 
@@ -987,13 +987,13 @@ export default function Support() {
                   <div className="flex gap-2 w-full justify-center pt-2">
                     <button
                       onClick={capturePhoto}
-                      className="flex-1 py-3 bg-[#a4d100] hover:bg-[#b2e600] text-slate-950 font-black uppercase text-xs tracking-widest rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="flex-1 py-3 bg-[#009e42] hover:bg-[#02d147] text-white font-black uppercase text-xs tracking-widest rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
                       <Camera size={14} /> Capture File
                     </button>
                     <button
                       onClick={stopCamera}
-                      className="px-5 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase text-xs tracking-wider rounded-xl transition-all cursor-pointer border border-white/10"
+                      className="px-5 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-white font-bold uppercase text-xs tracking-wider rounded-xl transition-all cursor-pointer border border-slate-200 dark:border-white/10"
                     >
                       Cancel
                     </button>
@@ -1008,38 +1008,38 @@ export default function Support() {
       {/* Selected Ticket Details Modal (Pop-up preview of complete details) */}
       <AnimatePresence>
         {selectedTicket && (
-          <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/60 md:bg-black/80 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 25 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 25 }}
-              className="bg-[#0c1017] border border-white/10 rounded-3xl p-6 max-w-2xl w-full shadow-2xl relative max-h-[85vh] overflow-y-auto scrollbar-thin space-y-5"
+              className="bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-white/10 rounded-3xl p-6 max-w-2xl w-full shadow-2xl relative max-h-[85vh] overflow-y-auto scrollbar-thin space-y-5"
             >
               {/* Header */}
-              <div className="flex items-start justify-between border-b border-white/5 pb-4">
+              <div className="flex items-start justify-between border-b border-slate-200 dark:border-white/5 pb-4">
                 <div className="space-y-1 pr-6">
                   <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-black uppercase font-mono bg-white/5 px-2.5 py-0.5 rounded text-slate-300 tracking-wider">
+                    <span className="text-[9px] font-black uppercase font-mono bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 rounded text-slate-700 dark:text-slate-300 tracking-wider">
                       Ticket Ref: {selectedTicket.id.substring(0, 12)}
                     </span>
                     <span className={cn(
                       "text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded border leading-none",
                       selectedTicket.status === 'resolved' 
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                         : selectedTicket.status === 'in-progress'
-                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                          : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
                     )}>
                       {selectedTicket.status === 'resolved' ? 'treated / successful' : selectedTicket.status === 'in-progress' ? 'treating / in progress' : 'pending'}
                     </span>
                   </div>
-                  <h3 className="text-lg font-black text-white uppercase tracking-tight italic font-serif pt-1.5">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight italic font-serif pt-1.5">
                     {selectedTicket.subject || "Platform Ticket"}
                   </h3>
                 </div>
                 <button 
                   onClick={() => setSelectedTicket(null)}
-                  className="p-1 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer shrink-0"
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all cursor-pointer shrink-0"
                 >
                   <X size={20} />
                 </button>
@@ -1048,10 +1048,10 @@ export default function Support() {
               {/* Details Body */}
               <div className="space-y-4 text-xs">
                 {/* Meta details */}
-                <div className="grid grid-cols-1 gap-4 bg-white/[0.01] border border-white/5 p-4 rounded-2xl">
+                <div className="grid grid-cols-1 gap-4 bg-slate-50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 p-4 rounded-2xl">
                   <div>
                     <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none mb-1">Submitted Date</p>
-                    <p className="text-slate-300 font-bold">
+                    <p className="text-slate-800 dark:text-slate-300 font-bold">
                       {selectedTicket.created_at ? 
                         (selectedTicket.created_at.toDate ? selectedTicket.created_at.toDate().toLocaleString() : new Date(selectedTicket.created_at.seconds ? selectedTicket.created_at.seconds * 1000 : selectedTicket.created_at).toLocaleString()) 
                         : "No date"}
@@ -1062,7 +1062,7 @@ export default function Support() {
                 {/* Message */}
                 <div className="space-y-1.5">
                   <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">Message / Query Description</p>
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-200 leading-relaxed whitespace-pre-wrap font-medium">
+                  <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap font-medium">
                     {selectedTicket.message}
                   </div>
                 </div>
@@ -1071,7 +1071,7 @@ export default function Support() {
                 {selectedTicket.screenshot && !selectedTicket.attachments && (
                   <div className="space-y-1.5">
                     <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">Attachment</p>
-                    <div className="p-2 bg-black/40 border border-white/10 rounded-2xl inline-block">
+                    <div className="p-2 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl inline-block">
                       <img 
                         src={selectedTicket.screenshot} 
                         alt="Ticket Attachment" 
@@ -1090,11 +1090,11 @@ export default function Support() {
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {selectedTicket.attachments.map((att: any, idx: number) => (
-                        <div key={idx} className="p-3 bg-white/[0.02] border border-white/5 rounded-2xl flex flex-col space-y-2">
+                        <div key={idx} className="p-3 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl flex flex-col space-y-2">
                           <div className="flex items-center gap-2 overflow-hidden">
-                            <FileText size={14} className="text-slate-400 shrink-0" />
+                            <FileText size={14} className="text-slate-500 dark:text-slate-400 shrink-0" />
                             <div className="truncate">
-                              <p className="font-bold text-slate-200 truncate">{att.name}</p>
+                              <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{att.name}</p>
                               {att.size && (
                                 <p className="text-[9px] text-slate-500">{(att.size / 1024).toFixed(1)} KB</p>
                               )}
@@ -1103,7 +1103,7 @@ export default function Support() {
                           
                           {/* Render preview if it's an image */}
                           {att.data && (att.type?.startsWith('image/') || att.name?.match(/\.(jpg|jpeg|png|webp|gif)$/i)) && (
-                            <div className="p-1 bg-black/40 border border-white/5 rounded-xl overflow-hidden mt-1 text-center">
+                            <div className="p-1 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden mt-1 text-center">
                               <img 
                                 src={att.data} 
                                 alt={att.name} 
@@ -1118,7 +1118,7 @@ export default function Support() {
                             <a
                               href={att.data}
                               download={att.name}
-                              className="text-[9px] font-black uppercase text-[#a4d100] hover:underline flex items-center gap-1 mt-1"
+                              className="text-[9px] font-black uppercase text-[#009e42] hover:underline flex items-center gap-1 mt-1"
                             >
                               <FolderOpen size={10} /> Download Document
                             </a>
@@ -1131,10 +1131,10 @@ export default function Support() {
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-white/5 text-right">
+              <div className="pt-4 border-t border-slate-200 dark:border-white/5 text-right">
                 <button
                   onClick={() => setSelectedTicket(null)}
-                  className="px-5 py-2.5 bg-[#a4d100] hover:bg-[#b5e700] text-slate-950 font-black uppercase text-xs tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95"
+                  className="px-5 py-2.5 bg-[#009e42] hover:bg-[#02d147] text-white font-black uppercase text-xs tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95"
                 >
                   Close Details
                 </button>
@@ -1147,22 +1147,22 @@ export default function Support() {
       {/* Immersive View All Ticket History overlay/page */}
       <AnimatePresence>
         {isViewingAllHistory && (
-          <div className="fixed inset-0 z-[2500] bg-[#050608] text-white flex flex-col overflow-hidden">
+          <div className="fixed inset-0 z-[2500] bg-slate-50 dark:bg-[#050608] text-slate-900 dark:text-white flex flex-col overflow-hidden">
             {/* Header bar styled exactly with primary color header accents */}
-            <div className="w-full bg-[#0c1017] border-b-2 border-[#a4d100] px-6 py-5 flex items-center justify-between shrink-0 shadow-xl">
+            <div className="w-full bg-white dark:bg-[#0c1017] border-b-2 border-[#009e42] px-6 py-5 flex items-center justify-between shrink-0 shadow-xl">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setIsViewingAllHistory(false)}
-                  className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all cursor-pointer text-slate-300 hover:text-white"
+                  className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-xl transition-all cursor-pointer text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                 >
                   <X size={18} />
                 </button>
                 <div>
-                  <h2 className="text-lg font-black uppercase tracking-tight italic font-serif text-white">Full Ticket Record</h2>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Monitoring CGA Treatment Desk Logs</p>
+                  <h2 className="text-lg font-black uppercase tracking-tight italic font-serif text-slate-900 dark:text-white">Full Ticket Record</h2>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-0.5">Monitoring CGA Treatment Desk Logs</p>
                 </div>
               </div>
-              <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs font-mono text-slate-400">
+              <div className="px-4 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-mono text-slate-700 dark:text-slate-400">
                 {userTickets.length} total records
               </div>
             </div>
@@ -1180,7 +1180,7 @@ export default function Support() {
                     onClick={() => {
                       setSelectedTicket(ticket);
                     }}
-                    className="w-full text-left p-6 border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-[#a4d100]/20 rounded-2xl transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group"
+                    className="w-full text-left p-6 border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-[#009e42]/20 rounded-2xl transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group"
                   >
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
@@ -1192,7 +1192,7 @@ export default function Support() {
                           {dateStr}
                         </span>
                       </div>
-                      <h4 className="text-base font-bold text-white group-hover:text-[#a4d100] transition-colors">
+                      <h4 className="text-base font-bold text-white group-hover:text-[#009e42] transition-colors">
                         {ticket.subject || "Platform Ticket"}
                       </h4>
                     </div>
@@ -1227,7 +1227,7 @@ function ContactCard({ icon, label, value, href, brandColor = "text-blue-500", b
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center justify-between group hover:border-[#CCFF00]/30 hover:bg-white/[0.02] transition-all backdrop-blur-sm"
+      className="bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center justify-between group hover:border-[#009e42]/30 hover:bg-white/[0.02] transition-all backdrop-blur-sm"
     >
       <div className="flex items-center gap-4">
         <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform", bgColor, brandColor)}>

@@ -51,7 +51,10 @@ import {
   Shield,
   Star,
   Compass,
-  Zap
+  Zap,
+  Sun,
+  Moon,
+  Monitor
 } from 'lucide-react';
 import { REVIEWS } from '../constants/landingData';
 import PhoneInput from 'react-phone-input-2';
@@ -60,6 +63,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
 import { useLanguage, LANGUAGES } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 // --- HELPERS ---
 const generateReferralCode = () => {
@@ -209,18 +213,134 @@ const Realistic3DIcon = ({ type }: { type: 'user' | 'plan' | 'fund' | 'node' }) 
 
 export default function LandingPage() {
   const { language, setLanguage, t } = useLanguage();
+  const { theme, effectiveTheme, isDark, setTheme } = useTheme();
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [isThemeOpen, setIsThemeOpen] = useState(false);
   const languageRef = React.useRef<HTMLDivElement>(null);
+  const themeRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (languageRef.current && !languageRef.current.contains(e.target as Node)) {
         setIsLanguageOpen(false);
       }
+      if (themeRef.current && !themeRef.current.contains(e.target as Node)) {
+        setIsThemeOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const renderThemeSelector = () => (
+    <div className="relative" ref={themeRef}>
+      <button 
+        onClick={() => setIsThemeOpen(!isThemeOpen)}
+        className={cn(
+          "w-9 h-9 flex items-center justify-center rounded-xl transition-all shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:scale-95",
+          isDark 
+            ? "bg-white/[0.04] border border-white/5 text-amber-300 hover:text-amber-200 hover:bg-white/[0.08] hover:border-white/10" 
+            : "bg-slate-100 border border-slate-200 text-amber-600 hover:text-amber-500 hover:bg-slate-200"
+        )}
+        title={`Theme: ${theme === 'system' ? `System (${effectiveTheme === 'dark' ? 'Dark' : 'Light'})` : theme === 'dark' ? 'Dark' : 'Light'}`}
+        aria-label="Theme selector"
+      >
+        {effectiveTheme === 'dark' ? (
+          <Moon size={17} className="transition-transform duration-300 hover:scale-110" />
+        ) : (
+          <Sun size={17} className="transition-transform duration-300 hover:scale-110" />
+        )}
+      </button>
+
+      <AnimatePresence>
+        {isThemeOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            style={{ willChange: 'transform, opacity' }}
+            className={cn(
+              "absolute top-full right-0 mt-2 w-48 rounded-2xl border shadow-2xl z-[150] overflow-hidden backdrop-blur-xl p-1.5 space-y-1",
+              isDark ? "bg-[#11141b]/95 border-white/10" : "bg-white/95 border-aura-line shadow-lg"
+            )}
+          >
+            <div className={cn(
+              "px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.25em] border-b mb-1",
+              isDark ? "text-white/40 border-white/5" : "text-slate-400 border-slate-100"
+            )}>
+              Theme Preference
+            </div>
+
+            {/* System */}
+            <button
+              onClick={() => {
+                setTheme('system');
+                setIsThemeOpen(false);
+              }}
+              className={cn(
+                "flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all",
+                theme === 'system'
+                  ? "bg-primary text-white shadow-md shadow-primary/20 font-bold"
+                  : isDark
+                    ? "text-white/60 hover:text-white hover:bg-white/5"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Monitor size={14} />
+                <span className="text-[11px] font-bold uppercase tracking-wider">System</span>
+              </div>
+              {theme === 'system' && <CheckCircle2 size={13} className="text-current" />}
+            </button>
+
+            {/* Light */}
+            <button
+              onClick={() => {
+                setTheme('light');
+                setIsThemeOpen(false);
+              }}
+              className={cn(
+                "flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all",
+                theme === 'light'
+                  ? "bg-primary text-white shadow-md shadow-primary/20 font-bold"
+                  : isDark
+                    ? "text-white/60 hover:text-white hover:bg-white/5"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Sun size={14} />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Light</span>
+              </div>
+              {theme === 'light' && <CheckCircle2 size={13} className="text-current" />}
+            </button>
+
+            {/* Dark */}
+            <button
+              onClick={() => {
+                setTheme('dark');
+                setIsThemeOpen(false);
+              }}
+              className={cn(
+                "flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all",
+                theme === 'dark'
+                  ? "bg-primary text-white shadow-md shadow-primary/20 font-bold"
+                  : isDark
+                    ? "text-white/60 hover:text-white hover:bg-white/5"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Moon size={14} />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Dark</span>
+              </div>
+              {theme === 'dark' && <CheckCircle2 size={13} className="text-current" />}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 
   const renderLanguageSelector = () => (
     <div className="relative" ref={languageRef}>
@@ -1173,11 +1293,11 @@ export default function LandingPage() {
           <div className="absolute inset-x-0 bottom-0 top-1/4 opacity-15 pointer-events-none">
             <svg className="w-full h-full" viewBox="0 0 1440 200" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M0 80 C 320 180, 720 0, 1080 120 C 1260 180, 1380 110, 1440 80 L 1440 200 L 0 200 Z" fill="url(#waveWelcomeGrad)" />
-              <path d="M0 80 C 320 180, 720 0, 1080 120 C 1260 180, 1380 110, 1440 80" stroke="#a4d100" strokeWidth="2.5" />
-              <path d="M0 120 C 400 30, 800 150, 1200 60 C 1320 30, 1400 80, 1440 100" stroke="#10b981" strokeWidth="1" strokeDasharray="4 4" className="opacity-50" />
+              <path d="M0 80 C 320 180, 720 0, 1080 120 C 1260 180, 1380 110, 1440 80" stroke="#009e42" strokeWidth="2.5" />
+              <path d="M0 120 C 400 30, 800 150, 1200 60 C 1320 30, 1400 80, 1440 100" stroke="#02d147" strokeWidth="1" strokeDasharray="4 4" className="opacity-50" />
               <defs>
                 <linearGradient id="waveWelcomeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#a4d100" stopOpacity="0.8" />
+                  <stop offset="0%" stopColor="#009e42" stopOpacity="0.8" />
                   <stop offset="100%" stopColor="transparent" stopOpacity="0" />
                 </linearGradient>
               </defs>
@@ -1185,13 +1305,13 @@ export default function LandingPage() {
           </div>
 
           {/* Large glowing orbs */}
-          <div className="absolute -top-12 left-1/3 w-96 h-96 bg-[#a4d100]/5 rounded-full blur-[120px]" />
+          <div className="absolute -top-12 left-1/3 w-96 h-96 bg-[#009e42]/5 rounded-full blur-[120px]" />
           <div className="absolute -bottom-12 right-1/3 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[150px]" />
 
           {/* Welcome Interactive Dashboard / Stats Banner overlay */}
           <div className="absolute inset-0 flex items-center justify-between px-20 max-w-7xl mx-auto w-full z-10">
             <div className="max-w-xl space-y-4 text-left">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#a4d100] bg-[#a4d100]/10 px-3.5 py-1.5 rounded-full border border-[#a4d100]/20 inline-block">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#009e42] bg-[#009e42]/10 px-3.5 py-1.5 rounded-full border border-[#009e42]/20 inline-block">
                 CGA Trades Investment Suite
               </span>
               <h1 className="text-4xl xl:text-5xl font-black text-white tracking-tight leading-none uppercase italic font-serif">
@@ -1203,20 +1323,20 @@ export default function LandingPage() {
             </div>
 
             {/* Glowing Tech Dashboard Visualizer */}
-            <div className="relative w-[340px] h-[180px] bg-black/40 border border-[#a4d100]/20 rounded-2xl p-5 shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden hidden xl:flex flex-col justify-between">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-[#a4d100]/5 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative w-[340px] h-[180px] bg-black/40 border border-[#009e42]/20 rounded-2xl p-5 shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden hidden xl:flex flex-col justify-between">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-[#009e42]/5 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-[#a4d100] tracking-widest uppercase font-bold">CGA SECURE NODE</span>
+                <span className="text-[10px] font-mono text-[#009e42] tracking-widest uppercase font-bold">CGA SECURE NODE</span>
                 <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#a4d100] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#a4d100]"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#009e42] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#009e42]"></span>
                 </span>
               </div>
 
               {/* Minimalist charts */}
               <div className="h-16 flex items-end gap-1.5 justify-center py-2">
                 {[40, 55, 45, 60, 75, 65, 80, 95, 85, 110, 100, 120].map((h, idx) => (
-                  <div key={idx} className="w-4 bg-[#a4d100]/15 border-t border-[#a4d100]/40 rounded-t-sm transition-all duration-500 hover:bg-[#a4d100]/30" style={{ height: `${(h / 120) * 100}%` }} />
+                  <div key={idx} className="w-4 bg-[#009e42]/15 border-t border-[#009e42]/40 rounded-t-sm transition-all duration-500 hover:bg-[#009e42]/30" style={{ height: `${(h / 120) * 100}%` }} />
                 ))}
               </div>
 
@@ -1269,7 +1389,7 @@ export default function LandingPage() {
           : "lg:h-24 lg:bg-[#050608]/35 lg:border-transparent lg:shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
       )}>
         <div className={cn("flex items-center gap-1.5 transition-all duration-500", isScrolled ? "scale-90" : "scale-100")}>
-          <img src="https://i.imgur.com/loFD5nc.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="h-7 w-auto lg:h-14 object-contain" />
+          <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="h-7 w-auto lg:h-14 object-contain" />
           <span className="text-sm lg:text-3xl font-black uppercase tracking-tighter leading-none">CGA Trades</span>
         </div>
 
@@ -1295,6 +1415,7 @@ export default function LandingPage() {
         <div className="flex items-center gap-2">
           {/* Mobile Buttons Layout - Compact & Premium */}
           <div className="flex lg:hidden items-center gap-1.5">
+            {renderThemeSelector()}
             {renderLanguageSelector()}
             {/* 1. Sign In */}
             <button 
@@ -1315,22 +1436,28 @@ export default function LandingPage() {
             {/* 3. Dropdown/Hamburger menu (extreme right) */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors shrink-0 flex flex-col justify-center items-end gap-1.5 w-8 h-8"
+              className={cn(
+                "p-2 rounded-lg transition-colors shrink-0 flex flex-col justify-center items-end gap-1.5 w-8 h-8",
+                isDark 
+                  ? "text-white/80 hover:text-white hover:bg-white/5" 
+                  : "text-slate-800 hover:text-slate-950 hover:bg-slate-100"
+              )}
               aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? (
                 <X size={16} />
               ) : (
                 <>
-                  <div className="w-4 h-[2px] bg-white rounded-full" />
-                  <div className="w-2.5 h-[2px] bg-white rounded-full" />
+                  <div className={cn("w-4.5 h-[2.5px] rounded-full transition-colors", isDark ? "bg-white" : "bg-slate-900 dark:bg-white")} />
+                  <div className={cn("w-3 h-[2.5px] rounded-full transition-colors", isDark ? "bg-white" : "bg-slate-900 dark:bg-white")} />
                 </>
               )}
             </button>
           </div>
 
           {/* Desktop Only Buttons */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-3">
+            {renderThemeSelector()}
             {renderLanguageSelector()}
             <button 
               onClick={() => { setIsModalOpen(true); setAuthMode('signin'); }}
@@ -1632,7 +1759,7 @@ export default function LandingPage() {
 
                 {/* Logo & Header */}
                 <div className="flex flex-col items-center text-center mt-6 mb-8">
-                   <img src="https://i.imgur.com/loFD5nc.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="w-20 h-20 lg:w-24 lg:h-24 object-contain mb-6" />
+                   <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="w-20 h-20 lg:w-24 lg:h-24 object-contain mb-6" />
                    <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
                      {authMode === 'signup' ? 'Create Account' : 'Welcome Back'}
                    </h2>

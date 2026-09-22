@@ -256,14 +256,15 @@ const FAQ = () => {
 
   return (
     <div className="min-h-screen bg-[#050608] text-white relative overflow-hidden">
-      {/* Edge-to-Edge Premium Header Banner with Image Background */}
-      <div className="w-full mb-16 relative overflow-hidden bg-[#050608]">
+      {/* Edge-to-Edge Super Slim Premium Header Banner with Image Background */}
+      <div className="w-full h-[100px] sm:h-[130px] md:h-[160px] mb-10 relative overflow-hidden bg-[#050608] border-b border-white/10 shadow-sm select-none">
         <img 
           src={faqHeader} 
           alt="FAQ Header" 
-          className="w-full h-auto block select-none"
+          className="w-full h-full object-cover object-center block select-none brightness-[0.95] contrast-[1.05]"
           referrerPolicy="no-referrer"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050608]/40 via-transparent to-transparent pointer-events-none" />
       </div>
 
       {/* Background Glows */}
@@ -280,7 +281,7 @@ const FAQ = () => {
         >
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-[#a4d100] font-semibold text-xs tracking-wider uppercase transition-colors cursor-pointer group"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-[#009e42] font-semibold text-xs tracking-wider uppercase transition-colors cursor-pointer group"
           >
             <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
             Back to previous page
@@ -355,13 +356,13 @@ const FAQ = () => {
           <div className="flex flex-wrap justify-center gap-4 relative z-10 pt-2">
             <button 
               onClick={() => navigate('/help')}
-              className="flex items-center gap-2.5 px-6 py-3 bg-[#a4d100] hover:bg-[#b4e110] text-black font-semibold text-xs rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg cursor-pointer"
+              className="flex items-center gap-2.5 px-6 py-3 bg-[#009e42] hover:bg-[#02d147] text-white font-semibold text-xs rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg cursor-pointer"
             >
               <Mail size={14} />
               Contact
             </button>
             <div className="flex items-center gap-2.5 px-6 py-3 bg-white/[0.03] border border-white/10 text-slate-300 font-medium text-xs rounded-xl">
-              <Globe size={14} className="text-[#a4d100]" />
+              <Globe size={14} className="text-[#009e42]" />
               24/7 Support Active
             </div>
           </div>

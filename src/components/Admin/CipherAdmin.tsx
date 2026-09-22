@@ -2404,7 +2404,7 @@ export default function CipherAdmin() {
       {/* Mobile Top Header */}
       <header className="fixed top-0 inset-x-0 h-16 bg-[#050608]/90 backdrop-blur-md border-b border-white/5 z-[100] flex items-center justify-between px-6 lg:hidden">
         <div className="flex items-center gap-3">
-          <img src="https://i.imgur.com/loFD5nc.png" alt="Cipher Terminal Logo" className="w-8 h-8 object-contain" />
+          <img src="https://i.imgur.com/BPyaRYZ.png" alt="Cipher Terminal Logo" className="w-8 h-8 object-contain" />
           <span className="text-[10px] font-black uppercase tracking-widest text-[#ffffff80]">CIPHER MOBILE</span>
         </div>
         <button
@@ -2715,7 +2715,7 @@ export default function CipherAdmin() {
       {/* Sidebar */}
       <aside className="w-64 border-r border-white/5 flex flex-col p-6 hidden lg:flex">
         <div className="flex items-center gap-3 mb-12">
-          <img src="https://i.imgur.com/loFD5nc.png" alt="Cipher Terminal Logo" className="w-10 h-10 lg:w-12 lg:h-12 object-contain" />
+          <img src="https://i.imgur.com/BPyaRYZ.png" alt="Cipher Terminal Logo" className="w-10 h-10 lg:w-12 lg:h-12 object-contain" />
           <span className="text-sm font-black uppercase tracking-tighter">CIPHER TERMINAL</span>
         </div>
 
@@ -4488,7 +4488,7 @@ export default function CipherAdmin() {
                                           <>
                                             <button 
                                               onClick={() => approveTwnTransaction(tx)}
-                                              className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 duration-200 transition-all text-black font-black text-[9px] uppercase tracking-widest rounded-lg cursor-pointer"
+                                              className="px-3 py-1.5 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] active:scale-95 duration-200 transition-all text-white font-black text-[9px] uppercase tracking-widest rounded-lg cursor-pointer"
                                             >
                                               Approve ✅
                                             </button>
@@ -6671,10 +6671,10 @@ export function CipherPlansEditor({ plans }: CipherPlansEditorProps) {
           minWithdrawal: 3,
           description: 'Steady growth for smart investors',
           color: 'text-lime-400',
-          accentColor: '#a4d100',
+          accentColor: '#009e42',
           borderColor: 'border-lime-500/20',
           bgColor: 'bg-black/40',
-          buttonColor: 'bg-lime-600 hover:bg-lime-500 active:bg-lime-700',
+          buttonColor: 'bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236]',
           gradient: 'from-lime-500/20 to-emerald-500/10',
           duration: 1,
           active_status: true
@@ -6691,10 +6691,10 @@ export function CipherPlansEditor({ plans }: CipherPlansEditorProps) {
           minWithdrawal: 15000,
           description: 'Higher returns with optimal balance',
           color: 'text-lime-400',
-          accentColor: '#a4d100',
+          accentColor: '#009e42',
           borderColor: 'border-lime-500/20',
           bgColor: 'bg-black/50',
-          buttonColor: 'bg-lime-600 hover:bg-lime-500 active:bg-lime-700',
+          buttonColor: 'bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236]',
           gradient: 'from-lime-500/20 to-teal-500/10',
           duration: 3,
           active_status: true
@@ -6711,10 +6711,10 @@ export function CipherPlansEditor({ plans }: CipherPlansEditorProps) {
           minWithdrawal: 30000,
           description: 'Maximum returns for elite investors',
           color: 'text-lime-400',
-          accentColor: '#a4d100',
+          accentColor: '#009e42',
           borderColor: 'border-lime-500/20',
           bgColor: 'bg-black/40',
-          buttonColor: 'bg-lime-600 hover:bg-lime-500 active:bg-lime-700',
+          buttonColor: 'bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236]',
           gradient: 'from-lime-500/20 to-purple-500/20',
           duration: 7,
           active_status: true

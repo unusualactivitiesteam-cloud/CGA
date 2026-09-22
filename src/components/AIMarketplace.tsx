@@ -25,7 +25,7 @@ import {
   CheckCircle,
   QrCode
 } from 'lucide-react';
-import { cn, formatCurrency } from '../lib/utils';
+import { cn, formatCurrency, formatNumberWithCommas, parseFormattedNumber } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../lib/firebase';
@@ -158,7 +158,6 @@ const ROBOTS: Robot[] = [
 
 const CRYPTO_ADDRESSES = {
   usdt: "TJTym5Qs77hBEr2kEiJPVEQwR4kM2AosSG",
-  erc20: "0x264E87AA85CBC641cBC4261a193bdc9948934E6D",
   btc: "bc1p2mw24svf4yg5d6v4lxk5309jlcgcqjdagaefuc0adac9z4ys2p5qfq9t8t"
 };
 
@@ -173,7 +172,7 @@ export default function AIMarketplace() {
   const [currentView, setCurrentView] = useState<'marketplace' | 'pay' | 'success'>('marketplace');
   const [upgradeInvestmentAmount, setUpgradeInvestmentAmount] = useState<string>('');
   const [transactionId, setTransactionId] = useState<string>('');
-  const [selectedCrypto, setSelectedCrypto] = useState<'usdt' | 'erc20' | 'btc'>('usdt');
+  const [selectedCrypto, setSelectedCrypto] = useState<'usdt' | 'btc'>('usdt');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [exchangeRate, setExchangeRate] = useState<number>(1400);
@@ -244,19 +243,19 @@ export default function AIMarketplace() {
       return {
         planId: 'premium',
         planName: 'Premium Plan',
-        minAmount: 100000
+        minAmount: 200
       };
     } else if (robotId === 'ai-3.0') {
       return {
         planId: 'elite',
         planName: 'Elite Plan',
-        minAmount: 1000000
+        minAmount: 500
       };
     } else {
       return {
         planId: 'regular',
         planName: 'Regular Plan',
-        minAmount: 100
+        minAmount: 50
       };
     }
   };
@@ -692,7 +691,7 @@ Thank you.`;
               {currentView === 'pay' ? (
                 <>
                   <div className="border-b border-white/5 pb-4">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#a4d100] mb-1 block">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#009e42] mb-1 block">
                       AI Robot Unlock Portal
                     </span>
                     <h2 className="text-xl sm:text-2xl font-black uppercase tracking-wider text-white">
@@ -703,7 +702,7 @@ Thank you.`;
                   {/* Robot details */}
                   <div className="space-y-6">
                     <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-[#a4d100]/5 rounded-full blur-2xl pointer-events-none" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-[#009e42]/5 rounded-full blur-2xl pointer-events-none" />
                       <div className="w-16 h-16 bg-white/5 rounded-2xl border border-white/10 p-2 shrink-0 flex items-center justify-center">
                         <img 
                           src={selectedRobot.image} 
@@ -713,7 +712,7 @@ Thank you.`;
                         />
                       </div>
                       <div className="space-y-1">
-                        <span className="text-[8px] font-black uppercase tracking-wider text-[#a4d100] bg-[#a4d100]/10 border border-[#a4d100]/20 px-2 py-0.5 rounded-md">
+                        <span className="text-[8px] font-black uppercase tracking-wider text-[#009e42] bg-[#009e42]/10 border border-[#009e42]/20 px-2 py-0.5 rounded-md">
                           Selected Bot
                         </span>
                         <p className="text-lg font-black text-white">{selectedRobot.name}</p>
@@ -744,21 +743,22 @@ Thank you.`;
                       </div>
                       
                       <div className="relative">
-                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg font-black text-[#a4d100] font-mono">$</span>
+                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg font-black text-[#009e42] font-mono">$</span>
                         <input 
-                          type="number" 
+                          type="text" 
+                          inputMode="decimal"
                           value={upgradeInvestmentAmount}
-                          onChange={(e) => setUpgradeInvestmentAmount(e.target.value)}
-                          className="w-full bg-[#030406]/90 border border-white/10 rounded-2xl py-4.5 pl-10 pr-24 text-base sm:text-lg font-black text-white outline-none focus:border-[#a4d100]/50 transition-colors"
-                          placeholder={getPlanInfoForRobot(selectedRobot.id).minAmount.toString()}
+                          onChange={(e) => setUpgradeInvestmentAmount(formatNumberWithCommas(e.target.value, true))}
+                          className="w-full bg-[#030406]/90 border border-white/10 rounded-2xl py-4.5 pl-10 pr-24 text-base sm:text-lg font-black text-white outline-none focus:border-[#009e42]/50 transition-colors"
+                          placeholder={formatNumberWithCommas(getPlanInfoForRobot(selectedRobot.id).minAmount)}
                         />
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => {
                               const min = getPlanInfoForRobot(selectedRobot.id).minAmount;
-                              const currentVal = parseFloat(upgradeInvestmentAmount) || min;
-                              setUpgradeInvestmentAmount((currentVal + min).toString());
+                              const currentVal = parseFormattedNumber(upgradeInvestmentAmount) || min;
+                              setUpgradeInvestmentAmount(formatNumberWithCommas((currentVal + min).toString()));
                             }}
                             className="bg-white/5 hover:bg-white/10 border border-white/10 px-2 py-1 rounded text-[10px] font-black uppercase text-white transition-all cursor-pointer"
                           >
@@ -768,7 +768,7 @@ Thank you.`;
                       </div>
 
                       {/* Display validation warning if any */}
-                      {parseFloat(upgradeInvestmentAmount) < getPlanInfoForRobot(selectedRobot.id).minAmount && (
+                      {upgradeInvestmentAmount && parseFormattedNumber(upgradeInvestmentAmount) < getPlanInfoForRobot(selectedRobot.id).minAmount && (
                         <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider ml-1 mt-1">
                           Amount must be at least {formatCurrency(getPlanInfoForRobot(selectedRobot.id).minAmount)}
                         </p>
@@ -790,10 +790,10 @@ Thank you.`;
 
                       <button
                         type="button"
-                        disabled={!upgradeInvestmentAmount || parseFloat(upgradeInvestmentAmount) < getPlanInfoForRobot(selectedRobot.id).minAmount}
+                        disabled={!upgradeInvestmentAmount || parseFormattedNumber(upgradeInvestmentAmount) < getPlanInfoForRobot(selectedRobot.id).minAmount}
                         onClick={() => {
                           const info = getPlanInfoForRobot(selectedRobot.id);
-                          const amt = parseFloat(upgradeInvestmentAmount) || info.minAmount;
+                          const amt = parseFormattedNumber(upgradeInvestmentAmount) || info.minAmount;
                           
                           // Save preselection to sessionStorage
                           sessionStorage.setItem('preselectPlanId', info.planId);
@@ -805,10 +805,10 @@ Thank you.`;
                           navigate('/invest');
                         }}
                         className={cn(
-                          "flex-1 py-4 rounded-2xl text-black font-extrabold text-[10px] tracking-widest uppercase transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer",
-                          (!upgradeInvestmentAmount || parseFloat(upgradeInvestmentAmount) < getPlanInfoForRobot(selectedRobot.id).minAmount)
-                            ? "bg-[#a4d100]/20 text-black/40 cursor-not-allowed"
-                            : "bg-[#a4d100] hover:bg-[#b5e600] active:scale-[0.98] shadow-[0_4px_20px_rgba(164,209,0,0.3)]"
+                          "flex-1 py-4 rounded-2xl text-white font-extrabold text-[10px] tracking-widest uppercase transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer",
+                          (!upgradeInvestmentAmount || parseFormattedNumber(upgradeInvestmentAmount) < getPlanInfoForRobot(selectedRobot.id).minAmount)
+                            ? "bg-[#009e42]/20 text-white/40 cursor-not-allowed"
+                            : "bg-[#009e42] hover:bg-[#02d147] active:scale-[0.98] shadow-[0_4px_20px_rgba(0,158,66,0.3)]"
                         )}
                       >
                         Proceed to Invest

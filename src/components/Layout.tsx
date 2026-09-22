@@ -38,7 +38,8 @@ import {
   ExternalLink,
   ShieldCheck,
   Bot,
-  Cpu
+  Cpu,
+  Monitor
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -46,6 +47,8 @@ import { useLocation, useNavigate, Outlet, Link } from 'react-router-dom';
 import { useAuth, handleFirestoreError, OperationType } from '../contexts/AuthContext';
 import { useLanguage, LANGUAGES } from '../contexts/LanguageContext';
 import { useUI } from '../contexts/UIContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { useMode } from '../contexts/ModeContext';
 import TransferModal from './TransferModal';
 import LegacyUpgradeModal from './LegacyUpgradeModal';
 import PremiumTransferSuccessModal from './PremiumTransferSuccessModal';
@@ -147,8 +150,8 @@ interface NavItemProps {
 }
 
 function BottomNavItem({ icon, label, active, onClick, gradientId, glowColor, isProfile, profilePhoto, isInvest }: NavItemProps) {
-  // Brand lime color constant
-  const activeGreen = "#a4d100";
+  // Brand green color constant
+  const activeGreen = "#009e42";
 
   return (
     <motion.button 
@@ -167,7 +170,7 @@ function BottomNavItem({ icon, label, active, onClick, gradientId, glowColor, is
         {isProfile ? (
           <div className={cn(
             "w-5 h-5 rounded-full overflow-hidden border transition-all duration-300 relative flex-shrink-0",
-            active ? "border-[#a4d100] scale-105" : "border-white/40"
+            active ? "border-[#009e42] scale-105" : "border-white/40"
           )}>
             <img 
               src={profilePhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=nexus`} 
@@ -180,7 +183,7 @@ function BottomNavItem({ icon, label, active, onClick, gradientId, glowColor, is
               size: 18,
               className: cn(
                 "transition-all duration-300", 
-                active ? "text-[#a4d100] drop-shadow-[0_0_4px_rgba(164,209,0,0.4)]" : "text-white/60 hover:text-white"
+                active ? "text-[#009e42] drop-shadow-[0_0_4px_rgba(0,158,66,0.4)]" : "text-white/60 hover:text-white"
               )
             })
           : icon}
@@ -189,7 +192,7 @@ function BottomNavItem({ icon, label, active, onClick, gradientId, glowColor, is
         {active && (
           <motion.div
             layoutId={`dot-${gradientId}`}
-            className="absolute -bottom-1.5 w-1 h-1 rounded-full pointer-events-none shadow-[0_0_6px_rgba(164,209,0,0.8)]"
+            className="absolute -bottom-1.5 w-1 h-1 rounded-full pointer-events-none shadow-[0_0_6px_rgba(0,158,66,0.8)]"
             style={{ backgroundColor: activeGreen }}
           />
         )}
@@ -199,7 +202,7 @@ function BottomNavItem({ icon, label, active, onClick, gradientId, glowColor, is
       <span className={cn(
         "text-[8px] font-black capitalize tracking-[0.12em] transition-all duration-300 mt-1 select-none", 
         active 
-          ? "text-[#a4d100] font-black opacity-100 drop-shadow-[0_0_4px_rgba(164,209,0,0.15)]" 
+          ? "text-[#009e42] font-black opacity-100 drop-shadow-[0_0_4px_rgba(0,158,66,0.15)]" 
           : "text-white/45 opacity-100 hover:text-white"
       )}>
         {label}
@@ -222,6 +225,7 @@ interface Notification {
 export default function Layout() {
   const { user, profile, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const { mode, isLite, isBeta } = useMode();
   const { 
     isTransferModalOpen, 
     openTransferModal, 
@@ -365,19 +369,12 @@ export default function Layout() {
     return () => unsubscribe();
   }, [user, isViewingProcessingScreen, approvedNotificationPopup, setApprovedNotificationPopup]);
   const navigate = useNavigate();
+  const { theme, effectiveTheme, isDark, setTheme, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDark, setIsDark] = useState(() => !document.documentElement.classList.contains('light'));
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(!document.documentElement.classList.contains('light'));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -650,6 +647,7 @@ export default function Layout() {
 
   const profileRef = useRef<HTMLDivElement>(null);
   const languageRef = useRef<HTMLDivElement>(null);
+  const themeRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -743,6 +741,9 @@ export default function Layout() {
       if (languageRef.current && !languageRef.current.contains(target)) {
         setIsLanguageOpen(false);
       }
+      if (themeRef.current && !themeRef.current.contains(target)) {
+        setIsThemeOpen(false);
+      }
       if (notificationsRef.current && !notificationsRef.current.contains(target)) {
         setIsNotificationsOpen(false);
       }
@@ -766,6 +767,7 @@ export default function Layout() {
     setIsProfileOpen(false);
     setIsNotificationsOpen(false);
     setIsLanguageOpen(false);
+    setIsThemeOpen(false);
     setIsHelpDropdownOpen(false);
   };
 
@@ -788,7 +790,7 @@ export default function Layout() {
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <button 
              onClick={() => window.location.reload()}
-             className="w-full py-4 bg-aura-lime text-aura-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 transition-all"
+             className="w-full py-4 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-lg shadow-[#009e42]/20 hover:scale-105 transition-all cursor-pointer"
           >
             I have verified my email
           </button>
@@ -817,7 +819,10 @@ export default function Layout() {
     >
       {/* --- TOP NAVBAR --- */}
       <nav className={cn(
-        "sticky top-0 left-0 right-0 w-full z-[100] flex items-center px-6 backdrop-blur-2xl transition-all duration-500 border-b border-white/10 bg-black text-white shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+        "sticky top-0 left-0 right-0 w-full z-[100] flex items-center px-6 backdrop-blur-2xl transition-all duration-500 border-b",
+        isDark 
+          ? "border-white/10 bg-black/90 text-white shadow-[0_8px_32px_rgba(0,0,0,0.4)]" 
+          : "border-slate-200 bg-white/95 text-slate-900 shadow-[0_8px_32px_rgba(0,0,0,0.05)]",
         isScrolled ? "h-14 py-2" : "h-16 lg:h-20",
         // Mobile visibility logic
         ((location.pathname === '/home' || (location.pathname === '/token' && !isMobile)) && !isDistractionFree) ? "flex" : "hidden lg:flex",
@@ -831,7 +836,9 @@ export default function Layout() {
               onClick={() => navigate('/home')}
               className={cn(
                 "p-2 rounded-xl transition-all flex items-center gap-2 group",
-                "hover:bg-white/5 text-aura-muted hover:text-white"
+                isDark 
+                  ? "hover:bg-white/5 text-aura-muted hover:text-white" 
+                  : "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
               )}
             >
               <ArrowLeft size={20} />
@@ -842,7 +849,9 @@ export default function Layout() {
               onClick={() => navigate(-1)}
               className={cn(
                 "p-2 rounded-xl transition-all flex items-center gap-2 group",
-                "hover:bg-white/5 text-aura-muted hover:text-white"
+                isDark 
+                  ? "hover:bg-white/5 text-aura-muted hover:text-white" 
+                  : "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
               )}
             >
               <ArrowLeft size={20} />
@@ -850,22 +859,30 @@ export default function Layout() {
           ) : (
             <button 
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 rounded-xl transition-colors lg:hidden flex flex-col justify-center gap-1.5 w-10 h-10 hover:bg-white/5 text-white items-start pl-2.5"
+              className={cn(
+                "p-2 rounded-xl transition-colors lg:hidden flex flex-col justify-center gap-1.5 w-10 h-10 items-start pl-2.5 cursor-pointer",
+                isDark 
+                  ? "hover:bg-white/10 text-white" 
+                  : "hover:bg-slate-100 text-slate-900"
+              )}
+              aria-label="Open menu"
             >
-              <div className="w-4 h-[2px] bg-white rounded-full" />
-              <div className="w-2.5 h-[2px] bg-white rounded-full" />
+              <div className={cn("w-4.5 h-[2.5px] rounded-full transition-colors", isDark ? "bg-white" : "bg-gray-600")} />
+              <div className={cn("w-3 h-[2.5px] rounded-full transition-colors", isDark ? "bg-white" : "bg-gray-600")} />
             </button>
           )}
 
-          <Link to="/home" className={cn(
-            "flex items-center gap-3 transition-all duration-500",
-            isScrolled ? "scale-90" : "scale-100"
-          )}>
-            <div className="relative group">
-              <img src="https://i.imgur.com/loFD5nc.png" alt="CGA Logo" className="h-6 md:h-7 lg:h-8 w-auto object-contain brightness-110" />
-              <div className="absolute inset-0 bg-aura-lime/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/home" className={cn(
+              "flex items-center gap-2.5 transition-all duration-500",
+              isScrolled ? "scale-90" : "scale-100"
+            )}>
+              <div className="relative group">
+                <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Logo" className="h-6 md:h-7 lg:h-8 w-auto object-contain brightness-110" />
+                <div className="absolute inset-0 bg-aura-lime/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </Link>
+          </div>
         </div>
 
         {/* Center: Desktop Nav Links */}
@@ -874,7 +891,7 @@ export default function Layout() {
             { label: 'Home', path: '/home' },
             { label: 'Invest', path: '/invest' },
             { label: 'Fund', path: '/fund' },
-            { label: 'CGA Token', path: '/token' },
+            ...(isBeta ? [{ label: 'CGA Token', path: '/token' }] : []),
             { label: 'How It Works', path: '/how-it-works' },
           ].map((item) => {
             const isActive = location.pathname.startsWith(item.path);
@@ -937,15 +954,15 @@ export default function Layout() {
                 >
                   <div className="flex flex-row items-center justify-center gap-2 lg:gap-4 w-full h-full">
                     {[
-                      { label: 'Partners', path: '/partners', icon: <Users size={14} /> },
-                      { label: 'Top Investors', path: '/top-investors', icon: <Trophy size={14} /> },
-                      { label: 'Reviews', path: '/reviews', icon: <MessageSquarePlus size={14} /> },
-                      { label: 'Reward', path: '/rewards', icon: <Gift size={14} /> },
-                      { label: 'Guide', path: '/guide', icon: <HelpCircle size={14} /> },
-                      { label: 'Join Us', path: '/join-us', icon: <Share2 size={14} /> },
-                      { label: 'Mining', path: '/mining', icon: <Cpu size={14} /> },
-                      { label: 'AI Marketplace', path: '/ai-marketplace', icon: <Bot size={14} /> },
-                    ].map((subItem) => {
+                      { label: 'Partners', path: '/partners', icon: <Users size={14} />, betaOnly: false },
+                      { label: 'Top Investors', path: '/top-investors', icon: <Trophy size={14} />, betaOnly: false },
+                      { label: 'Reviews', path: '/reviews', icon: <MessageSquarePlus size={14} />, betaOnly: false },
+                      { label: 'Reward', path: '/rewards', icon: <Gift size={14} />, betaOnly: false },
+                      { label: 'Guide', path: '/guide', icon: <HelpCircle size={14} />, betaOnly: false },
+                      { label: 'Join Us', path: '/join-us', icon: <Share2 size={14} />, betaOnly: false },
+                      { label: 'Mining', path: '/mining', icon: <Cpu size={14} />, betaOnly: true },
+                      { label: 'AI Marketplace', path: '/ai-marketplace', icon: <Bot size={14} />, betaOnly: true },
+                    ].filter(item => !item.betaOnly || isBeta).map((subItem) => {
                       const isSubActive = location.pathname === subItem.path;
                       return (
                         <button
@@ -1037,76 +1054,191 @@ export default function Layout() {
 
         {/* Right: Actions */}
         <div className="flex items-center justify-end gap-2 md:gap-3">
-          <div className="relative" ref={languageRef}>
-            <button 
-              onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] border border-white/5 text-lg hover:bg-white/[0.08] hover:border-white/10 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:scale-95 text-xl"
-              title="Select Language"
-            >
-              {LANGUAGES.find(l => l.code === language)?.flag || '🇺🇸'}
-            </button>
-
-            <AnimatePresence>
-              {isLanguageOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  style={{ willChange: 'transform, opacity' }}
+          {/* Theme, Language, Telegram, and Support: Only rendered in CGA Beta */}
+          {isBeta && (
+            <>
+              {/* Theme Selector Control */}
+              <div className="relative" ref={themeRef}>
+                <button 
+                  onClick={() => setIsThemeOpen(!isThemeOpen)}
                   className={cn(
-                    "absolute top-full right-0 mt-2 w-56 rounded-2xl border shadow-2xl z-[110] overflow-hidden backdrop-blur-xl",
-                    isDark ? "bg-[#11141b]/95 border-white/10" : "bg-white/95 border-aura-line"
+                    "w-9 h-9 flex items-center justify-center rounded-xl transition-all shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:scale-95",
+                    isDark 
+                      ? "bg-white/[0.04] border border-white/5 text-amber-300 hover:text-amber-200 hover:bg-white/[0.08] hover:border-white/10" 
+                      : "bg-slate-100 border border-slate-200 text-amber-600 hover:text-amber-500 hover:bg-slate-200"
                   )}
+                  title={`Theme: ${theme === 'system' ? `System (${effectiveTheme === 'dark' ? 'Dark' : 'Light'})` : theme === 'dark' ? 'Dark' : 'Light'}`}
+                  aria-label={`Theme: ${theme === 'system' ? `System (${effectiveTheme === 'dark' ? 'Dark' : 'Light'})` : theme === 'dark' ? 'Dark' : 'Light'}`}
                 >
-                  <div className="p-2 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent custom-scrollbar space-y-0.5">
-                    {LANGUAGES.map((lang) => (
-                      <button 
-                        key={lang.code}
+                  {effectiveTheme === 'dark' ? (
+                    <Moon size={18} className="transition-transform duration-300 hover:scale-110" />
+                  ) : (
+                    <Sun size={18} className="transition-transform duration-300 hover:scale-110" />
+                  )}
+                </button>
+
+                <AnimatePresence>
+                  {isThemeOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      style={{ willChange: 'transform, opacity' }}
+                      className={cn(
+                        "absolute top-full right-0 mt-2 w-48 rounded-2xl border shadow-2xl z-[110] overflow-hidden backdrop-blur-xl p-1.5 space-y-1",
+                        isDark ? "bg-[#11141b]/95 border-white/10" : "bg-white/95 border-aura-line shadow-lg"
+                      )}
+                    >
+                      <div className={cn(
+                        "px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.25em] border-b mb-1",
+                        isDark ? "text-aura-muted border-white/5" : "text-slate-400 border-slate-100"
+                      )}>
+                        Theme Preference
+                      </div>
+
+                      {/* System Option */}
+                      <button
                         onClick={() => {
-                          setLanguage(lang.code as any);
-                          setIsLanguageOpen(false);
+                          setTheme('system');
+                          setIsThemeOpen(false);
                         }}
                         className={cn(
                           "flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all",
-                          language === lang.code 
-                            ? "bg-aura-lime text-aura-black shadow-lg shadow-aura-lime/20" 
-                            : isDark ? "text-aura-muted hover:text-white hover:bg-white/5" : "text-gray-600 hover:text-black hover:bg-black/5"
+                          theme === 'system'
+                            ? "bg-primary text-aura-black shadow-md shadow-primary/20 font-bold"
+                            : isDark
+                              ? "text-aura-muted hover:text-white hover:bg-white/5"
+                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                         )}
                       >
                         <div className="flex items-center gap-2.5">
-                          <span className="text-base select-none">{lang.flag}</span>
-                          <span className="text-[10px] font-black uppercase tracking-wider">{lang.name}</span>
+                          <Monitor size={15} />
+                          <span className="text-[11px] font-bold uppercase tracking-wider">System</span>
                         </div>
-                        {language === lang.code && <CheckCircle2 size={12} />}
+                        {theme === 'system' && <CheckCircle2 size={13} className="text-current" />}
                       </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
 
-          <a
-            href="https://t.me/cga_help"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-1.5 transition-all flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 text-[#229ED9]"
-            title="Telegram Support"
-          >
-            <svg 
-              viewBox="0 0 24 24" 
-              className="w-5.5 h-5.5 flex-shrink-0 filter drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.3)] fill-current"
-            >
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-1-.65-.35-1 .22-1.58.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.24-5.54 3.65-.52.36-.97.53-1.33.52-.4-.01-1.17-.23-1.74-.41-.7-.23-1.26-.35-1.21-.74.03-.2.29-.41.79-.62 3.09-1.34 5.15-2.23 6.19-2.67 2.94-1.24 3.55-1.45 3.95-1.46.09 0 .28.02.4.12.1.08.13.19.14.28-.01.07.01.21 0 .31z" />
-            </svg>
-          </a>
+                      {/* Light Option */}
+                      <button
+                        onClick={() => {
+                          setTheme('light');
+                          setIsThemeOpen(false);
+                        }}
+                        className={cn(
+                          "flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all",
+                          theme === 'light'
+                            ? "bg-primary text-aura-black shadow-md shadow-primary/20 font-bold"
+                            : isDark
+                              ? "text-aura-muted hover:text-white hover:bg-white/5"
+                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Sun size={15} />
+                          <span className="text-[11px] font-bold uppercase tracking-wider">Light</span>
+                        </div>
+                        {theme === 'light' && <CheckCircle2 size={13} className="text-current" />}
+                      </button>
 
-          <button 
-            onClick={() => handleNavigation('/help')}
-            className="p-2 text-aura-muted hover:text-aura-lime transition-colors"
-          >
-            <Headset size={20} />
-          </button>
+                      {/* Dark Option */}
+                      <button
+                        onClick={() => {
+                          setTheme('dark');
+                          setIsThemeOpen(false);
+                        }}
+                        className={cn(
+                          "flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all",
+                          theme === 'dark'
+                            ? "bg-primary text-aura-black shadow-md shadow-primary/20 font-bold"
+                            : isDark
+                              ? "text-aura-muted hover:text-white hover:bg-white/5"
+                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Moon size={15} />
+                          <span className="text-[11px] font-bold uppercase tracking-wider">Dark</span>
+                        </div>
+                        {theme === 'dark' && <CheckCircle2 size={13} className="text-current" />}
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="relative" ref={languageRef}>
+                <button 
+                  onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] border border-white/5 text-lg hover:bg-white/[0.08] hover:border-white/10 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:scale-95 text-xl"
+                  title="Select Language"
+                >
+                  {LANGUAGES.find(l => l.code === language)?.flag || '🇺🇸'}
+                </button>
+
+                <AnimatePresence>
+                  {isLanguageOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      style={{ willChange: 'transform, opacity' }}
+                      className={cn(
+                        "absolute top-full right-0 mt-2 w-56 rounded-2xl border shadow-2xl z-[110] overflow-hidden backdrop-blur-xl",
+                        isDark ? "bg-[#11141b]/95 border-white/10" : "bg-white/95 border-aura-line"
+                      )}
+                    >
+                      <div className="p-2 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent custom-scrollbar space-y-0.5">
+                        {LANGUAGES.map((lang) => (
+                          <button 
+                            key={lang.code}
+                            onClick={() => {
+                              setLanguage(lang.code as any);
+                              setIsLanguageOpen(false);
+                            }}
+                            className={cn(
+                              "flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all",
+                              language === lang.code 
+                                ? "bg-aura-lime text-aura-black shadow-lg shadow-aura-lime/20" 
+                                : isDark ? "text-aura-muted hover:text-white hover:bg-white/5" : "text-gray-600 hover:text-black hover:bg-black/5"
+                            )}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span className="text-base select-none">{lang.flag}</span>
+                              <span className="text-[10px] font-black uppercase tracking-wider">{lang.name}</span>
+                            </div>
+                            {language === lang.code && <CheckCircle2 size={12} />}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <a
+                href="https://t.me/cga_help"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 transition-all flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 text-[#229ED9]"
+                title="Telegram Support"
+              >
+                <svg 
+                  viewBox="0 0 24 24" 
+                  className="w-5.5 h-5.5 flex-shrink-0 filter drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.3)] fill-current"
+                >
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-1-.65-.35-1 .22-1.58.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.24-5.54 3.65-.52.36-.97.53-1.33.52-.4-.01-1.17-.23-1.74-.41-.7-.23-1.26-.35-1.21-.74.03-.2.29-.41.79-.62 3.09-1.34 5.15-2.23 6.19-2.67 2.94-1.24 3.55-1.45 3.95-1.46.09 0 .28.02.4.12.1.08.13.19.14.28-.01.07.01.21 0 .31z" />
+                </svg>
+              </a>
+
+              <button 
+                onClick={() => handleNavigation('/help')}
+                className="p-2 text-aura-muted hover:text-aura-lime transition-colors"
+                title="Support"
+              >
+                <Headset size={20} />
+              </button>
+            </>
+          )}
 
           <div className="relative">
             <button 
@@ -1150,39 +1282,41 @@ export default function Layout() {
                     isDark ? "bg-[#11141b]/95 border-white/10" : "bg-white/95 border-aura-line"
                   )}
                 >
-                  <div className="p-4 border-b border-white/5">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-aura-muted mb-1">{t('authenticated_as')}</p>
-                    <p className="text-sm font-bold text-white truncate">{profile?.name || 'Nexus User'}</p>
-                    <p className="text-[8px] font-mono text-aura-muted truncate">@{profile?.username || 'user'}</p>
+                  <div className="p-4 border-b border-slate-100 dark:border-white/5">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400 dark:text-aura-muted mb-1">{t('authenticated_as')}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{profile?.name || 'Nexus User'}</p>
+                    <p className="text-[8px] font-mono text-slate-500 dark:text-aura-muted truncate">@{profile?.username || 'user'}</p>
                   </div>
                   <div className="p-2">
                     <div className="flex gap-2 p-3">
                       <button 
                         onClick={() => handleNavigation('/dashboard')}
-                        className="flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-[20px] text-[9px] font-black uppercase tracking-widest text-white/70 hover:text-white bg-gradient-to-br from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 transition-all border border-white/5 hover:border-purple-500/30 shadow-lg hover:shadow-purple-500/10 group"
+                        className="flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-[20px] text-[9px] font-black uppercase tracking-widest text-slate-700 hover:text-slate-900 dark:text-white/70 dark:hover:text-white bg-gradient-to-br from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 transition-all border border-slate-200 dark:border-white/5 hover:border-purple-500/30 shadow-lg hover:shadow-purple-500/10 group cursor-pointer"
                       >
                         <div className="p-2 rounded-lg bg-indigo-500/10 group-hover:scale-110 transition-transform">
-                          <LayoutDashboard size={18} className="text-indigo-400" />
+                          <LayoutDashboard size={18} className="text-indigo-500 dark:text-indigo-400" />
                         </div>
                         {t('dashboard')}
                       </button>
-                      <button 
-                        onClick={() => {
-                          setIsProfileOpen(false);
-                          openTransferModal();
-                        }}
-                        className="flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-[20px] text-[9px] font-black uppercase tracking-widest text-white/70 hover:text-white bg-gradient-to-br from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 transition-all border border-white/5 hover:border-pink-500/30 shadow-lg hover:shadow-pink-500/10 group"
-                      >
-                        <div className="p-2 rounded-lg bg-purple-500/10 group-hover:scale-110 transition-transform">
-                          <ArrowRightLeft size={18} className="text-purple-400" />
-                        </div>
-                        Transfer
-                      </button>
+                      {isBeta && (
+                        <button 
+                          onClick={() => {
+                            setIsProfileOpen(false);
+                            openTransferModal();
+                          }}
+                          className="flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-[20px] text-[9px] font-black uppercase tracking-widest text-slate-700 hover:text-slate-900 dark:text-white/70 dark:hover:text-white bg-gradient-to-br from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 transition-all border border-slate-200 dark:border-white/5 hover:border-pink-500/30 shadow-lg hover:shadow-pink-500/10 group cursor-pointer"
+                        >
+                          <div className="p-2 rounded-lg bg-purple-500/10 group-hover:scale-110 transition-transform">
+                            <ArrowRightLeft size={18} className="text-purple-500 dark:text-purple-400" />
+                          </div>
+                          Transfer
+                        </button>
+                      )}
                     </div>
                     
                     <button 
                       onClick={() => handleNavigation('/profile')}
-                      className="flex items-center gap-3 w-full p-3 rounded-lg text-xs font-bold uppercase tracking-widest text-aura-muted hover:text-aura-lime hover:bg-white/5 transition-all"
+                      className="flex items-center gap-3 w-full p-3 rounded-lg text-xs font-bold uppercase tracking-widest text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-aura-muted dark:hover:text-aura-lime dark:hover:bg-white/5 transition-all cursor-pointer"
                     >
                       <User size={14} />
                       {t('profile')}
@@ -1226,7 +1360,7 @@ export default function Layout() {
               "lg:hidden fixed bottom-0 left-0 right-0 w-full h-16 pb-1 z-[100] flex items-center px-4 backdrop-blur-3xl border-t transition-all duration-300",
               isDark 
                 ? "bg-[#06080c]/90 border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]" 
-                : "bg-white/95 border-[#a4d100]/20 shadow-[0_-10px_25px_rgba(164,209,0,0.05)]",
+                : "bg-white/95 border-[#009e42]/20 shadow-[0_-10px_25px_rgba(0,158,66,0.05)]",
               isDistractionFree && "hidden"
             )}
           >
@@ -1250,8 +1384,8 @@ export default function Layout() {
                   <stop offset="100%" stopColor="#be123c" />
                 </linearGradient>
                 <linearGradient id="meIconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#a4d100" />
-                  <stop offset="100%" stopColor="#10b981" />
+                  <stop offset="0%" stopColor="#009e42" />
+                  <stop offset="100%" stopColor="#02d147" />
                 </linearGradient>
               </defs>
             </svg>
@@ -1318,7 +1452,7 @@ export default function Layout() {
                     active={activeTabKey === 'profile'} 
                     onClick={() => handleNavigation('/profile')} 
                     gradientId="meIconGrad"
-                    glowColor="#a4d100"
+                    glowColor="#009e42"
                   />
                   
                   {/* Animated Indicator Trail */}
@@ -1330,8 +1464,8 @@ export default function Layout() {
                     style={{ 
                       width: `calc(${100 / 5}% - 12px)`,
                       left: `calc(${((['home', 'fund', 'invest', 'withdraw', 'profile'].indexOf(activeTabKey) >= 0 ? ['home', 'fund', 'invest', 'withdraw', 'profile'].indexOf(activeTabKey) : 0) * (100 / 5))}% + 6px)`,
-                      backgroundColor: '#a4d100',
-                      boxShadow: '0 0 10px #a4d100'
+                      backgroundColor: '#009e42',
+                      boxShadow: '0 0 10px #009e42'
                     }}
                   />
                 </div>
@@ -1520,7 +1654,7 @@ export default function Layout() {
               <div className="p-8 pb-4">
                 <div className="flex justify-between items-center mb-8">
                   <div className="flex items-center">
-                    <img src="https://i.imgur.com/loFD5nc.png" alt="CGA Logo" className="h-10 w-auto object-contain" />
+                    <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Logo" className="h-10 w-auto object-contain" />
                   </div>
                   <button 
                     onClick={() => setIsSidebarOpen(false)}
@@ -1574,36 +1708,42 @@ export default function Layout() {
                   active={activeTab === 'notifications'}
                   onClick={() => handleNavigation('/notifications')}
                 />
-                <SidebarItem 
-                  icon={<Coins size={20} className="text-amber-450" />} 
-                  label="CGA Token" 
-                  active={activeTab === 'token'}
-                  onClick={() => handleNavigation('/token')}
-                />
-                <SidebarItem 
-                  icon={<Cpu size={20} className="text-aura-lime" />} 
-                  label="Mining" 
-                  active={activeTab === 'mining'}
-                  onClick={() => handleNavigation('/mining')}
-                />
-                <SidebarItem 
-                  icon={<Bot size={20} className="text-cyan-400" />} 
-                  label="AI Marketplace" 
-                  active={activeTab === 'ai-marketplace'}
-                  onClick={() => handleNavigation('/ai-marketplace')}
-                />
+                {isBeta && (
+                  <>
+                    <SidebarItem 
+                      icon={<Coins size={20} className="text-amber-450" />} 
+                      label="CGA Token" 
+                      active={activeTab === 'token'}
+                      onClick={() => handleNavigation('/token')}
+                    />
+                    <SidebarItem 
+                      icon={<Cpu size={20} className="text-aura-lime" />} 
+                      label="Mining" 
+                      active={activeTab === 'mining'}
+                      onClick={() => handleNavigation('/mining')}
+                    />
+                    <SidebarItem 
+                      icon={<Bot size={20} className="text-cyan-400" />} 
+                      label="AI Marketplace" 
+                      active={activeTab === 'ai-marketplace'}
+                      onClick={() => handleNavigation('/ai-marketplace')}
+                    />
+                  </>
+                )}
                 <SidebarItem 
                   icon={<MessageSquarePlus size={20} />} 
                   label={t('reviews')} 
                   active={activeTab === 'reviews'}
                   onClick={() => handleNavigation('/reviews')}
                 />
-                <SidebarItem 
-                  icon={<Users size={20} />} 
-                  label="Partners" 
-                  active={activeTab === 'partners'}
-                  onClick={() => handleNavigation('/partners')}
-                />
+                {isBeta && (
+                  <SidebarItem 
+                    icon={<Users size={20} />} 
+                    label="Partners" 
+                    active={activeTab === 'partners'}
+                    onClick={() => handleNavigation('/partners')}
+                  />
+                )}
                 <SidebarItem 
                   icon={<CheckCircle2 size={20} />} 
                   label="How it Works" 
@@ -1694,7 +1834,7 @@ export default function Layout() {
             >
               {/* Premium Top-Left Brand Logo inside Popup */}
               <div className="absolute top-5 left-6 flex items-center gap-1.5 pointer-events-none select-none">
-                <img src="https://i.imgur.com/loFD5nc.png" alt="CGA Logo" className="h-4.5 w-auto object-contain brightness-110" />
+                <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Logo" className="h-4.5 w-auto object-contain brightness-110" />
                 <span className="text-[10px] font-serif font-black tracking-tighter uppercase italic leading-none text-white/90">CGA</span>
               </div>
 
@@ -1939,7 +2079,7 @@ export default function Layout() {
             >
               {/* Premium Top-Left Brand Logo inside Popup */}
               <div className="absolute top-5 left-6 flex items-center gap-1.5 pointer-events-none select-none">
-                <img src="https://i.imgur.com/loFD5nc.png" alt="CGA Logo" className="h-4.5 w-auto object-contain brightness-110" />
+                <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Logo" className="h-4.5 w-auto object-contain brightness-110" />
                 <span className="text-[10px] font-serif font-black tracking-tighter uppercase italic leading-none text-white/95">CGA</span>
               </div>
 
@@ -2068,7 +2208,7 @@ export default function Layout() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 30 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="fixed bottom-6 right-4 md:right-6 max-w-[380px] w-[calc(100vw-32px)] z-[1200] rounded-2xl bg-[#090b10]/90 backdrop-blur-xl border border-purple-500/20 shadow-[0_25px_60px_-15px_rgba(147,51,234,0.3)] p-5 select-none text-left overflow-hidden border-l-4 border-l-purple-500"
+            className="fixed bottom-6 right-4 md:right-6 max-w-[380px] w-[calc(100vw-32px)] z-[1200] rounded-2xl bg-white dark:bg-[#090b10]/90 backdrop-blur-xl border border-purple-500/20 shadow-2xl p-5 select-none text-left overflow-hidden border-l-4 border-l-purple-500"
           >
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 opacity-80" />
             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 blur-2xl rounded-full pointer-events-none" />
@@ -2079,19 +2219,19 @@ export default function Layout() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[9px] uppercase font-semibold text-purple-400 tracking-wider">Referral Reward Active</span>
+                  <span className="text-[9px] uppercase font-semibold text-purple-500 dark:text-purple-400 tracking-wider">Referral Reward Active</span>
                   <button 
                     onClick={() => closePopup(`mr-a-reward-${showClaimToast.id}`)}
-                    className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+                    className="text-slate-400 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white transition-colors cursor-pointer"
                   >
                     <X size={14} />
                   </button>
                 </div>
-                <h4 className="text-sm font-bold text-white tracking-tight leading-snug">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
                   Claim Referral Reward
                 </h4>
-                <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
-                  Your referral <span className="text-purple-300 font-extrabold">{showClaimToast.partner_name}</span> has activated an investment successfully. Claim your referral reward now.
+                <p className="text-[11px] text-slate-600 dark:text-gray-400 mt-1 leading-relaxed">
+                  Your referral <span className="text-purple-600 dark:text-purple-300 font-extrabold">{showClaimToast.partner_name}</span> has activated an investment successfully. Claim your referral reward now.
                 </p>
                 <div className="mt-3.5">
                   <button 
@@ -2118,37 +2258,37 @@ export default function Layout() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 30 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="fixed bottom-6 right-4 md:right-6 max-w-[380px] w-[calc(100vw-32px)] z-[1200] rounded-2xl bg-[#090b10]/95 backdrop-blur-xl border border-emerald-500/20 shadow-[0_25px_60px_-15px_rgba(16,185,129,0.3)] p-5 select-none text-left overflow-hidden border-l-4 border-l-emerald-500"
+            className="fixed bottom-6 right-4 md:right-6 max-w-[380px] w-[calc(100vw-32px)] z-[1200] rounded-2xl bg-white dark:bg-[#090b10]/95 backdrop-blur-xl border border-emerald-500/20 shadow-2xl p-5 select-none text-left overflow-hidden border-l-4 border-l-emerald-500"
           >
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-80" />
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 blur-2xl rounded-full pointer-events-none" />
 
             <div className="flex gap-4 items-start relative z-10">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 dark:text-emerald-400 flex-shrink-0">
                 <Gift size={18} className="animate-pulse" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[9px] uppercase font-semibold text-emerald-400 tracking-wider">Node Active</span>
+                  <span className="text-[9px] uppercase font-semibold text-emerald-600 dark:text-emerald-400 tracking-wider">Node Active</span>
                   <button 
                     onClick={() => setMrBActivationPopup(null)}
-                    className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+                    className="text-slate-400 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white transition-colors cursor-pointer"
                   >
                     <X size={14} />
                   </button>
                 </div>
-                <h4 className="text-sm font-bold text-white tracking-tight leading-snug">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
                   Investment Plan Activated
                 </h4>
                 <div className="mt-1.5 p-2 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
-                  <p className="text-[10px] text-gray-400">
-                    Plan: <span className="text-white font-semibold uppercase">{mrBActivationPopup.planName}</span>
+                  <p className="text-[10px] text-slate-600 dark:text-gray-400">
+                    Plan: <span className="text-slate-900 dark:text-white font-semibold uppercase">{mrBActivationPopup.planName}</span>
                   </p>
-                  <p className="text-[10px] text-gray-400">
-                    Amount: <span className="text-emerald-400 font-bold font-mono">${mrBActivationPopup.amount.toFixed(2)}</span>
+                  <p className="text-[10px] text-slate-600 dark:text-gray-400">
+                    Amount: <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">${mrBActivationPopup.amount.toFixed(2)}</span>
                   </p>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">
+                <p className="text-[11px] text-slate-600 dark:text-gray-400 mt-2 leading-relaxed">
                   You have successfully activated your investment plan. Claim your activation reward now.
                 </p>
                 <div className="mt-3.5">
@@ -2176,7 +2316,7 @@ export default function Layout() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 30 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="fixed bottom-6 right-4 md:right-6 max-w-[380px] w-[calc(100vw-32px)] z-[1200] rounded-2xl bg-[#090b10]/95 backdrop-blur-xl border border-primary/20 shadow-[0_25px_60px_-15px_rgba(59,130,246,0.3)] p-5 select-none text-left overflow-hidden border-l-4 border-l-primary"
+            className="fixed bottom-6 right-4 md:right-6 max-w-[380px] w-[calc(100vw-32px)] z-[1200] rounded-2xl bg-white dark:bg-[#090b10]/95 backdrop-blur-xl border border-primary/20 shadow-2xl p-5 select-none text-left overflow-hidden border-l-4 border-l-primary"
           >
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-indigo-500 to-purple-500 opacity-80" />
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 blur-2xl rounded-full pointer-events-none" />
@@ -2194,10 +2334,10 @@ export default function Layout() {
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[9px] uppercase font-semibold text-primary tracking-wider">Protocol Activation</span>
                 </div>
-                <h4 className="text-sm font-bold text-white tracking-tight leading-snug">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
                   AI Trading Bot Activated
                 </h4>
-                <p className="text-[11px] text-gray-300 mt-2 leading-relaxed font-sans">
+                <p className="text-[11px] text-slate-600 dark:text-gray-300 mt-2 leading-relaxed font-sans">
                   $10 AI Trading Bot Activation Fee has been deducted from your account.
                 </p>
                 <div className="mt-3.5">
@@ -2243,7 +2383,7 @@ export default function Layout() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 15 }}
                 transition={{ type: "spring", damping: 25, stiffness: 350 }}
-                className="relative w-full max-w-[380px] rounded-2xl bg-[#090b10]/95 backdrop-blur-xl border border-primary/20 shadow-[0_25px_60px_-15px_rgba(59,130,246,0.3)] p-5 select-none text-left overflow-hidden border-l-4 border-l-primary pointer-events-auto md:fixed md:bottom-6 md:right-6 md:w-[380px]"
+                className="relative w-full max-w-[380px] rounded-2xl bg-white dark:bg-[#090b10]/95 backdrop-blur-xl border border-primary/20 shadow-2xl p-5 select-none text-left overflow-hidden border-l-4 border-l-primary pointer-events-auto md:fixed md:bottom-6 md:right-6 md:w-[380px]"
               >
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-blue-500 to-indigo-500 opacity-80" />
                 <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 blur-2xl rounded-full pointer-events-none" />
@@ -2265,23 +2405,23 @@ export default function Layout() {
                           }
                           setApprovedNotificationPopup(null);
                         }}
-                        className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        className="text-slate-400 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white transition-colors cursor-pointer"
                       >
                         <X size={14} />
                       </button>
                     </div>
-                    <h4 className="text-sm font-bold text-white tracking-tight leading-snug">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
                       Investment Approved
                     </h4>
                     <div className="mt-1.5 p-2 bg-primary/5 border border-primary/10 rounded-lg">
-                      <p className="text-[10px] text-gray-400">
-                        Plan: <span className="text-white font-semibold uppercase">{approvedNotificationPopup.planName}</span>
+                      <p className="text-[10px] text-slate-600 dark:text-gray-400">
+                        Plan: <span className="text-slate-900 dark:text-white font-semibold uppercase">{approvedNotificationPopup.planName}</span>
                       </p>
-                      <p className="text-[10px] text-gray-400">
+                      <p className="text-[10px] text-slate-600 dark:text-gray-400">
                         Amount: <span className="text-primary font-bold font-mono">${approvedNotificationPopup.amount.toLocaleString()}</span>
                       </p>
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">
+                    <p className="text-[11px] text-slate-600 dark:text-gray-400 mt-2 leading-relaxed">
                       Your submitted investment has been verified and approved by administration. Activate it now to start compiling your ROI yield.
                     </p>
                     <div className="mt-3.5">
@@ -2327,20 +2467,20 @@ export default function Layout() {
             <AnimatePresence>
               {isSpinMineOpen && (
                 <div 
-                  className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 font-sans pointer-events-auto" 
+                  className="fixed inset-0 bg-black/70 backdrop-blur-md z-[9999] flex items-center justify-center p-4 font-sans pointer-events-auto" 
                   onClick={() => setIsSpinMineOpen(false)}
                 >
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="bg-[#0b0e14]/98 border border-white/10 rounded-[36px] max-w-sm w-full p-6 relative overflow-hidden shadow-2xl"
+                    className="bg-white dark:bg-[#0b0e14]/98 border border-slate-200 dark:border-white/10 rounded-[36px] max-w-sm w-full p-6 relative overflow-hidden shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {/* Close Button */}
                     <button 
                       onClick={() => setIsSpinMineOpen(false)}
-                      className="absolute top-5 right-5 p-2 bg-white/5 border border-white/10 rounded-full hover:text-red-400 transition-colors cursor-pointer"
+                      className="absolute top-5 right-5 p-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 rounded-full transition-colors cursor-pointer"
                     >
                       <X size={15} />
                     </button>
@@ -2364,11 +2504,11 @@ export default function Layout() {
                             </svg>
                           </div>
                           <div>
-                            <h4 className="text-[11px] font-black uppercase text-white tracking-wide">Spin & Win Wheel</h4>
-                            <p className="text-[9px] text-slate-400 mt-0.5">Activate random outcome rewards</p>
+                            <h4 className="text-[11px] font-black uppercase text-slate-900 dark:text-white tracking-wide">Spin & Win Wheel</h4>
+                            <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">Activate random outcome rewards</p>
                           </div>
                         </div>
-                        <ChevronRight size={14} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
+                        <ChevronRight size={14} className="text-slate-400 dark:text-slate-500 group-hover:translate-x-1 transition-transform" />
                       </button>
 
                       {/* Option 2: CGA Token Mining */}
@@ -2381,19 +2521,19 @@ export default function Layout() {
                       >
                         <div className="flex items-center gap-4">
                           <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-xl group-hover:scale-105 transition-transform">
-                            <Cpu size={18} className="text-amber-400 animate-bounce" />
+                            <Cpu size={18} className="text-amber-500 dark:text-amber-400 animate-bounce" />
                           </div>
                           <div>
-                            <h4 className="text-[11px] font-black uppercase text-white tracking-wide">CGA Token Portal</h4>
-                            <p className="text-[9px] text-slate-400 mt-0.5">Operate high-end ASIC harvesters</p>
+                            <h4 className="text-[11px] font-black uppercase text-slate-900 dark:text-white tracking-wide">CGA Token Portal</h4>
+                            <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">Operate high-end ASIC harvesters</p>
                           </div>
                         </div>
-                        <ChevronRight size={14} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
+                        <ChevronRight size={14} className="text-slate-400 dark:text-slate-500 group-hover:translate-x-1 transition-transform" />
                       </button>
                     </div>
 
                     <div className="mt-5 text-center">
-                      <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">WAVE MAINNET SYSTEM SECURE</span>
+                      <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest font-mono">WAVE MAINNET SYSTEM SECURE</span>
                     </div>
                   </motion.div>
                 </div>

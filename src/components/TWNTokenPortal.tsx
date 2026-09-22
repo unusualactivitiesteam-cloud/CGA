@@ -29,7 +29,7 @@ import {
   ArrowLeft,
   Cpu
 } from 'lucide-react';
-import { cn, formatCurrency } from '../lib/utils';
+import { cn, formatCurrency, formatNumberWithCommas, parseFormattedNumber } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../lib/firebase';
@@ -326,7 +326,7 @@ export default function TWNTokenPortal() {
 
   // Trigger purchase via balance
   const initiateBalanceBuy = () => {
-    const amt = parseFloat(balanceBuyAmount);
+    const amt = parseFormattedNumber(balanceBuyAmount);
     if (isNaN(amt) || amt <= 0) {
       toast.error("Please enter a valid amount to purchase.");
       return;
@@ -352,7 +352,7 @@ export default function TWNTokenPortal() {
 
   // Trigger purchase via direct deposit request
   const initiateDirectDeposit = () => {
-    const amt = parseFloat(directDepositAmount);
+    const amt = parseFormattedNumber(directDepositAmount);
     if (isNaN(amt) || amt <= 0) {
       toast.error("Please enter a valid deposit amount.");
       return;
@@ -368,7 +368,7 @@ export default function TWNTokenPortal() {
 
   // Trigger Send TWN token
   const initiateSendToken = () => {
-    const amt = parseFloat(sendAmount);
+    const amt = parseFormattedNumber(sendAmount);
     if (isNaN(amt) || amt <= 0) {
       toast.error("Please enter a valid amount.");
       return;
@@ -398,7 +398,7 @@ export default function TWNTokenPortal() {
   };
 
   const executeDirectDepositSubmit = async () => {
-    const amountVal = parseFloat(directDepositAmount);
+    const amountVal = parseFormattedNumber(directDepositAmount);
     if (isNaN(amountVal) || amountVal <= 0) return;
 
     setIsSubmittingTx(true);
@@ -448,7 +448,7 @@ export default function TWNTokenPortal() {
   };
 
   const executeBalanceBuy = async () => {
-    const usdToSpend = parseFloat(balanceBuyAmount);
+    const usdToSpend = parseFormattedNumber(balanceBuyAmount);
     if (isNaN(usdToSpend) || usdToSpend <= 0) return;
 
     if (profile?.suspended || profile?.banned) {
@@ -544,7 +544,7 @@ export default function TWNTokenPortal() {
   };
 
   const executeSendTransfer = async () => {
-    const twnToSend = parseFloat(sendAmount);
+    const twnToSend = parseFormattedNumber(sendAmount);
     if (isNaN(twnToSend) || twnToSend <= 0) return;
 
     if (profile?.suspended || profile?.banned) {
@@ -716,7 +716,7 @@ export default function TWNTokenPortal() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:30px_30px] pointer-events-none" />
         
         {/* Soft neon circles matching the theme color */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#a4d100]/5 rounded-full blur-[100px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#009e42]/5 rounded-full blur-[100px]" />
         <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-64 h-64 bg-emerald-500/5 rounded-full blur-[120px]" />
 
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 flex flex-row items-center justify-between gap-4 relative z-10">
@@ -729,22 +729,22 @@ export default function TWNTokenPortal() {
           {/* Isometric futuristic token container */}
           <div className="relative w-16 h-16 sm:w-48 sm:h-48 flex items-center justify-center shrink-0 pointer-events-none">
             {/* Outer rings */}
-            <div className="absolute inset-0 border border-dashed border-[#a4d100]/20 rounded-full animate-[spin_40s_linear_infinite]" />
-            <div className="absolute inset-1.5 sm:inset-4 border border-[#a4d100]/40 rounded-full animate-[spin_20s_linear_infinite_reverse]" />
+            <div className="absolute inset-0 border border-dashed border-[#009e42]/20 rounded-full animate-[spin_40s_linear_infinite]" />
+            <div className="absolute inset-1.5 sm:inset-4 border border-[#009e42]/40 rounded-full animate-[spin_20s_linear_infinite_reverse]" />
             
             {/* Spinning Token Centerpiece */}
-            <div className="w-10 h-10 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-[#a4d100]/25 via-emerald-500/20 to-black border border-[#a4d100] flex items-center justify-center shadow-[0_0_30px_rgba(164,209,0,0.3)] relative">
-              <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 sm:w-10 sm:h-10 drop-shadow-[0_0_10px_#a4d100]">
-                <path d="M32 4L56 18V46L32 60L8 46V18L32 4Z" stroke="#a4d100" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M32 16V48" stroke="#a4d100" strokeWidth="3" strokeLinecap="round" />
-                <path d="M22 26H42" stroke="#a4d100" strokeWidth="3" strokeLinecap="round" />
-                <path d="M22 38H42" stroke="#a4d100" strokeWidth="3" strokeLinecap="round" />
+            <div className="w-10 h-10 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-[#009e42]/25 via-emerald-500/20 to-black border border-[#009e42] flex items-center justify-center shadow-[0_0_30px_rgba(0,158,66,0.3)] relative">
+              <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 sm:w-10 sm:h-10 drop-shadow-[0_0_10px_#009e42]">
+                <path d="M32 4L56 18V46L32 60L8 46V18L32 4Z" stroke="#009e42" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M32 16V48" stroke="#009e42" strokeWidth="3" strokeLinecap="round" />
+                <path d="M22 26H42" stroke="#009e42" strokeWidth="3" strokeLinecap="round" />
+                <path d="M22 38H42" stroke="#009e42" strokeWidth="3" strokeLinecap="round" />
               </svg>
               <div className="absolute inset-0.5 rounded-full border border-white/5 pointer-events-none" />
             </div>
 
             {/* Float particles */}
-            <div className="absolute top-0.5 left-1 w-1 h-1 rounded-full bg-[#a4d100] animate-ping" />
+            <div className="absolute top-0.5 left-1 w-1 h-1 rounded-full bg-[#009e42] animate-ping" />
             <div className="absolute bottom-1 right-2.5 w-1 h-1 rounded-full bg-emerald-400 opacity-60" />
           </div>
         </div>
@@ -804,7 +804,7 @@ export default function TWNTokenPortal() {
         {/* Top Navbar Header matching visually the references */}
         <header className="hidden lg:flex items-center justify-between py-4 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <img src="https://i.imgur.com/loFD5nc.png" alt="ZWA" className="h-8 w-auto object-contain" referrerPolicy="no-referrer" />
+            <img src="https://i.imgur.com/BPyaRYZ.png" alt="ZWA" className="h-8 w-auto object-contain" referrerPolicy="no-referrer" />
             <div className="flex flex-col">
               <span className="text-xs font-black uppercase tracking-[0.25em] text-white leading-tight font-sans">Capital Growth</span>
               <span className="text-[8px] font-bold text-purple-400 uppercase tracking-[0.4em] leading-none">Alliance</span>
@@ -969,7 +969,7 @@ export default function TWNTokenPortal() {
                 {/* TWN Mining Portal shortcut */}
                 <button
                   onClick={() => navigate('/mining')}
-                  className="w-full mt-2.5 py-3 bg-gradient-to-r from-amber-500/10 to-[#CCFF00]/10 hover:from-amber-500/20 hover:to-[#CCFF00]/20 border border-amber-500/20 hover:border-[#CCFF00]/40 text-[#CCFF00] font-black text-[9px] uppercase tracking-[0.15em] rounded-xl duration-200 active:scale-95 transition-all cursor-pointer font-sans text-center flex items-center justify-center gap-1.5"
+                  className="w-full mt-2.5 py-3 bg-gradient-to-r from-amber-500/10 to-[#009e42]/10 hover:from-amber-500/20 hover:to-[#009e42]/20 border border-amber-500/20 hover:border-[#009e42]/40 text-[#009e42] font-black text-[9px] uppercase tracking-[0.15em] rounded-xl duration-200 active:scale-95 transition-all cursor-pointer font-sans text-center flex items-center justify-center gap-1.5"
                 >
                   <Cpu size={11} className="text-amber-400 animate-pulse" /> Enter Mining Portal
                 </button>
@@ -1356,14 +1356,15 @@ export default function TWNTokenPortal() {
                       <div className="relative">
                         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
                         <input 
-                          type="number"
-                          placeholder="e.g. 10"
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="e.g. 100"
                           value={directDepositAmount}
-                          onChange={(e) => setDirectDepositAmount(e.target.value)}
-                          className="w-full bg-[#05060f] border border-white/10 focus:border-purple-500 rounded-xl py-2.5 pl-8 pr-12 text-xs font-black text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          onChange={(e) => setDirectDepositAmount(formatNumberWithCommas(e.target.value, true))}
+                          className="w-full bg-[#05060f] border border-white/10 focus:border-purple-500 rounded-xl py-2.5 pl-8 pr-12 text-xs font-black text-white focus:outline-none"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-[#F59E0B]">
-                          ≈ {((parseFloat(directDepositAmount) || 0) / currentPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} TWN
+                          ≈ {((parseFormattedNumber(directDepositAmount) || 0) / currentPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} TWN
                         </span>
                       </div>
                     </div>
@@ -1452,11 +1453,12 @@ export default function TWNTokenPortal() {
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
                       <input 
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         placeholder="e.g. 50"
                         value={balanceBuyAmount}
-                        onChange={(e) => setBalanceBuyAmount(e.target.value)}
-                        className="w-full bg-[#05060f] border border-white/10 focus:border-purple-500 rounded-xl py-3 pl-8 pr-12 text-xs font-black text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        onChange={(e) => setBalanceBuyAmount(formatNumberWithCommas(e.target.value, true))}
+                        className="w-full bg-[#05060f] border border-white/10 focus:border-purple-500 rounded-xl py-3 pl-8 pr-12 text-xs font-black text-white focus:outline-none"
                       />
                       <button 
                         type="button"
@@ -1465,7 +1467,7 @@ export default function TWNTokenPortal() {
                           if (selectedBalanceSource === 'available') sourceVal = profile?.available_balance || 0;
                           else if (selectedBalanceSource === 'funding') sourceVal = profile?.funding_balance || 0;
                           else if (selectedBalanceSource === 'reward') sourceVal = profile?.withdraw_methods?.reward_dollar_balance ?? profile?.reward_dollar_balance ?? 0;
-                          setBalanceBuyAmount((sourceVal).toFixed(2));
+                          setBalanceBuyAmount(formatNumberWithCommas((sourceVal).toFixed(2)));
                         }}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-purple-400 hover:text-white transition-all bg-purple-500/10 px-2 py-1 rounded cursor-pointer"
                       >
@@ -1478,7 +1480,7 @@ export default function TWNTokenPortal() {
                   <div className="bg-[#150a21]/50 border border-[#a855f7]/10 p-4 rounded-xl flex items-center justify-between select-none">
                     <div className="text-left leading-none font-sans">
                       <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest block mb-1">Purchasing</span>
-                      <span className="text-base font-black text-white font-mono">{(parseFloat(balanceBuyAmount) || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                      <span className="text-base font-black text-white font-mono">{(parseFormattedNumber(balanceBuyAmount) || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 font-black text-[10px]">
                       →
@@ -1486,14 +1488,14 @@ export default function TWNTokenPortal() {
                     <div className="text-right leading-none font-sans">
                       <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest block mb-1">Acquired Payout</span>
                       <span className="text-base font-black text-[#F59E0B] font-mono">
-                        ≈ {((parseFloat(balanceBuyAmount) || 0) / currentPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} TWN
+                        ≈ {((parseFormattedNumber(balanceBuyAmount) || 0) / currentPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} TWN
                       </span>
                     </div>
                   </div>
 
                   <button 
                     onClick={initiateBalanceBuy}
-                    disabled={isSubmittingTx || !balanceBuyAmount || parseFloat(balanceBuyAmount) <= 0}
+                    disabled={isSubmittingTx || !balanceBuyAmount || parseFormattedNumber(balanceBuyAmount) <= 0}
                     className="w-full py-4 bg-gradient-to-r from-purple-600 to-[#F59E0B] text-white font-black text-[9px] uppercase tracking-[0.3em] rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-md pointer-events-auto disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {isSubmittingTx ? "Authorizing Security..." : "Unlock with Transfer PIN"}
@@ -1695,16 +1697,17 @@ export default function TWNTokenPortal() {
                       
                       <div className="relative">
                         <input 
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
                           placeholder="Amount of TWN tokens to send"
                           value={sendAmount}
-                          onChange={(e) => setSendAmount(e.target.value)}
+                          onChange={(e) => setSendAmount(formatNumberWithCommas(e.target.value, false))}
                           className="w-full bg-[#05060f] border border-white/5 focus:border-purple-500 rounded-xl py-3 pl-4 pr-16 text-xs font-black text-white focus:outline-none"
                         />
                         <button 
                           type="button"
-                          onClick={() => setSendAmount((profile?.twn_balance || 0).toString())}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-purple-400 hover:text-white transition-all bg-purple-500/10 px-2 py-1 rounded"
+                          onClick={() => setSendAmount(formatNumberWithCommas((profile?.twn_balance || 0).toString()))}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-purple-400 hover:text-white transition-all bg-purple-500/10 px-2 py-1 rounded cursor-pointer"
                         >
                           MAX
                         </button>
@@ -1714,9 +1717,9 @@ export default function TWNTokenPortal() {
                   </div>
 
                   <button 
-                    disabled={!sendAmount || parseFloat(sendAmount) <= 0 || parseFloat(sendAmount) > (profile?.twn_balance || 0) || !verifiedRecipient || isSubmittingTx}
+                    disabled={!sendAmount || parseFormattedNumber(sendAmount) <= 0 || parseFormattedNumber(sendAmount) > (profile?.twn_balance || 0) || !verifiedRecipient || isSubmittingTx}
                     onClick={initiateSendToken}
-                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-[#F59E0B] text-white rounded-xl font-black uppercase tracking-[0.25em] text-[10px] shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-[#F59E0B] text-white rounded-xl font-black uppercase tracking-[0.25em] text-[10px] shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer"
                   >
                     {isSubmittingTx ? "Verifying Nodes..." : "Continue to Secure PIN"}
                   </button>
@@ -1743,7 +1746,7 @@ export default function TWNTokenPortal() {
                   <div className="bg-[#05060f]/60 border border-white/5 rounded-2xl p-4 space-y-2 text-left">
                     <div className="flex justify-between items-center border-b border-white/5 pb-1.5 font-sans">
                       <span className="text-[9px] font-black text-[#8E8A9E] uppercase">Amount</span>
-                      <span className="text-xs font-black text-[#A855F7] font-mono">{parseFloat(sendAmount).toLocaleString()} TWN</span>
+                      <span className="text-xs font-black text-[#A855F7] font-mono">{parseFormattedNumber(sendAmount).toLocaleString()} TWN</span>
                     </div>
                     <div className="flex justify-between items-center border-b border-white/5 pb-1.5 font-sans">
                       <span className="text-[9px] font-black text-[#8E8A9E] uppercase">Recipient</span>

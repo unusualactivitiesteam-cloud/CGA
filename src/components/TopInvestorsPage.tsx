@@ -209,7 +209,7 @@ export default function TopInvestorsPage() {
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back Home
         </button>
         <div className="flex items-center gap-3">
-          <img src="https://i.imgur.com/loFD5nc.png" alt="CGA Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
+          <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
           <span className="text-lg md:text-xl font-black uppercase tracking-tighter hidden md:inline leading-none">CGA</span>
         </div>
         <div className="w-10" /> {/* Spacer */}

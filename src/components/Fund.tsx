@@ -25,11 +25,13 @@ import {
   Search,
   Globe,
   Send,
-  LayoutDashboard
+  LayoutDashboard,
+  Coins
 } from 'lucide-react';
-import { cn, formatCurrency, isWithdrawalAllowed } from '../lib/utils';
+import { cn, formatCurrency, isWithdrawalAllowed, formatNumberWithCommas, parseFormattedNumber } from '../lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useAuth } from '../contexts/AuthContext';
+import { useMode } from '../contexts/ModeContext';
 import { DynamicBalance } from './DynamicBalance';
 import { 
   collection, 
@@ -51,18 +53,25 @@ import { broadcastActivity } from '../lib/activity_logger';
 import SuccessModal from './SuccessModal';
 import PinProtocolModal from './PinProtocolModal';
 import { TransactionTicket } from './TransactionTicket';
+import { 
+  isNigeriaRegion, 
+  NIGERIA_BANK_ACCOUNTS, 
+  fetchPaymentEligibility,
+  getWhatsAppBankTransferUrl 
+} from '../services/paymentRouting';
+import { NigeriaBankTransferFlow } from './NigeriaBankTransferFlow';
 
 // --- CONSTANTS ---
 const CRYPTO_ADDRESSES = {
   usdt: "TJTym5Qs77hBEr2kEiJPVEQwR4kM2AosSG",
-  erc20: "0x264E87AA85CBC641cBC4261a193bdc9948934E6D",
   btc: "bc1p2mw24svf4yg5d6v4lxk5309jlcgcqjdagaefuc0adac9z4ys2p5qfq9t8t"
 };
 
-const PRE_FIXED_AMOUNTS = [1000, 5000, 10000, 50000, 100000, 1000000];
+const PRE_FIXED_AMOUNTS = [100, 1000, 5000, 10000, 50000, 100000];
 
 export default function Fund() {
   const { user, profile } = useAuth();
+  const { isBeta } = useMode();
   const { tab } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -77,26 +86,23 @@ export default function Fund() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'deposit' | 'withdrawal' | 'investment' | 'transfer'>('all');
 
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [detectedCountry, setDetectedCountry] = useState<string | null>(() => {
-    try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone.toLowerCase();
-      if (tz.includes('lagos')) return 'Nigeria';
-      if (tz.includes('sydney') || tz.includes('melbourne') || tz.includes('brisbane') || tz.includes('perth') || tz.includes('adelaide') || tz.includes('darwin') || tz.includes('hobart') || tz.includes('canberra') || tz.includes('australia')) return 'Australia';
-      if (tz.includes('london') || tz.includes('belfast') || tz.includes('europe')) return 'United Kingdom';
-      if (tz.includes('toronto') || tz.includes('vancouver') || tz.includes('montreal') || tz.includes('edmonton') || tz.includes('winnipeg') || tz.includes('halifax') || tz.includes('canada')) return 'Canada';
-      if (tz.includes('berlin') || tz.includes('munich') || tz.includes('frankfurt') || tz.includes('germany')) return 'Germany';
-      if (tz.includes('paris') || tz.includes('france')) return 'France';
-      if (tz.includes('singapore')) return 'Singapore';
-      if (tz.includes('new_york') || tz.includes('chicago') || tz.includes('los_angeles') || tz.includes('denver') || tz.includes('phoenix') || tz.includes('america')) return 'United States';
-    } catch (e) {}
-    return 'Nigeria'; // default fallback
+  const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
+  const [detectedCode, setDetectedCode] = useState<string | null>(null);
+  const [isVerifiedNigeria, setIsVerifiedNigeria] = useState<boolean>(() => {
+    return isNigeriaRegion(profile?.country || profile?.countryName, profile?.country_code);
   });
+
+  const isUserInNigeria = isVerifiedNigeria || isNigeriaRegion(
+    profile?.country || profile?.countryName,
+    profile?.country_code
+  ) || isNigeriaRegion(detectedCountry, detectedCode);
 
   useEffect(() => {
     async function loadDetectedLocation() {
       try {
         const result = await detectUserLocation();
         setDetectedCountry(result.country);
+        setDetectedCode(result.code);
       } catch (err) {
         console.error("[Fund] Failed to run dynamic geolocation protocol:", err);
       }
@@ -105,8 +111,29 @@ export default function Fund() {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+    async function verifyServerEligibility() {
+      try {
+        const token = await user?.getIdToken();
+        const res = await fetchPaymentEligibility(
+          token,
+          profile?.country || profile?.countryName || detectedCountry,
+          profile?.country_code || detectedCode
+        );
+        if (mounted) {
+          setIsVerifiedNigeria(res.isNigeria);
+        }
+      } catch (err) {
+        console.warn("[Fund] Payment eligibility check error:", err);
+      }
+    }
+    verifyServerEligibility();
+    return () => { mounted = false; };
+  }, [user, profile, detectedCountry, detectedCode]);
+
+  useEffect(() => {
     if (location.state && location.state.prefillAmount) {
-      setDepositAmount(String(location.state.prefillAmount));
+      setDepositAmount(formatNumberWithCommas(String(location.state.prefillAmount)));
       setIsRobotUpgrade(location.state.isRobotUpgrade || false);
       setRobotName(location.state.robotName || '');
     }
@@ -115,9 +142,10 @@ export default function Fund() {
   // --- DEPOSIT STATES ---
   const [depositAmount, setDepositAmount] = useState('');
   const [depositMethod, setDepositMethod] = useState<'bank' | 'crypto' | null>(null);
-  const [depositCryptoType, setDepositCryptoType] = useState<'usdt' | 'erc20' | 'btc'>('usdt');
-  const [depositStep, setDepositStep] = useState<'input' | 'payment'>('input');
+  const [depositCryptoType, setDepositCryptoType] = useState<'usdt' | 'btc'>('usdt');
+  const [depositStep, setDepositStep] = useState<'input' | 'method' | 'payment'>('input');
   const [depositTxId, setDepositTxId] = useState('');
+  const [nigeriaBankIndex, setNigeriaBankIndex] = useState<number | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(1400);
   const [withdrawExchangeRate, setWithdrawExchangeRate] = useState<number>(1400);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -281,7 +309,14 @@ export default function Fund() {
     if (!user || !profile) return;
     setIsSubmitting(true);
     try {
-      const amount = parseFloat(depositAmount);
+      const amount = parseFormattedNumber(depositAmount);
+      const depositMethodValue = depositMethod || 'crypto';
+
+      if (depositMethodValue === 'bank' && !isUserInNigeria) {
+        toast.error("Bank transfer is restricted to accounts registered in Nigeria.");
+        setIsSubmitting(false);
+        return;
+      }
       
       if (!isRobotUpgrade) {
         // Query if there is a pending deposit of the exact same amount
@@ -306,7 +341,7 @@ export default function Fund() {
           user_name: profile.name || user.email,
           type: 'ai_upgrade',
           amount,
-          method: 'crypto',
+          method: depositMethodValue,
           reference: depositTxId,
           status: 'Pending',
           created_at: new Date().toISOString(),
@@ -331,7 +366,9 @@ export default function Fund() {
           user_id: user.uid,
           user_name: profile.name,
           amount,
-          method: 'crypto',
+          method: depositMethodValue,
+          crypto_type: depositMethodValue === 'crypto' ? depositCryptoType : null,
+          bank_name: depositMethodValue === 'bank' ? (NIGERIA_BANK_ACCOUNTS[0]?.bankName + ' / ' + NIGERIA_BANK_ACCOUNTS[1]?.bankName) : null,
           reference: depositTxId,
           status: 'pending',
           created_at: new Date().toISOString()
@@ -357,7 +394,7 @@ export default function Fund() {
           "Initiated Deposit",
           `$${amount.toLocaleString()}`,
           true,
-          "💳"
+          depositMethodValue === 'bank' ? "🏦" : "💳"
         );
       }
     } catch (error) {
@@ -396,7 +433,7 @@ export default function Fund() {
 
     setIsSubmitting(true);
     try {
-      const amountRaw = parseFloat(withdrawAmount);
+      const amountRaw = parseFormattedNumber(withdrawAmount);
       const amount = Math.floor(amountRaw * 100) / 100;
       const fee = Math.floor(((amount * withdrawalFeePercent) / 100) * 100) / 100;
       const finalAmount = Math.floor((amount - fee) * 100) / 100;
@@ -493,8 +530,9 @@ export default function Fund() {
   };
 
   const renderDepositSection = () => {
-    const amountNum = parseFloat(depositAmount);
-    const isDepositAmountValid = depositAmount && !isNaN(amountNum) && amountNum > 0;
+    const amountNum = parseFormattedNumber(depositAmount);
+    const isBelowDepositMin = depositAmount && (amountNum < 100);
+    const isDepositAmountValid = depositAmount && !isNaN(amountNum) && amountNum >= 100;
 
     if (depositStep === 'input') {
       return (
@@ -506,7 +544,7 @@ export default function Fund() {
         >
           {/* Tech lines background */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff01_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#a4d100]/20 to-transparent pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#009e42]/20 to-transparent pointer-events-none" />
 
           <div className="flex items-center gap-4 pb-5 border-b border-white/5 relative z-10">
             <button 
@@ -534,22 +572,37 @@ export default function Fund() {
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-aura-muted ml-2">Amount to Fund ($)</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-6 flex items-center text-[#a4d100] font-black text-xl">$</div>
+                <div className="absolute inset-y-0 left-6 flex items-center text-[#009e42] font-black text-xl">$</div>
                 <input 
                   type="text" 
-                  inputMode="numeric"
+                  inputMode="decimal"
                   value={depositAmount}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/[^0-9]/g, '');
-                    setDepositAmount(val);
+                    const formatted = formatNumberWithCommas(e.target.value, false);
+                    setDepositAmount(formatted);
                   }}
-                  placeholder="1,000"
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-5 pl-12 pr-6 text-xl md:text-2xl font-bold outline-none focus:border-[#a4d100]/50 transition-all text-white font-mono"
+                  placeholder="100"
+                  className={cn(
+                    "w-full bg-black/40 border rounded-2xl py-5 pl-12 pr-6 text-xl md:text-2xl font-bold outline-none transition-all text-white font-mono",
+                    isBelowDepositMin ? "border-red-500 text-red-500 focus:bg-red-500/5 shadow-[0_0_20px_rgba(239,68,68,0.1)]" : "border-white/10 focus:border-[#009e42]/50"
+                  )}
                 />
               </div>
-              <p className="text-[9px] font-bold text-aura-muted uppercase tracking-widest ml-2">
-                Flexible funding — No deposit limits
-              </p>
+              <div className="flex justify-between items-center px-2">
+                <p className="text-[9px] font-bold text-aura-muted uppercase tracking-widest">
+                  Minimum funding: $100
+                </p>
+                {amountNum >= 100 && (
+                  <p className="text-[9px] font-bold text-[#009e42] uppercase tracking-widest font-mono">
+                    ${amountNum.toLocaleString()}
+                  </p>
+                )}
+              </div>
+              {isBelowDepositMin && (
+                <p className="text-red-500 text-[10px] font-bold uppercase text-center animate-pulse">
+                  Minimum deposit is $100
+                </p>
+              )}
             </div>
 
             {/* Quick Prefixed Figures */}
@@ -559,11 +612,11 @@ export default function Fund() {
                   <button
                     key={amt}
                     type="button"
-                    onClick={() => setDepositAmount(String(amt))}
+                    onClick={() => setDepositAmount(formatNumberWithCommas(amt))}
                     className={cn(
                       "py-3.5 rounded-xl border text-[10px] font-mono font-bold uppercase transition-all duration-300 cursor-pointer",
-                      depositAmount === String(amt)
-                        ? "bg-[#a4d100]/20 border-[#a4d100] text-[#a4d100] shadow-[0_0_15px_rgba(164,209,0,0.15)]"
+                      parseFormattedNumber(depositAmount) === amt
+                        ? "bg-[#009e42]/20 border-[#009e42] text-[#009e42] shadow-[0_0_15px_rgba(0,158,66,0.15)]"
                         : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10 hover:border-white/10"
                     )}
                   >
@@ -577,10 +630,9 @@ export default function Fund() {
           <button
             disabled={!isDepositAmountValid}
             onClick={() => {
-              setDepositMethod('crypto');
-              setDepositStep('payment');
+              setDepositStep('method');
             }}
-            className="w-full py-5 bg-[#a4d100] hover:bg-[#8ec200] disabled:opacity-20 disabled:hover:bg-[#a4d100] text-black font-bold text-sm rounded-2xl shadow-xl transition-all duration-300 relative z-10 cursor-pointer"
+            className="w-full py-5 bg-[#009e42] hover:bg-[#02d147] disabled:opacity-20 disabled:hover:bg-[#009e42] text-white font-bold text-sm rounded-2xl shadow-xl transition-all duration-300 relative z-10 cursor-pointer"
           >
             Proceed to fund
           </button>
@@ -588,17 +640,16 @@ export default function Fund() {
       );
     }
 
-    if (depositStep === 'payment') {
+    if (depositStep === 'method') {
       return (
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
-          className="max-w-lg mx-auto bg-[#11141b]/95 border border-white/10 rounded-[32px] p-6 md:p-10 shadow-[0_30px_60px_rgba(0,0,0,0.85)] backdrop-blur-md space-y-8 text-white relative overflow-hidden"
+          className="max-w-lg mx-auto bg-[#11141b]/95 border border-white/10 rounded-[32px] p-6 md:p-10 shadow-[0_30px_60px_rgba(0,0,0,0.85)] backdrop-blur-md space-y-6 text-white relative overflow-hidden"
         >
-          {/* Tech lines background */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff01_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#a4d100]/20 to-transparent pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#009e42]/20 to-transparent pointer-events-none" />
 
           <div className="flex items-center gap-4 pb-5 border-b border-white/5 relative z-10">
             <button 
@@ -608,42 +659,207 @@ export default function Fund() {
               <ChevronLeft size={16} className="text-white/80" />
             </button>
             <div>
+              <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight font-serif italic">Payment Method</h2>
+              <p className="text-[10px] font-black uppercase tracking-widest text-aura-muted">Deposit Amount: ${parseFormattedNumber(depositAmount).toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 relative z-10">
+            {isUserInNigeria ? (
+              <>
+                {/* Nigeria Option 1: Bank Transfer */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDepositMethod('bank');
+                    setNigeriaBankIndex(null);
+                    setDepositStep('payment');
+                  }}
+                  className="w-full p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#009e42]/50 transition-all flex items-center justify-between cursor-pointer group text-left"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-[#009e42]/10 border border-[#009e42]/20 flex items-center justify-center text-[#009e42] group-hover:scale-105 transition-transform">
+                      <Building2 size={22} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black uppercase tracking-wide text-white">Bank Transfer</p>
+                    </div>
+                  </div>
+                  <ArrowRight size={16} className="text-aura-muted group-hover:text-white group-hover:translate-x-1 transition-all" />
+                </button>
+
+                {/* Nigeria Option 2: Crypto Payments */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDepositMethod('crypto');
+                    setDepositStep('payment');
+                  }}
+                  className="w-full p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#009e42]/50 transition-all flex items-center justify-between cursor-pointer group text-left"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+                      <Coins size={22} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black uppercase tracking-wide text-white">Crypto Payments</p>
+                    </div>
+                  </div>
+                  <ArrowRight size={16} className="text-aura-muted group-hover:text-white group-hover:translate-x-1 transition-all" />
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Non-Nigeria OPTION 1: Pay with Crypto */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDepositMethod('crypto');
+                    setDepositStep('payment');
+                  }}
+                  className="w-full p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#009e42]/50 transition-all flex items-center justify-between cursor-pointer group text-left"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-[#009e42]/10 border border-[#009e42]/20 flex items-center justify-center text-[#009e42] group-hover:scale-105 transition-transform">
+                      <Coins size={22} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-black uppercase tracking-wide text-white">Pay with Crypto</p>
+                        <span className="px-2 py-0.5 rounded-full text-[8px] font-black bg-[#009e42]/20 text-[#009e42] border border-[#009e42]/30">INSTANT</span>
+                      </div>
+                      <p className="text-[10px] text-aura-muted font-mono mt-0.5">Bitcoin (BTC) & USDT (TRC20)</p>
+                    </div>
+                  </div>
+                  <ArrowRight size={16} className="text-aura-muted group-hover:text-white group-hover:translate-x-1 transition-all" />
+                </button>
+
+                {/* Non-Nigeria OPTION 2: Request Bank Transfer */}
+                <a
+                  href={getWhatsAppBankTransferUrl(depositAmount || amountNum)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#009e42]/50 transition-all flex items-center justify-between cursor-pointer group text-left"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#009e42] group-hover:scale-105 transition-transform">
+                      <Building2 size={22} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-black uppercase tracking-wide text-white">Request Bank Transfer</p>
+                        <span className="px-2 py-0.5 rounded-full text-[8px] font-black bg-white/10 text-white/90 border border-white/15">DIRECT DESK</span>
+                      </div>
+                      <p className="text-[10px] text-aura-muted font-mono mt-0.5">Contact settlement desk for account details</p>
+                    </div>
+                  </div>
+                  <ArrowRight size={16} className="text-aura-muted group-hover:text-white group-hover:translate-x-1 transition-all" />
+                </a>
+              </>
+            )}
+          </div>
+        </motion.div>
+      );
+    }
+
+    if (depositStep === 'payment') {
+      const depositAmtNum = parseFormattedNumber(depositAmount);
+      const ngnEquivalent = Math.round(depositAmtNum * exchangeRate);
+
+      if (depositMethod === 'bank' && isUserInNigeria) {
+        return (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="max-w-lg mx-auto bg-[#11141b]/95 border border-white/10 rounded-[32px] p-6 md:p-8 shadow-[0_30px_60px_rgba(0,0,0,0.85)] backdrop-blur-md space-y-6 text-white relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff01_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#009e42]/20 to-transparent pointer-events-none" />
+
+            <NigeriaBankTransferFlow
+              amountUsd={depositAmtNum}
+              exchangeRate={exchangeRate}
+              nigeriaBankIndex={nigeriaBankIndex}
+              onSelectBankIndex={setNigeriaBankIndex}
+              onBackToMethodSelect={() => setDepositStep('method')}
+              transactionReference={depositTxId}
+              onTransactionReferenceChange={setDepositTxId}
+              copiedField={copiedField}
+              onCopy={handleCopy}
+              amountLabel="Amount to Fund:"
+              submitButton={
+                nigeriaBankIndex !== null ? (
+                  <button 
+                    disabled={!depositTxId || isSubmitting}
+                    onClick={submitDeposit}
+                    className="w-full py-5 bg-[#009e42] hover:bg-[#02d147] disabled:opacity-20 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl transition-all duration-300 relative z-10 cursor-pointer"
+                  >
+                    {isSubmitting ? 'Verifying Transfer...' : "I've paid"}
+                  </button>
+                ) : null
+              }
+            />
+          </motion.div>
+        );
+      }
+
+      // Default to Crypto Transfer
+      return (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          className="max-w-lg mx-auto bg-[#11141b]/95 border border-white/10 rounded-[32px] p-6 md:p-10 shadow-[0_30px_60px_rgba(0,0,0,0.85)] backdrop-blur-md space-y-8 text-white relative overflow-hidden"
+        >
+          {/* Tech lines background */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff01_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#009e42]/20 to-transparent pointer-events-none" />
+
+          <div className="flex items-center gap-4 pb-5 border-b border-white/5 relative z-10">
+            <button 
+              onClick={() => setDepositStep('method')} 
+              className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 rounded-xl transition-all cursor-pointer"
+            >
+              <ChevronLeft size={16} className="text-white/80" />
+            </button>
+            <div>
               <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight font-serif italic">Crypto Transfer</h2>
-              <p className="text-[10px] font-black uppercase tracking-widest text-aura-muted">Total amount: ${parseFloat(depositAmount).toLocaleString()}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-aura-muted">Total amount: ${parseFormattedNumber(depositAmount).toLocaleString()}</p>
             </div>
           </div>
 
           <div className="space-y-6 relative z-10">
-            {/* Coins filter selection */}
-            <div className="flex gap-1.5">
-              {(['usdt', 'erc20', 'btc'] as const).map(t => (
+            {/* Coins filter selection - strictly USDT TRC20 and BTC Native */}
+            <div className="flex gap-2">
+              {(['usdt', 'btc'] as const).map(t => (
                 <button 
                   key={t} 
                   onClick={() => setDepositCryptoType(t)}
                   className={cn(
-                    "flex-1 py-3 rounded-xl text-[9px] font-black uppercase border transition-all cursor-pointer",
-                    depositCryptoType === t ? "bg-[#a4d100]/20 border-[#a4d100] text-[#a4d100] shadow-[0_0_12px_rgba(164,209,0,0.12)]" : "bg-white/5 border-white/5 text-white/50 hover:text-white"
+                    "flex-1 py-3.5 rounded-xl text-[10px] font-black uppercase border transition-all cursor-pointer",
+                    depositCryptoType === t ? "bg-[#009e42]/20 border-[#009e42] text-[#009e42] shadow-[0_0_12px_rgba(0,158,66,0.12)]" : "bg-white/5 border-white/5 text-white/50 hover:text-white"
                   )}
                 >
-                  {t === 'usdt' ? 'USDT (TRC20)' : t === 'erc20' ? 'USDT (ERC20)' : 'BTC (Native)'}
+                  {t === 'usdt' ? 'USDT (TRC20)' : 'BTC (Native)'}
                 </button>
               ))}
             </div>
 
-            <div className="p-6 bg-gradient-to-b from-[#161124]/30 to-[#0c0d12]/95 border border-purple-500/20 rounded-3xl flex flex-col items-center gap-5 shadow-[0_15px_30px_rgba(0,0,0,0.5)] relative overflow-hidden backdrop-blur-md">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl -z-10" />
+            <div className="p-6 bg-gradient-to-b from-[#009e42]/10 to-[#0c0d12]/95 border border-[#009e42]/20 rounded-3xl flex flex-col items-center gap-5 shadow-[0_15px_30px_rgba(0,0,0,0.5)] relative overflow-hidden backdrop-blur-md">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-[#009e42]/5 rounded-full blur-2xl -z-10" />
               <div className="p-3 bg-white rounded-2xl shadow-[0_10px_25px_rgba(255,255,255,0.05)] border border-white/20">
                 <QRCodeCanvas value={CRYPTO_ADDRESSES[depositCryptoType]} size={120} />
               </div>
               <div className="w-full space-y-2">
                 <p className="text-[9px] text-center text-aura-muted uppercase tracking-widest font-bold">Scan QR or Copy Address</p>
                 <div className="bg-black/40 border border-white/10 rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3 overflow-hidden shadow-inner">
-                  <code className="text-[10px] font-mono text-purple-400 truncate tracking-wide">{CRYPTO_ADDRESSES[depositCryptoType]}</code>
+                  <code className="text-[10px] font-mono text-[#009e42] truncate tracking-wide">{CRYPTO_ADDRESSES[depositCryptoType]}</code>
                   <button 
                     onClick={() => handleCopy(CRYPTO_ADDRESSES[depositCryptoType], 'wallet')} 
                     className="flex-shrink-0 p-2 hover:bg-white/5 rounded-lg text-aura-muted hover:text-white transition-all active:scale-95"
                   >
-                    {copiedField === 'wallet' ? <Check size={13} className="text-purple-400" /> : <Copy size={13} />}
+                    {copiedField === 'wallet' ? <Check size={13} className="text-[#009e42]" /> : <Copy size={13} />}
                   </button>
                 </div>
               </div>
@@ -656,7 +872,7 @@ export default function Fund() {
                 value={depositTxId}
                 onChange={(e) => setDepositTxId(e.target.value)}
                 placeholder="Input transaction details or sending wallet"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm font-mono focus:border-[#a4d100] outline-none transition-all text-white"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm font-mono focus:border-[#009e42] outline-none transition-all text-white"
               />
             </div>
           </div>
@@ -664,9 +880,9 @@ export default function Fund() {
           <button 
             disabled={!depositTxId || isSubmitting}
             onClick={submitDeposit}
-            className="w-full py-5 bg-[#a4d100] hover:bg-[#8ec200] disabled:opacity-20 text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl transition-all duration-300 relative z-10 cursor-pointer"
+            className="w-full py-5 bg-[#009e42] hover:bg-[#02d147] disabled:opacity-20 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl transition-all duration-300 relative z-10 cursor-pointer"
           >
-            {isSubmitting ? 'Syncing Network...' : 'I have made payment'}
+            {isSubmitting ? 'Syncing Network...' : "I've paid"}
           </button>
         </motion.div>
       );
@@ -678,40 +894,42 @@ export default function Fund() {
   const renderWithdrawSection = () => {
     if (!isWithdrawalAllowed()) {
       return (
-        <div className="max-w-[360px] mx-auto p-6 rounded-2xl bg-[#0c0d12]/50 border border-rose-500/10 text-center space-y-4 shadow-[0_15px_30px_rgba(0,0,0,0.6)] backdrop-blur-md relative overflow-hidden transition-all duration-300">
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-rose-500/15 to-transparent" />
-          <div className="w-12 h-12 mx-auto bg-rose-500/5 border border-rose-500/15 rounded-full flex items-center justify-center text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.08)] relative">
-            <Lock size={20} className="animate-pulse" />
-            <div className="absolute inset-0 rounded-full bg-rose-500/5 animate-ping opacity-10" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-base font-bold text-white tracking-wide font-sans">Portal Closed</h3>
-            <p className="text-[9px] font-black text-rose-400 py-0.5 px-2 bg-rose-500/5 rounded-full border border-rose-500/10 inline-block">
-              Service temporarily closed
-            </p>
-          </div>
-          <p className="text-[11px] text-white/50 leading-relaxed font-medium">
-            Withdrawals are currently unavailable. Withdrawal window reopens Monday 9:00 AM GMT+1.
-          </p>
-          <div className="pt-2 border-t border-white/[0.04] space-y-3">
-            <div className="text-[9px] font-semibold text-white/30 tracking-wide">
-              Operational window: Mon 9:00 AM – Fri 4:00 PM (GMT+1)
+        <div className="w-full min-h-[calc(100dvh-9rem)] lg:min-h-[calc(100vh-14rem)] flex items-center justify-center py-2 px-4 my-auto">
+          <div className="w-full max-w-[360px] mx-auto p-6 rounded-2xl bg-[#0c0d12]/50 border border-rose-500/10 text-center space-y-4 shadow-[0_15px_30px_rgba(0,0,0,0.6)] backdrop-blur-md relative overflow-hidden transition-all duration-300">
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-rose-500/15 to-transparent" />
+            <div className="w-12 h-12 mx-auto bg-rose-500/5 border border-rose-500/15 rounded-full flex items-center justify-center text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.08)] relative">
+              <Lock size={20} className="animate-pulse" />
+              <div className="absolute inset-0 rounded-full bg-rose-500/5 animate-ping opacity-10" />
             </div>
-            <button
-              onClick={() => {
-                const backRoute = sessionStorage.getItem('lastMainRoute') || '/dashboard';
-                navigate(backRoute);
-              }}
-              className="w-full mt-2 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/80 hover:text-white transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <ArrowLeft size={12} /> Go back
-            </button>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-white tracking-wide font-sans">Portal Closed</h3>
+              <p className="text-[9px] font-black text-rose-400 py-0.5 px-2 bg-rose-500/5 rounded-full border border-rose-500/10 inline-block">
+                Service temporarily closed
+              </p>
+            </div>
+            <p className="text-[11px] text-white/50 leading-relaxed font-medium">
+              Withdrawals are currently unavailable. Withdrawal window reopens Monday 9:00 AM GMT+1.
+            </p>
+            <div className="pt-2 border-t border-white/[0.04] space-y-3">
+              <div className="text-[9px] font-semibold text-white/30 tracking-wide">
+                Operational window: Mon 9:00 AM – Fri 4:00 PM (GMT+1)
+              </div>
+              <button
+                onClick={() => {
+                  const backRoute = sessionStorage.getItem('lastMainRoute') || '/dashboard';
+                  navigate(backRoute);
+                }}
+                className="w-full mt-2 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/80 hover:text-white transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <ArrowLeft size={12} /> Go back
+              </button>
+            </div>
           </div>
         </div>
       );
     }
 
-    const amountNum = parseFloat(withdrawAmount);
+    const amountNum = parseFormattedNumber(withdrawAmount);
     const isFrozen = profile?.withdrawals_frozen || profile?.suspended || profile?.banned;
     const isInsufficient = withdrawAmount && (amountNum > available_balance);
     const isBelowMin = withdrawAmount && (amountNum < withdrawalThreshold);
@@ -750,7 +968,7 @@ export default function Fund() {
             <div className="h-10">
               <DynamicBalance 
                 value={formatCurrency(available_balance)} 
-                className="text-[#a4d100] text-center font-serif italic font-black" 
+                className="text-[#009e42] text-center font-serif italic font-black" 
                 containerClassName="justify-center"
                 baseSizeMobile="text-2xl"
                 baseSizeDesktop="lg:text-3xl"
@@ -762,27 +980,27 @@ export default function Fund() {
             <div className="relative">
               <div className={cn(
                 "absolute inset-y-0 left-6 flex items-center font-bold text-xl transition-colors",
-                (isInsufficient || isBelowMin || isFrozen) ? "text-red-500" : "text-[#a4d100]"
+                (isInsufficient || isBelowMin || isFrozen) ? "text-red-500" : "text-[#009e42]"
               )}>$</div>
               <input 
                 type="text" 
-                inputMode="numeric"
+                inputMode="decimal"
                 disabled={isFrozen}
                 value={withdrawAmount}
                 onChange={(e) => {
-                  const val = e.target.value.replace(/[^0-9]/g, '');
-                  setWithdrawAmount(val);
+                  const formatted = formatNumberWithCommas(e.target.value, true);
+                  setWithdrawAmount(formatted);
                 }}
                 placeholder="0.00"
                 className={cn(
                   "w-full bg-black/40 border rounded-2xl py-5 pl-12 pr-20 text-xl md:text-2xl font-bold outline-none transition-all text-white font-mono",
-                  (isInsufficient || isBelowMin || isFrozen) ? "border-red-500 text-red-500 focus:bg-red-500/5 shadow-[0_0_20px_rgba(239,68,68,0.1)]" : "border-white/10 focus:border-[#a4d100]"
+                  (isInsufficient || isBelowMin || isFrozen) ? "border-red-500 text-red-500 focus:bg-red-500/5 shadow-[0_0_20px_rgba(239,68,68,0.1)]" : "border-white/10 focus:border-[#009e42]"
                 )}
               />
               <button 
                 type="button"
-                onClick={() => setWithdrawAmount(available_balance.toString())}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase text-emerald-400 bg-[#a4d100]/10 border border-[#a4d100]/20 px-3 py-1.5 rounded-xl hover:bg-[#a4d100]/25 transition-all font-mono"
+                onClick={() => setWithdrawAmount(formatNumberWithCommas(available_balance.toFixed(2), true))}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase text-emerald-400 bg-[#009e42]/10 border border-[#009e42]/20 px-3 py-1.5 rounded-xl hover:bg-[#009e42]/25 transition-all font-mono"
               >
                 Max
               </button>
@@ -792,7 +1010,7 @@ export default function Fund() {
                <p className="text-[9px] font-bold text-aura-muted uppercase tracking-widest italic">Fee: {withdrawalFeePercent}%</p>
                {amountNum > 0 && (
                  <p className="text-[9px] font-bold text-aura-muted uppercase tracking-widest">
-                   Net payout: <span className="text-[#a4d100] font-black">${(receiveAmount > 0 ? receiveAmount : 0).toLocaleString()}</span>
+                   Net payout: <span className="text-[#009e42] font-black">${(receiveAmount > 0 ? receiveAmount : 0).toLocaleString()}</span>
                  </p>
                )}
             </div>
@@ -819,7 +1037,7 @@ export default function Fund() {
             onClick={() => setWithdrawStep('method')}
             className={cn(
               "w-full py-5 text-white font-bold uppercase tracking-widest text-[10px] rounded-2xl shadow-xl transition-all cursor-pointer relative z-10",
-              (isInsufficient || isBelowMin || !withdrawAmount || isFrozen) ? "bg-white/5 text-white/20 cursor-not-allowed border border-white/5" : "bg-red-600 hover:bg-red-700 shadow-red-500/20"
+              (isInsufficient || isBelowMin || !withdrawAmount || isFrozen) ? "bg-white/5 text-white/20 cursor-not-allowed border border-white/5" : "bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] shadow-[#009e42]/20"
             )}
           >
             {isFrozen ? 'Access Restricted' : 'Select Settlement Method'}
@@ -871,16 +1089,16 @@ export default function Fund() {
             {profile?.withdraw_methods?.crypto && (
                <button 
                   onClick={() => handleUseSavedMethod('crypto')}
-                  className="w-full flex items-center justify-between p-4 bg-[#a4d100]/5 border border-[#a4d100]/20 rounded-xl group hover:bg-[#a4d100]/10 transition-all cursor-pointer"
+                  className="w-full flex items-center justify-between p-4 bg-[#009e42]/5 border border-[#009e42]/20 rounded-xl group hover:bg-[#009e42]/10 transition-all cursor-pointer"
                >
                   <div className="flex items-center gap-3">
-                     <div className="p-2 rounded-lg bg-[#a4d100]/20 text-[#a4d100]"><Check size={14} /></div>
+                     <div className="p-2 rounded-lg bg-[#009e42]/20 text-[#009e42]"><Check size={14} /></div>
                      <div className="text-left">
                         <p className="text-[9px] font-black uppercase text-white">Use Saved Crypto Wallet</p>
                         <p className="text-[8px] font-bold text-aura-muted uppercase font-mono">{profile.withdraw_methods.crypto.type.toUpperCase()} • {profile.withdraw_methods.crypto.address.substring(0, 10)}...</p>
                      </div>
                   </div>
-                  <ChevronRight size={14} className="text-aura-muted group-hover:text-[#a4d100] transition-transform group-hover:translate-x-1" />
+                  <ChevronRight size={14} className="text-aura-muted group-hover:text-[#009e42] transition-transform group-hover:translate-x-1" />
                </button>
             )}
 
@@ -889,7 +1107,7 @@ export default function Fund() {
               <select 
                 value={cryptoDetails.type} 
                 onChange={e => setCryptoDetails({...cryptoDetails, type: e.target.value})} 
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm outline-none focus:border-[#a4d100] text-white"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm outline-none focus:border-[#009e42] text-white"
               >
                 <option value="usdt">USDT (TRC20)</option>
                 <option value="btc">Bitcoin (Native)</option>
@@ -903,7 +1121,7 @@ export default function Fund() {
                 value={cryptoDetails.address} 
                 onChange={e => setCryptoDetails({...cryptoDetails, address: e.target.value})} 
                 placeholder="Paste wallet address"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm outline-none focus:border-[#a4d100] text-white font-mono" 
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm outline-none focus:border-[#009e42] text-white font-mono" 
               />
             </div>
           </div>
@@ -913,7 +1131,7 @@ export default function Fund() {
           <button 
             disabled={!cryptoDetails.address || isSubmitting}
             onClick={handleWithdrawalRequest}
-            className="w-full py-5 bg-red-600 hover:bg-red-700 disabled:opacity-20 text-white font-bold uppercase tracking-widest text-[10px] rounded-2xl shadow-xl transition-all duration-300 relative z-10 cursor-pointer shadow-red-500/20"
+            className="w-full py-5 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] disabled:opacity-20 text-white font-bold uppercase tracking-widest text-[10px] rounded-2xl shadow-xl transition-all duration-300 relative z-10 cursor-pointer shadow-[#009e42]/20"
           >
             {isSubmitting ? 'Authorizing...' : 'Authorize Withdrawal'}
           </button>
@@ -951,7 +1169,7 @@ export default function Fund() {
             { id: 'deposit', label: 'Deposits' },
             { id: 'withdrawal', label: 'Withdrawals' },
             { id: 'investment', label: 'Investments' },
-            { id: 'transfer', label: 'Transfers' }
+            ...(isBeta ? [{ id: 'transfer', label: 'Transfers' }] : [])
           ].map((f) => (
             <button
               key={f.id}
@@ -959,7 +1177,7 @@ export default function Fund() {
               className={cn(
                 "flex-1 min-w-[75px] py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 cursor-pointer text-center",
                 activeFilter === f.id
-                  ? "bg-[#a4d100] text-black shadow-lg shadow-[#a4d100]/20"
+                  ? "bg-[#009e42] text-white shadow-lg shadow-[#009e42]/20"
                   : "text-white/60 hover:text-white hover:bg-white/5"
               )}
             >
@@ -994,13 +1212,19 @@ export default function Fund() {
     );
   };
 
+  const isClosedWithdrawal = tab === 'withdraw' && !isWithdrawalAllowed();
+
   return (
-    <div className="space-y-8 pb-20 pt-4 lg:py-8 min-h-screen">
+    <div className={cn(
+      isClosedWithdrawal 
+        ? "flex flex-col justify-center items-center py-2 lg:py-8 min-h-[calc(100dvh-8rem)] lg:min-h-[calc(100vh-12rem)]" 
+        : "space-y-8 pb-20 pt-4 lg:py-8 min-h-screen"
+    )}>
       <SuccessModal 
         isOpen={showDepositSuccess}
         onClose={handleDepositReset}
         title="Deposit Submitted"
-        message={`Your deposit of ${formatCurrency(parseFloat(depositAmount) || 0)} has been logged. Verification sequence initiated.`}
+        message={`Your deposit of ${formatCurrency(parseFormattedNumber(depositAmount) || 0)} has been logged. Verification sequence initiated.`}
       />
       <SuccessModal 
         isOpen={showWithdrawSuccess}
@@ -1028,31 +1252,31 @@ export default function Fund() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowSystemBusyModal(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+              className="absolute inset-0 bg-black/60 md:bg-black/80 backdrop-blur-xl"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-md bg-[#0a0d17]/95 border border-white/10 rounded-[28px] p-8 md:p-10 shadow-[0_0_80px_rgba(239,68,68,0.15)] overflow-hidden text-center backdrop-blur-xl"
+              className="relative w-full max-w-md bg-white dark:bg-[#0a0d17]/95 border border-slate-200 dark:border-white/10 rounded-[28px] p-8 md:p-10 shadow-2xl overflow-hidden text-center backdrop-blur-xl"
             >
               <div className="absolute top-[-25%] left-[-25%] w-[60%] h-[60%] bg-red-400/10 rounded-full blur-[90px] pointer-events-none" />
               <div className="absolute bottom-[-25%] right-[-25%] w-[60%] h-[60%] bg-red-400/10 rounded-full blur-[90px] pointer-events-none" />
 
               <div className="relative space-y-6">
                 <div className="space-y-3">
-                  <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight italic font-serif text-white">
+                  <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight italic font-serif text-slate-900 dark:text-white">
                     System Busy
                   </h3>
                   <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent mx-auto opacity-50" />
-                  <p className="text-gray-300 text-xs md:text-sm font-medium leading-relaxed text-center px-2">
+                  <p className="text-slate-600 dark:text-gray-300 text-xs md:text-sm font-medium leading-relaxed text-center px-2">
                     There are too many traffic in the system at the moment.<br/><br/>Please try again later.
                   </p>
                 </div>
 
                 <button 
                   onClick={() => setShowSystemBusyModal(false)}
-                  className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-xl active:scale-98 transition-all cursor-pointer"
+                  className="w-full py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-800 dark:text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-xl active:scale-98 transition-all cursor-pointer"
                 >
                   OK
                 </button>
@@ -1065,12 +1289,12 @@ export default function Fund() {
       {/* INITIAL DEPOSIT PENDING MODAL */}
       <AnimatePresence>
         {showPendingDepositAlert && (
-          <div className="fixed inset-0 z-[1200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-[1200] flex items-center justify-center p-6 bg-black/60 md:bg-black/80 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md bg-[#0c0f14] border border-amber-500/20 rounded-[2.5rem] p-8 shadow-[0_0_50px_rgba(245,158,11,0.15)] overflow-hidden text-center"
+              className="relative w-full max-w-md bg-white dark:bg-[#0c0f14] border border-amber-500/20 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden text-center"
             >
               <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-500" />
               
@@ -1079,25 +1303,25 @@ export default function Fund() {
                 <span className="text-3xl text-amber-500 font-black">!</span>
               </div>
 
-              <h3 className="text-2xl font-bold tracking-tight text-white mb-2">
+              <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
                 Deposit <span className="text-amber-500">Pending</span>
               </h3>
 
               {/* Thin divider */}
               <div className="relative flex items-center justify-center my-4 px-12">
-                <div className="w-full h-[1px] bg-white/10" />
+                <div className="w-full h-[1px] bg-slate-200 dark:bg-white/10" />
                 <div className="absolute w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]" />
               </div>
 
-              <p className="text-sm text-gray-300 mb-6 font-medium leading-relaxed">
-                Your initial deposit of <span className="text-white font-mono font-bold">{formatCurrency(pendingDepositAmountAlert)}</span> is currently under administrative review.
+              <p className="text-sm text-slate-600 dark:text-gray-300 mb-6 font-medium leading-relaxed">
+                Your initial deposit of <span className="text-slate-900 dark:text-white font-mono font-bold">{formatCurrency(pendingDepositAmountAlert)}</span> is currently under administrative review.
               </p>
 
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-left mb-6 space-y-2">
-                <p className="text-xs text-gray-400 leading-relaxed font-sans">
+              <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 text-left mb-6 space-y-2">
+                <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed font-sans">
                   • You cannot submit duplicate deposits of the same amount while the initial ticket is pending.
                 </p>
-                <p className="text-xs text-gray-400 leading-relaxed font-sans">
+                <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed font-sans">
                   • To proceed, please <span className="text-amber-500 font-semibold">use a different deposit amount</span> or create an investment immediately.
                 </p>
               </div>
@@ -1109,13 +1333,13 @@ export default function Fund() {
                     setShowPendingDepositAlert(false);
                     setDepositStep('input');
                   }}
-                  className="w-full py-4 bg-[#a4d100] hover:bg-[#bce600] text-black font-extrabold uppercase tracking-wider text-xs rounded-xl transition-all shadow-[0_4px_20px_rgba(164,209,0,0.25)] active:scale-98 cursor-pointer"
+                  className="w-full py-4 bg-[#009e42] hover:bg-[#02d147] text-white font-extrabold uppercase tracking-wider text-xs rounded-xl transition-all shadow-[0_4px_20px_rgba(0,158,66,0.25)] active:scale-98 cursor-pointer"
                 >
                   Create Different Ticket
                 </button>
                 <button 
                   onClick={() => setShowPendingDepositAlert(false)}
-                  className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold uppercase tracking-wider text-xs rounded-xl active:scale-98 transition-all cursor-pointer"
+                  className="w-full py-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-white border border-slate-200 dark:border-white/10 font-bold uppercase tracking-wider text-xs rounded-xl active:scale-98 transition-all cursor-pointer"
                 >
                   Go Back
                 </button>

@@ -17,7 +17,7 @@ const Footer = () => {
           {/* Company Info */}
           <div className="space-y-6">
             <div className="flex items-center">
-              <img src="https://i.imgur.com/loFD5nc.png" alt="CGA Trades Logo" className="h-8 md:h-10 w-auto object-contain" />
+              <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Trades Logo" className="h-8 md:h-10 w-auto object-contain" />
             </div>
             <p className="text-aura-muted text-xs leading-relaxed max-w-xs font-medium">
               {t("Institutional-grade digital asset management platform powered by high-frequency algorithmic neural networks. Redefining the future of automated equity growth.")}

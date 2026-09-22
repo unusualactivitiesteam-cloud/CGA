@@ -74,10 +74,10 @@ const About = () => {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="text-center px-4"
           >
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-[0.2em] text-white font-sans filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+            <h1 className="hero-banner-title about-header-title text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-[0.2em] text-white font-sans filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
               {t("About Us")}
             </h1>
-            <div className="mt-2.5 w-12 h-[3px] bg-[#a4d100] mx-auto rounded-full shadow-[0_0_12px_#a4d100]" />
+            <div className="mt-2.5 w-12 h-[3px] bg-[#009e42] mx-auto rounded-full shadow-[0_0_12px_#009e42]" />
           </motion.div>
         </div>
       </div>

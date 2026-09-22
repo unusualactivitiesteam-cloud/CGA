@@ -16,7 +16,7 @@ import {
   Unlock,
   LucideIcon
 } from 'lucide-react';
-import { cn, formatCurrency } from '../lib/utils';
+import { cn, formatCurrency, formatNumberWithCommas, parseFormattedNumber } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { DynamicBalance } from './DynamicBalance';
 import PinProtocolModal from './PinProtocolModal';
@@ -200,7 +200,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
       return;
     }
 
-    const amountNum = parseFloat(amount);
+    const amountNum = parseFormattedNumber(amount);
     if (isNaN(amountNum) || amountNum <= 0) return;
 
     if (type === 'internal' && fromWallet === toWallet) {
@@ -464,7 +464,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
           <div className="space-y-6 pt-4">
             <button 
               onClick={() => setStep('selection')}
-              className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 hover:text-blue-500 transition-colors"
+              className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2 hover:text-[#009e42] transition-colors cursor-pointer"
             >
               <RefreshCw size={12} /> Change Method
             </button>
@@ -474,26 +474,26 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">From Wallet</label>
+                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">From Wallet</label>
                       <select 
                         value={fromWallet}
                         onChange={(e) => setFromWallet(e.target.value as WalletType)}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500"
+                        className="w-full bg-slate-50 dark:bg-[#131720] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-white outline-none focus:border-[#009e42]"
                       >
                         {Object.entries(WALLET_NAMES).map(([key, name]) => (
-                          <option key={key} value={key}>{name} ({formatCurrency(getProfileWalletBalance(key as WalletType))})</option>
+                          <option key={key} value={key} className="bg-white dark:bg-[#131720] text-slate-800 dark:text-white">{name} ({formatCurrency(getProfileWalletBalance(key as WalletType))})</option>
                         ))}
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">To Wallet</label>
+                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">To Wallet</label>
                       <select 
                         value={toWallet}
                         onChange={(e) => setToWallet(e.target.value as WalletType)}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500"
+                        className="w-full bg-slate-50 dark:bg-[#131720] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-white outline-none focus:border-blue-500"
                       >
                         {Object.entries(WALLET_NAMES).map(([key, name]) => (
-                          <option key={key} value={key}>{name}</option>
+                          <option key={key} value={key} className="bg-white dark:bg-[#131720] text-slate-800 dark:text-white">{name}</option>
                         ))}
                       </select>
                     </div>
@@ -501,7 +501,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center px-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Amount to Transfer</label>
+                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Amount to Transfer</label>
                       <div className="flex items-center gap-1">
                         <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Balance:</span>
                         <div className="w-24 h-4">
@@ -518,24 +518,24 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     <div className="relative">
                       <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                       <input 
-                        type="number"
+                        type="text"
                         inputMode="decimal"
                         placeholder="0.00"
                         value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-10 pr-16 text-xl font-bold text-slate-800 outline-none focus:border-blue-500 transition-all"
+                        onChange={(e) => setAmount(formatNumberWithCommas(e.target.value, true))}
+                        className="w-full bg-slate-50 dark:bg-[#131720] border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-10 pr-16 text-xl font-bold text-slate-800 dark:text-white outline-none focus:border-blue-500 transition-all placeholder:text-slate-400"
                       />
                       <button 
                         type="button"
                         onClick={() => {
                           const balance = getProfileWalletBalance(fromWallet);
-                          setAmount(balance.toFixed(2));
+                          setAmount(formatNumberWithCommas(balance.toFixed(2)));
                         }}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-600 hover:text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg transition-all active:scale-95"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-600 dark:text-blue-400 hover:text-blue-700 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer"
                       >
                         MAX
                       </button>
-                      {amount && parseFloat(amount) > getProfileWalletBalance(fromWallet) && (
+                      {amount && parseFormattedNumber(amount) > getProfileWalletBalance(fromWallet) && (
                         <div className="absolute -bottom-6 left-0 flex items-center gap-1.5 text-red-500">
                           <AlertCircle size={10} />
                           <span className="text-[9px] font-bold uppercase tracking-widest">Insufficient funds</span>
@@ -548,7 +548,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center px-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Recipient User ID</label>
+                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Recipient User ID</label>
                       {searchError && (
                          <span className="text-[10px] font-bold text-red-500 uppercase tracking-[0.1em] animate-pulse">User not found</span>
                       )}
@@ -567,31 +567,31 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         value={targetUserId}
                         onChange={(e) => setTargetUserId(e.target.value.replace(/\D/g, '').slice(0, 8))}
                         className={cn(
-                          "w-full bg-slate-50 border rounded-xl py-3.5 pl-12 pr-4 text-sm font-bold text-slate-700 outline-none transition-all",
-                          targetUser ? "border-green-500 bg-green-50/30" : 
-                          (targetUserId.length === 8 && searchError) ? "border-red-500 bg-red-50/30" : 
-                          "border-slate-100 focus:border-blue-500"
+                          "w-full bg-slate-50 dark:bg-[#131720] border rounded-xl py-3.5 pl-12 pr-4 text-sm font-bold text-slate-800 dark:text-white outline-none transition-all placeholder:text-slate-400",
+                          targetUser ? "border-[#009e42] bg-[#009e42]/5" : 
+                          (targetUserId.length === 8 && searchError) ? "border-red-500 bg-red-50/30 dark:bg-red-950/20" : 
+                          "border-slate-200 dark:border-white/10 focus:border-[#009e42]"
                         )}
                       />
-                      {isSearching && <div className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-blue-500"><RefreshCw size={14} /></div>}
+                      {isSearching && <div className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-[#009e42]"><RefreshCw size={14} /></div>}
                     </div>
 
                     {/* Beneficiaries / Recent Suggestions */}
                     {beneficiaries.length > 0 && !targetUser && !searchError && targetUserId.length < 8 && (
                       <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">Recent Recipients</p>
+                        <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1 mb-2">Recent Recipients</p>
                         <div className="flex flex-wrap gap-2">
                           {beneficiaries.map((ben) => (
                             <button
                               key={ben.id}
                               onClick={() => setTargetUserId(ben.public_id)}
-                              className="px-3 py-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 rounded-lg transition-all flex items-center gap-2 group"
+                              className="px-3 py-1.5 bg-slate-50 dark:bg-[#131720] hover:bg-[#009e42]/5 border border-slate-200 dark:border-white/10 hover:border-[#009e42]/30 rounded-lg transition-all flex items-center gap-2 group cursor-pointer"
                             >
-                              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-black text-blue-600">
+                              <div className="w-5 h-5 rounded-full bg-[#009e42]/10 flex items-center justify-center text-[10px] font-black text-[#009e42]">
                                 {ben.name.charAt(0)}
                               </div>
                               <div className="text-left">
-                                <p className="text-[10px] font-bold text-slate-700 leading-none">{ben.name}</p>
+                                <p className="text-[10px] font-bold text-slate-800 dark:text-white leading-none">{ben.name}</p>
                                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">ID: {ben.public_id}</p>
                               </div>
                             </button>
@@ -611,8 +611,8 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                       animate={{ opacity: 1, scale: 1 }}
                       className="space-y-4 pt-2"
                     >
-                      <div className="bg-green-50/50 border border-green-100 rounded-2xl p-4 flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full border-2 border-white shadow-sm overflow-hidden bg-white">
+                      <div className="bg-green-50/50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/30 rounded-2xl p-4 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden bg-white">
                           <img 
                             src={targetUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${targetUser.username}`} 
                             alt="Recipient" 
@@ -621,45 +621,45 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         </div>
                         <div>
                           <div className="flex items-center gap-1">
-                            <h4 className="text-sm font-bold text-slate-800">{targetUser.name}</h4>
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">{targetUser.name}</h4>
                             <ShieldCheck size={14} className="text-green-500" />
                           </div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">@{targetUser.username} • {targetUser.public_id}</p>
+                          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">@{targetUser.username} • {targetUser.public_id}</p>
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Send From</label>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Send From</label>
                         <select 
                           value={fromWallet}
                           onChange={(e) => setFromWallet(e.target.value as WalletType)}
-                          className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500"
+                          className="w-full bg-slate-50 dark:bg-[#131720] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-white outline-none focus:border-[#009e42]"
                         >
                           {Object.entries(WALLET_NAMES).map(([key, name]) => (
-                            <option key={key} value={key}>{name} ({formatCurrency(getProfileWalletBalance(key as WalletType))})</option>
+                            <option key={key} value={key} className="bg-white dark:bg-[#131720] text-slate-800 dark:text-white">{name} ({formatCurrency(getProfileWalletBalance(key as WalletType))})</option>
                           ))}
                         </select>
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Destination Wallet</label>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Destination Wallet</label>
                         <select 
                           value={toReceiverWallet}
                           onChange={(e) => setToReceiverWallet(e.target.value as any)}
-                          className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500"
+                          className="w-full bg-slate-50 dark:bg-[#131720] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-white outline-none focus:border-[#009e42]"
                         >
-                          <option value="">-- Select Destination Wallet --</option>
-                          <option value="funding_balance">Funding Wallet</option>
-                          <option value="available_balance">Available Balance</option>
-                          <option value="total_invested">Assets</option>
+                          <option value="" className="bg-white dark:bg-[#131720] text-slate-800 dark:text-white">-- Select Destination Wallet --</option>
+                          <option value="funding_balance" className="bg-white dark:bg-[#131720] text-slate-800 dark:text-white">Funding Wallet</option>
+                          <option value="available_balance" className="bg-white dark:bg-[#131720] text-slate-800 dark:text-white">Available Balance</option>
+                          <option value="total_invested" className="bg-white dark:bg-[#131720] text-slate-800 dark:text-white">Assets</option>
                         </select>
                       </div>
 
                       <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Amount to Transfer</label>
+                          <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Amount to Transfer</label>
                           <div className="flex items-center gap-1">
-                            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Balance:</span>
+                            <span className="text-[10px] font-bold text-[#009e42] uppercase tracking-widest">Balance:</span>
                             <div className="w-24 h-4">
                                 <DynamicBalance 
                                     value={fromWallet ? formatCurrency(getProfileWalletBalance(fromWallet)) : "$0"} 
@@ -674,23 +674,24 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         <div className="relative">
                           <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                           <input 
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="0.00"
                             value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-10 pr-16 text-xl font-bold text-slate-800 outline-none focus:border-blue-500 transition-all"
+                            onChange={(e) => setAmount(formatNumberWithCommas(e.target.value, true))}
+                            className="w-full bg-slate-50 dark:bg-[#131720] border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-10 pr-16 text-xl font-bold text-slate-800 dark:text-white outline-none focus:border-blue-500 transition-all placeholder:text-slate-400"
                           />
                           <button 
                             type="button"
                             onClick={() => {
                               const balance = getProfileWalletBalance(fromWallet);
-                              setAmount(balance.toFixed(2));
+                              setAmount(formatNumberWithCommas(balance.toFixed(2)));
                             }}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-600 hover:text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg transition-all active:scale-95"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-600 dark:text-blue-400 hover:text-blue-700 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer"
                           >
                             MAX
                           </button>
-                          {amount && parseFloat(amount) > getProfileWalletBalance(fromWallet) && (
+                          {amount && parseFormattedNumber(amount) > getProfileWalletBalance(fromWallet) && (
                             <div className="absolute -bottom-6 left-0 flex items-center gap-1.5 text-red-500">
                               <AlertCircle size={10} />
                               <span className="text-[9px] font-bold uppercase tracking-widest">Insufficient funds</span>
@@ -705,9 +706,9 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
             </div>
 
             <button 
-              disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > getProfileWalletBalance(fromWallet) || (type === 'user' && (!targetUser || !toReceiverWallet))}
+              disabled={!amount || parseFormattedNumber(amount) <= 0 || parseFormattedNumber(amount) > getProfileWalletBalance(fromWallet) || (type === 'user' && (!targetUser || !toReceiverWallet))}
               onClick={() => setShowPinModal(true)}
-              className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold uppercase tracking-[0.2em] text-xs shadow-xl shadow-blue-600/20 disabled:grayscale disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98] mt-4"
+              className="w-full py-4.5 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white rounded-2xl font-bold uppercase tracking-[0.2em] text-xs shadow-xl shadow-[#009e42]/20 disabled:grayscale disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98] mt-4 cursor-pointer"
             >
               Continue to PIN
             </button>
@@ -722,59 +723,59 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                 initial={{ scale: 0, rotate: -45 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", damping: 12, stiffness: 200 }}
-                className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white mx-auto shadow-xl shadow-emerald-500/20"
+                className="w-16 h-16 bg-[#009e42] rounded-2xl flex items-center justify-center text-white mx-auto shadow-xl shadow-[#009e42]/20"
               >
                 <CheckCircle2 size={32} />
               </motion.div>
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -z-10" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-[#009e42]/10 rounded-full blur-2xl -z-10" />
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Success</h3>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">Transaction Verified</p>
+              <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Success</h3>
+              <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Transaction Verified</p>
             </div>
 
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2 text-left">
-              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                <span className="text-[9px] font-bold text-slate-400 uppercase">Amount</span>
-                <span className="text-xs font-black text-slate-800 tracking-tight">{formatCurrency(parseFloat(amount) || 0)}</span>
+            <div className="bg-slate-50 dark:bg-[#131720] border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-2 text-left">
+              <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-2">
+                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Amount</span>
+                <span className="text-xs font-black text-slate-900 dark:text-white tracking-tight">{formatCurrency(parseFormattedNumber(amount) || 0)}</span>
               </div>
               {type === 'internal' ? (
                 <>
-                  <div className="flex justify-between items-center border-b border-slate-200 pb-2 pt-1">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase">From</span>
-                    <span className="text-xs font-bold text-slate-700">{WALLET_NAMES[fromWallet]}</span>
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-2 pt-1">
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">From</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{WALLET_NAMES[fromWallet]}</span>
                   </div>
-                  <div className="flex justify-between items-center border-b border-slate-200 pb-2 pt-1">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase">To</span>
-                    <span className="text-xs font-bold text-slate-700">{WALLET_NAMES[toWallet]}</span>
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-2 pt-1">
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">To</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{WALLET_NAMES[toWallet]}</span>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="flex justify-between items-center border-b border-slate-200 pb-2 pt-1">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase">From</span>
-                    <span className="text-xs font-bold text-slate-700">{WALLET_NAMES[fromWallet]}</span>
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-2 pt-1">
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">From</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{WALLET_NAMES[fromWallet]}</span>
                   </div>
-                  <div className="flex justify-between items-center border-b border-slate-200 pb-2 pt-1">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase">Recipient</span>
-                    <span className="text-xs font-bold text-slate-700">{targetUser?.name} ({targetUser?.public_id})</span>
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-2 pt-1">
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Recipient</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{targetUser?.name} ({targetUser?.public_id})</span>
                   </div>
-                  <div className="flex justify-between items-center border-b border-slate-200 pb-2 pt-1">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase">Destination Wallet</span>
-                    <span className="text-xs font-bold text-slate-700">{RECEIVER_WALLET_NAMES[toReceiverWallet] || toReceiverWallet}</span>
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-2 pt-1">
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Destination Wallet</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{RECEIVER_WALLET_NAMES[toReceiverWallet] || toReceiverWallet}</span>
                   </div>
                 </>
               )}
               <div className="flex justify-between items-center pt-1">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Status</span>
-                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Completed</span>
+                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Status</span>
+                <span className="text-[9px] font-black text-[#009e42] uppercase tracking-widest">Completed</span>
               </div>
             </div>
 
             <button 
               onClick={onClose}
-              className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold uppercase tracking-[0.2em] text-[10px] transition-all active:scale-[0.98]"
+              className="w-full py-3.5 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white rounded-xl font-bold uppercase tracking-[0.2em] text-[10px] shadow-lg shadow-[#009e42]/20 transition-all active:scale-[0.98] cursor-pointer"
             >
               Done
             </button>
@@ -792,14 +793,14 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-md"
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-md"
           />
           <motion.div 
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className={cn(
-              "relative bg-white shadow-2xl overflow-hidden transition-all duration-500",
+              "relative bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden transition-all duration-500",
               step === 'success' ? "w-full max-w-[280px] rounded-3xl" : 
               "w-full max-w-[380px] rounded-2xl"
             )}
@@ -821,7 +822,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   </div>
                   <button 
                     onClick={onClose}
-                    className="p-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all text-white"
+                    className="p-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all text-white cursor-pointer"
                   >
                     <X size={14} />
                   </button>
@@ -832,7 +833,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
 
             {/* Body */}
             <div className={cn(
-              "bg-white transition-all duration-500",
+              "bg-white dark:bg-[#0c1017] transition-all duration-500",
               step === 'success' ? "p-6" : 
               "p-5"
             )}>
@@ -862,7 +863,7 @@ function SelectionCard({ icon: Icon, title, description, onClick, color }: { ico
     <button 
       onClick={onClick}
       className={cn(
-        "p-4 border border-slate-100 rounded-2xl text-left group hover:border-blue-500/30 hover:bg-slate-50 transition-all active:scale-[0.98]",
+        "p-4 border border-slate-200 dark:border-white/10 rounded-2xl text-left group hover:border-blue-500/30 hover:bg-slate-50 dark:hover:bg-white/5 transition-all active:scale-[0.98] cursor-pointer",
         "flex flex-row items-center gap-4 w-full"
       )}
     >
@@ -870,10 +871,10 @@ function SelectionCard({ icon: Icon, title, description, onClick, color }: { ico
         <Icon size={18} />
       </div>
       <div className="space-y-0.5 flex-1 min-w-0">
-        <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+        <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
           {title} <ArrowRight size={12} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-blue-500" />
         </h4>
-        <p className="text-[10px] font-medium text-slate-400 leading-normal">
+        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-normal">
           {description}
         </p>
       </div>

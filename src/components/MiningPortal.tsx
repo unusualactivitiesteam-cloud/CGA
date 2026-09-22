@@ -693,9 +693,9 @@ export default function MiningPortal() {
       const el = document.getElementById(`miner-card-${machId}`);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('ring-4', 'ring-[#CCFF00]', 'ring-offset-4', 'ring-offset-black', 'transition-all', 'duration-500');
+        el.classList.add('ring-4', 'ring-[#009e42]', 'ring-offset-4', 'ring-offset-black', 'transition-all', 'duration-500');
         setTimeout(() => {
-          el.classList.remove('ring-4', 'ring-[#CCFF00]', 'ring-offset-4', 'ring-offset-black');
+          el.classList.remove('ring-4', 'ring-[#009e42]', 'ring-offset-4', 'ring-offset-black');
         }, 5000);
       }
     }, 200);
@@ -1270,7 +1270,7 @@ export default function MiningPortal() {
           position: absolute;
           width: 8px;
           height: 8px;
-          border-color: var(--theme-accent, #CCFF00);
+          border-color: var(--theme-accent, #009e42);
           border-style: solid;
           pointer-events: none;
           z-index: 5;
@@ -1306,7 +1306,7 @@ export default function MiningPortal() {
           <div className="flex items-center gap-3 mt-auto sm:mt-0">
             <button 
               onClick={handleClose} 
-              className="p-3 bg-black/50 hover:bg-black/70 border border-white/10 rounded-2xl hover:text-[#CCFF00] transition-all backdrop-blur-md active:scale-95 duration-200"
+              className="p-3 bg-black/50 hover:bg-black/70 border border-white/10 rounded-2xl hover:text-[#009e42] transition-all backdrop-blur-md active:scale-95 duration-200"
               title="Go Back"
             >
               <ArrowLeft size={18} className="text-white" />
@@ -1317,7 +1317,7 @@ export default function MiningPortal() {
           <div className="flex items-center gap-5 p-3.5 bg-black/60 border border-white/10 rounded-3xl backdrop-blur-md mt-auto sm:mt-0 max-w-max self-end sm:self-auto">
             <div className="text-right">
               <p className="text-[9px] font-black uppercase text-amber-400 tracking-widest">Your Escrow Balance</p>
-              <p className="text-base sm:text-lg font-black text-[#CCFF00] font-mono mt-0.5">
+              <p className="text-base sm:text-lg font-black text-[#009e42] font-mono mt-0.5">
                 {(profile?.twn_balance || 0).toLocaleString()} <span className="text-xs font-bold text-white">CGA</span>
               </p>
             </div>
@@ -1449,7 +1449,7 @@ export default function MiningPortal() {
                             </div>
                             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                               <div 
-                                className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-[#CCFF00] to-emerald-600 transition-all font-sans"
+                                className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-[#009e42] to-emerald-600 transition-all font-sans"
                                 style={{ width: `${freeProgress}%` }}
                               />
                             </div>
@@ -1709,7 +1709,7 @@ export default function MiningPortal() {
                   <Zap size={14} className="text-amber-500 animate-pulse" /> STARTER MINER NODE
                 </h2>
 
-                <div className="p-6 rounded-[32px] relative overflow-hidden transition-all duration-300 bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6" style={{ '--theme-accent': '#CCFF00', '--theme-accent-shadow': 'rgba(204, 255, 0, 0.15)' } as React.CSSProperties}>
+                <div className="p-6 rounded-[32px] relative overflow-hidden transition-all duration-300 bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6" style={{ '--theme-accent': '#009e42', '--theme-accent-shadow': 'rgba(0, 158, 66, 0.15)' } as React.CSSProperties}>
                   <span className="cyber-corner-bracket cyber-corner-tl" />
                   <span className="cyber-corner-bracket cyber-corner-tr" />
                   <span className="cyber-corner-bracket cyber-corner-bl" />
@@ -1767,7 +1767,7 @@ export default function MiningPortal() {
       {/* DETAILED PREMIUM SECURITY NOTICE */}
       <div className="w-full max-w-7xl mx-auto px-4 md:px-8 mt-12 mb-8 animate-fade-in">
         <div className="bg-white border border-slate-200 rounded-[32px] p-6 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-sm">
-          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#CCFF00]/15 to-transparent" />
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#009e42]/15 to-transparent" />
           <div className="flex items-center gap-4">
             <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-xl">
               <Terminal size={18} />
@@ -1785,7 +1785,7 @@ export default function MiningPortal() {
         <button
           type="button"
           onClick={() => setShowGuide(true)}
-          className="px-8 py-4 bg-slate-900 border-2 border-[#8ba313] hover:border-black text-[#CCFF00] hover:text-white hover:bg-slate-950 rounded-2xl text-xs font-black uppercase tracking-[0.25em] transition-all cursor-pointer shadow-lg shadow-amber-400/10 hover:scale-[1.02] active:scale-[0.98]"
+          className="px-8 py-4 bg-slate-900 border-2 border-[#009e42] hover:border-black text-[#009e42] hover:text-white hover:bg-slate-950 rounded-2xl text-xs font-black uppercase tracking-[0.25em] transition-all cursor-pointer shadow-lg shadow-emerald-400/10 hover:scale-[1.02] active:scale-[0.98]"
         >
           📖 Open Mining System Guide
         </button>
@@ -2161,7 +2161,7 @@ export default function MiningPortal() {
                   onClick={handlePaySubmit}
                   disabled={isSubmittingPay || !txHash.trim() || !isConfirmed}
                   className={cn(
-                    "flex-1 py-3 bg-gradient-to-r from-amber-500 to-[#CCFF00] rounded-xl text-xs font-black uppercase tracking-wider text-[#07090e] shadow-lg transition-all flex items-center justify-center gap-2 font-mono font-bold",
+                    "flex-1 py-3 bg-gradient-to-r from-amber-500 to-[#009e42] rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-lg transition-all flex items-center justify-center gap-2 font-mono font-bold",
                     (!txHash.trim() || !isConfirmed || isSubmittingPay) 
                       ? "opacity-30 cursor-not-allowed filter grayscale" 
                       : "hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
@@ -2225,7 +2225,7 @@ export default function MiningPortal() {
               <button
                 type="button"
                 onClick={() => handleActivateMachineDirect(approvedMachine.id)}
-                className="w-full py-4 bg-[#CCFF00] hover:bg-[#b5e200] active:scale-[0.98] transition-all text-[#07090e] rounded-2xl text-xs font-black uppercase tracking-widest shadow-md flex items-center justify-center gap-2 font-sans"
+                className="w-full py-4 bg-[#009e42] hover:bg-[#02d147] active:scale-[0.98] transition-all text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-md flex items-center justify-center gap-2 font-sans"
               >
                 <Zap size={14} /> Activate Mining Machine
               </button>

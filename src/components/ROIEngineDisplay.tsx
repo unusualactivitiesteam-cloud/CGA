@@ -217,7 +217,7 @@ export const ROIEngineStats = React.memo(({ investments, profile, user, variant 
               "p-10 border rounded-[40px] relative overflow-visible group transition-all duration-300 shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-md",
               isLight 
                 ? "bg-white border-slate-200/80 shadow-[0_10px_30px_rgba(0,0,0,0.03),0_0_25px_rgba(255,255,255,0.95)]" 
-                : "bg-[#0B0D13]/90 border-white/10 hover:border-[#A6FF00]/40"
+                : "bg-[#0B0D13]/90 border-white/10 hover:border-[#009e42]/40"
             )}
         >
             <div className={cn("h-32 mb-10 relative overflow-visible border-b transition-colors", isLight ? "border-slate-100" : "border-white/5")}>
@@ -303,7 +303,7 @@ export const ROIEngineStats = React.memo(({ investments, profile, user, variant 
   return (
     <div 
         className={cn(
-          "w-full border shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-md rounded-[24px] overflow-hidden flex flex-col md:flex-row items-stretch md:items-center justify-between p-5 lg:p-6 gap-5 relative group hover:border-[#A6FF00]/40 hover:shadow-[0_0_30px_rgba(166,255,0,0.03)] transition-all duration-500 gpu-accelerate",
+          "w-full border shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-md rounded-[24px] overflow-hidden flex flex-col md:flex-row items-stretch md:items-center justify-between p-5 lg:p-6 gap-5 relative group hover:border-[#009e42]/40 hover:shadow-[0_0_30px_rgba(0,158,66,0.06)] transition-all duration-500 gpu-accelerate",
           isLight 
             ? "bg-white border-slate-200/80 shadow-[0_10px_30px_rgba(0,0,0,0.03),0_0_25px_rgba(255,255,255,0.95)]" 
             : "bg-[#0B0D13]/90 border-white/10"
@@ -357,7 +357,7 @@ export const ROIEngineStats = React.memo(({ investments, profile, user, variant 
           <div className="flex flex-col text-left">
             <span className={cn(
               "text-[10px] font-black uppercase tracking-[0.2em] transition-colors",
-              isLight ? "text-slate-400" : "text-[#a4d100]"
+              isLight ? "text-slate-400" : "text-[#009e42]"
             )}>CGA Nodes Active</span>
             <span className={cn(
               "text-xs font-semibold flex items-center gap-1.5 mt-0.5 transition-colors",
@@ -418,7 +418,7 @@ export const ROIEngineStats = React.memo(({ investments, profile, user, variant 
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
-                className="h-full bg-gradient-to-r from-emerald-400 via-[#a4d100] to-green-500 shadow-[0_0_15px_rgba(16,185,129,0.4)] rounded-full"
+                className="h-full bg-gradient-to-r from-emerald-400 via-[#009e42] to-green-500 shadow-[0_0_15px_rgba(16,185,129,0.4)] rounded-full"
               />
             </div>
           </div>

@@ -190,10 +190,116 @@ async function startServer() {
     }
   });
 
+  // --- PAYMENT METHOD ROUTING & REGIONAL ELIGIBILITY ---
+  const NIGERIAN_BANKS = [
+    {
+      id: "opay",
+      bankName: "Opay",
+      accountNumber: "6550002094",
+      accountName: "TAVARI WAVE NETWORK/CGA TRADES"
+    },
+    {
+      id: "moniepoint",
+      bankName: "MONIEPOINT",
+      accountNumber: "9132530055",
+      accountName: "TAVARI WAVE NETWORK/CGA TRADES"
+    }
+  ];
+
+  const ALLOWED_CRYPTO = {
+    btc: {
+      name: "Bitcoin (BTC)",
+      network: "Native Bitcoin Network",
+      address: "bc1p2mw24svf4yg5d6v4lxk5309jlcgcqjdagaefuc0adac9z4ys2p5qfq9t8t"
+    },
+    usdt: {
+      name: "USDT (TRC20)",
+      network: "TRON (TRC20)",
+      address: "TJTym5Qs77hBEr2kEiJPVEQwR4kM2AosSG"
+    }
+  };
+
+  const verifyNigeriaRegion = (country?: string, code?: string) => {
+    if (!country && !code) return false;
+    const c = (country || '').trim().toLowerCase();
+    const cd = (code || '').trim().toUpperCase();
+    return cd === 'NG' || cd === 'NGA' || c === 'nigeria' || c.includes('nigeria') || c.includes('lagos');
+  };
+
+  const getRegionFromUser = async (req: Request): Promise<{ country: string; code: string; isNigeria: boolean }> => {
+    let country = (req.query.country as string) || (req.body?.country as string) || '';
+    let code = (req.query.code as string) || (req.body?.code as string) || (req.headers['cf-ipcountry'] as string) || '';
+
+    // Check Firebase ID Token if supplied
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const decoded = await admin.auth().verifyIdToken(token);
+        if (decoded && adminDb) {
+          const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
+          if (userDoc.exists) {
+            const data = userDoc.data();
+            if (data?.country) country = data.country;
+            if (data?.country_code) code = data.country_code;
+            if (data?.countryName && !country) country = data.countryName;
+          }
+        }
+      } catch (e) {
+        // Token decode failed silently, fallback to params/headers
+      }
+    }
+
+    const isNigeria = verifyNigeriaRegion(country, code);
+    return {
+      country: isNigeria ? 'Nigeria' : country || 'Global',
+      code: isNigeria ? 'NG' : code || 'GL',
+      isNigeria
+    };
+  };
+
+  app.all("/api/payment/eligibility", async (req: Request, res: Response) => {
+    try {
+      const region = await getRegionFromUser(req);
+      if (region.isNigeria) {
+        return res.json({
+          country: "Nigeria",
+          countryCode: "NG",
+          isNigeria: true,
+          availableMethods: ["bank", "crypto"],
+          bankAccounts: NIGERIAN_BANKS,
+          cryptoOptions: ALLOWED_CRYPTO
+        });
+      } else {
+        return res.json({
+          country: region.country || "Global",
+          countryCode: region.code || "GL",
+          isNigeria: false,
+          availableMethods: ["crypto"],
+          bankAccounts: [],
+          cryptoOptions: ALLOWED_CRYPTO
+        });
+      }
+    } catch (err: any) {
+      console.error("[Payment Eligibility Error]:", err);
+      res.status(500).json({ error: "Failed to determine payment eligibility" });
+    }
+  });
+
   // --- DEPOSIT REQUEST ---
   app.post("/api/transactions/deposit", authenticate, async (req: AuthenticatedRequest, res) => {
-    const { amount, method, referenceId } = req.body;
+    const { amount, method, referenceId, country, countryCode } = req.body;
     try {
+      // If bank method attempted, strictly enforce Nigeria region
+      if (method === 'bank' || method === 'bank_transfer') {
+        const region = await getRegionFromUser(req);
+        if (!region.isNigeria && !verifyNigeriaRegion(country, countryCode)) {
+          return res.status(403).json({ 
+            error: "Bank transfer payment method is strictly available only for accounts registered in Nigeria." 
+          });
+        }
+      }
+
       await query(
         "INSERT INTO transactions (user_id, type, amount, status, reference_id, metadata) VALUES ($1, 'deposit', $2, 'pending', $3, $4)",
         [req.user!.id, amount, referenceId, JSON.stringify({ method })]
@@ -286,12 +392,12 @@ async function startServer() {
 
   // --- FIREBASE ADMIN INITIALIZATION ---
   const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
-  let adminApp: admin.app.App;
-  let adminDb: admin.firestore.Firestore;
+  let adminApp: admin.app.App | null = null;
+  let adminDb: admin.firestore.Firestore | null = null;
 
   try {
-    let projectId = "gen-lang-client-0341439865";
-    let databaseId = "ai-studio-339400f0-0e07-40fa-bc4e-9fd3d4481de3";
+    let projectId = "gen-lang-client-0324660521";
+    let databaseId = "ai-studio-cgawaveus-67fa75e1-f3e9-4cdd-aad9-79b6395dcfdb";
     if (fs.existsSync(configPath)) {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
       if (config.projectId) projectId = config.projectId;
@@ -307,7 +413,7 @@ async function startServer() {
     }
     adminDb = getAdminFirestore(adminApp, databaseId);
   } catch (err: any) {
-    console.error("Firebase admin init error:", err.message);
+    console.warn("Firebase admin init notice:", err.message);
   }
 
   // Firebase Admin Authentication Middleware

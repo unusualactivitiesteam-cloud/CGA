@@ -126,12 +126,12 @@ export default function GlobalRegulatoryCorporateCompliance() {
           <div className="flex-shrink-0 flex items-center justify-center">
             <div className="relative w-16 h-16 sm:w-28 sm:h-28 flex items-center justify-center">
               {/* Outer Glow Halo */}
-              <div className="absolute inset-0 bg-[#a4d100]/5 blur-2xl rounded-full" />
+              <div className="absolute inset-0 bg-[#009e42]/5 blur-2xl rounded-full" />
               
               {/* Spinning/Rolling Realistic Globe Graphics */}
               <div className="w-full h-full relative">
                 {/* 3D sphere background with realistic depth gradient */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#020304] via-[#083d20]/30 to-[#a4d100]/20 border border-[#a4d100]/20 shadow-[inset_0_0_15px_rgba(164,209,0,0.25)]" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#020304] via-[#083d20]/30 to-[#009e42]/20 border border-[#009e42]/20 shadow-[inset_0_0_15px_rgba(0,158,66,0.25)]" />
                 
                 {/* Spinning longitude and latitude grid (realistic digital globe) */}
                 <motion.div
@@ -139,7 +139,7 @@ export default function GlobalRegulatoryCorporateCompliance() {
                   animate={{ rotate: 360 }}
                   transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
                 >
-                  <svg viewBox="0 0 100 100" className="w-[90%] h-[90%] text-[#a4d100]/75">
+                  <svg viewBox="0 0 100 100" className="w-[90%] h-[90%] text-[#009e42]/75">
                     {/* Latitude grid lines */}
                     <path d="M 10 50 Q 50 65 90 50" fill="none" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.4" />
                     <path d="M 10 50 Q 50 35 90 50" fill="none" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.4" />
@@ -176,7 +176,7 @@ export default function GlobalRegulatoryCorporateCompliance() {
                     <path d="M 30 40 L 45 25 M 70 45 L 80 55 M 20 60 L 55 75" fill="none" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.2" />
                     
                     {/* Ring scanner segment */}
-                    <circle cx="50" cy="50" r="48" fill="none" stroke="#a4d100" strokeWidth="1.2" strokeDasharray="30 150" strokeOpacity="0.6" />
+                    <circle cx="50" cy="50" r="48" fill="none" stroke="#009e42" strokeWidth="1.2" strokeDasharray="30 150" strokeOpacity="0.6" />
                   </svg>
                 </motion.div>
 
@@ -199,7 +199,7 @@ export default function GlobalRegulatoryCorporateCompliance() {
               animate={{ opacity: 1, x: 0 }}
               className="text-lg sm:text-3xl font-black italic font-serif text-white uppercase tracking-tight leading-tight"
             >
-              Global Regulatory <span className="text-[#a4d100]">&</span> Corporate Compliance
+              Global Regulatory <span className="text-[#009e42]">&</span> Corporate Compliance
             </motion.h1>
           </div>
         </header>
@@ -220,7 +220,7 @@ export default function GlobalRegulatoryCorporateCompliance() {
         {/* JURISDICTIONS DIRECTORY */}
         <div className="space-y-8">
           <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-            <Globe className="text-[#a4d100]" size={20} />
+            <Globe className="text-[#009e42]" size={20} />
             <h2 className="text-xl font-bold uppercase tracking-wider text-white italic font-serif">International Corporate Registry</h2>
           </div>
 
@@ -231,14 +231,14 @@ export default function GlobalRegulatoryCorporateCompliance() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                className="p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-[#0c0f16] to-[#040608] border border-white/5 hover:border-[#a4d100]/20 transition-all duration-300 space-y-6 text-left shadow-xl"
+                className="p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-[#0c0f16] to-[#040608] border border-white/5 hover:border-[#009e42]/20 transition-all duration-300 space-y-6 text-left shadow-xl"
               >
                 {/* Jurisdiction Title Banner */}
                 <div className="flex items-center gap-3">
                   <span className="text-2xl sm:text-3xl select-none" role="img" aria-label={item.country}>{item.flag}</span>
                   <div>
                     <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">{item.country}</h3>
-                    <span className="text-[9px] font-mono tracking-widest text-[#a4d100] uppercase font-bold">CORPORATE REGISTRATION</span>
+                    <span className="text-[9px] font-mono tracking-widest text-[#009e42] uppercase font-bold">CORPORATE REGISTRATION</span>
                   </div>
                 </div>
 
@@ -247,15 +247,15 @@ export default function GlobalRegulatoryCorporateCompliance() {
                   <table className="w-full text-left text-xs border-collapse min-w-[500px] sm:min-w-0">
                     <thead>
                       <tr className="border-b border-white/5 bg-white/[0.02]">
-                        <th className="px-4 py-3 font-mono text-[10px] text-[#a4d100] uppercase font-black tracking-widest w-1/2">Code / Regulatory Authority</th>
-                        <th className="px-4 py-3 font-mono text-[10px] text-[#a4d100] uppercase font-black tracking-widest w-1/2">Function / Scope</th>
+                        <th className="px-4 py-3 font-mono text-[10px] text-[#009e42] uppercase font-black tracking-widest w-1/2">Code / Regulatory Authority</th>
+                        <th className="px-4 py-3 font-mono text-[10px] text-[#009e42] uppercase font-black tracking-widest w-1/2">Function / Scope</th>
                       </tr>
                     </thead>
                     <tbody>
                       {item.registrations.map((reg, regIdx) => (
                         <tr key={regIdx} className="border-b border-white/5 last:border-0 hover:bg-white/[0.01] transition-colors">
                           <td className="px-4 py-3 font-bold text-white flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#a4d100]" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#009e42]" />
                             {reg.authority}
                           </td>
                           <td className="px-4 py-3 text-gray-400 font-medium leading-relaxed">{reg.function}</td>
@@ -277,7 +277,7 @@ export default function GlobalRegulatoryCorporateCompliance() {
         {/* GLOBAL COMPLIANCE FRAMEWORK */}
         <section className="space-y-6 text-left">
           <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-            <Scale className="text-[#a4d100]" size={20} />
+            <Scale className="text-[#009e42]" size={20} />
             <h2 className="text-xl font-bold uppercase tracking-wider text-white italic font-serif">Global Compliance Framework</h2>
           </div>
 
@@ -289,7 +289,7 @@ export default function GlobalRegulatoryCorporateCompliance() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {compliancePillars.map((pillar, index) => (
                 <div key={index} className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/[0.01] border border-white/5 hover:border-white/10 transition-colors">
-                  <div className="w-7 h-7 rounded-lg bg-[#a4d100]/10 border border-[#a4d100]/20 flex items-center justify-center text-[#a4d100] font-mono text-[10px] font-black">
+                  <div className="w-7 h-7 rounded-lg bg-[#009e42]/10 border border-[#009e42]/20 flex items-center justify-center text-[#009e42] font-mono text-[10px] font-black">
                     {String(index + 1).padStart(2, '0')}
                   </div>
                   <span className="text-xs sm:text-sm text-white font-black uppercase tracking-tight">{pillar}</span>
@@ -304,12 +304,12 @@ export default function GlobalRegulatoryCorporateCompliance() {
         </section>
 
         {/* OUR COMMITMENT */}
-        <section className="p-8 sm:p-12 rounded-[40px] bg-gradient-to-br from-[#0c0f16]/95 to-[#040608]/98 border border-[#a4d100]/20 text-center relative overflow-hidden shadow-2xl">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-[#a4d100]/5 rounded-full blur-[100px] pointer-events-none" />
+        <section className="p-8 sm:p-12 rounded-[40px] bg-gradient-to-br from-[#0c0f16]/95 to-[#040608]/98 border border-[#009e42]/20 text-center relative overflow-hidden shadow-2xl">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-[#009e42]/5 rounded-full blur-[100px] pointer-events-none" />
           
           <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-            <div className="w-12 h-12 rounded-2xl bg-[#a4d100]/10 border border-[#a4d100]/20 flex items-center justify-center mx-auto">
-              <ShieldCheck className="text-[#a4d100]" size={24} />
+            <div className="w-12 h-12 rounded-2xl bg-[#009e42]/10 border border-[#009e42]/20 flex items-center justify-center mx-auto">
+              <ShieldCheck className="text-[#009e42]" size={24} />
             </div>
             
             <h2 className="text-2xl sm:text-3xl font-black italic font-serif text-white uppercase tracking-tight">Our Commitment</h2>

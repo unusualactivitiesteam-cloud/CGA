@@ -253,7 +253,7 @@ export const TransactionTicket: React.FC<TransactionTicketProps> = ({ tx, curren
             <div className="text-right">
               <p id={`tx-amount-${tx.id}`} className={cn(
                 "text-xs md:text-sm font-black tracking-tight mb-0.5 italic font-serif",
-                isWithType ? "text-red-400" : "text-[#a4d100]"
+                isWithType ? "text-red-400" : "text-[#009e42]"
               )}>
                 {displaySign}{displayAmount}
               </p>
@@ -283,15 +283,15 @@ export const TransactionTicket: React.FC<TransactionTicketProps> = ({ tx, curren
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-sm bg-[#0e1118] border border-white/10 rounded-[28px] p-6 shadow-[0_0_50px_rgba(164,209,0,0.07)] overflow-hidden text-left"
+              className="relative w-full max-w-sm bg-white dark:bg-[#0e1118] border border-slate-200 dark:border-white/10 rounded-[28px] p-6 shadow-2xl overflow-hidden text-left"
             >
               {/* Subtle top ambient glow */}
-              <div className="absolute top-0 inset-x-0 h-[80px] bg-gradient-to-b from-[#a4d100]/5 to-transparent pointer-events-none" />
+              <div className="absolute top-0 inset-x-0 h-[80px] bg-gradient-to-b from-[#009e42]/5 to-transparent pointer-events-none" />
 
               {/* Close Button */}
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 p-1.5 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-full transition-colors cursor-pointer text-white/60 hover:text-white"
+                className="absolute top-4 right-4 p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 rounded-full transition-colors cursor-pointer text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white"
               >
                 <X size={14} />
               </button>
@@ -302,22 +302,22 @@ export const TransactionTicket: React.FC<TransactionTicketProps> = ({ tx, curren
                   <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg mb-3", iconBg)}>
                     {React.cloneElement(iconComponent, { size: 20 })}
                   </div>
-                  <h3 className="text-sm font-black text-white text-center uppercase tracking-wider">
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white text-center uppercase tracking-wider">
                     {displayType}
                   </h3>
-                  <span className="text-[9px] text-white/40 uppercase tracking-widest font-black mt-1">
+                  <span className="text-[9px] text-slate-400 dark:text-white/40 uppercase tracking-widest font-black mt-1">
                     Transaction Receipt
                   </span>
                 </div>
 
                 {/* Amount Display */}
-                <div className="py-4 bg-white/[0.02] border border-white/5 rounded-2xl text-center">
-                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">
+                <div className="py-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl text-center">
+                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-white/40 mb-1">
                     Amount Settled
                   </p>
                   <p className={cn(
                     "text-xl sm:text-2xl font-black italic font-serif tracking-tight",
-                    isWithType ? "text-red-400" : "text-[#a4d100]"
+                    isWithType ? "text-red-500 dark:text-red-400" : "text-[#009e42]"
                   )}>
                     {displaySign}{displayAmount}
                   </p>
@@ -330,26 +330,26 @@ export const TransactionTicket: React.FC<TransactionTicketProps> = ({ tx, curren
 
                 {/* Details list */}
                 <div className="space-y-2.5">
-                  <h4 className="text-[8px] font-black uppercase tracking-[0.15em] text-white/40 pb-1 border-b border-white/5">
+                  <h4 className="text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-white/40 pb-1 border-b border-slate-100 dark:border-white/5">
                     Transaction Details
                   </h4>
                   
                   {/* Common details */}
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-white/40 uppercase tracking-wider font-bold">Type</span>
-                    <span className="text-white font-bold">{tx.type === 'investment' ? 'Investment' : displayType}</span>
+                    <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold">Type</span>
+                    <span className="text-slate-900 dark:text-white font-bold">{tx.type === 'investment' ? 'Investment' : displayType}</span>
                   </div>
 
                   {/* Specific fields */}
                   {tx.type === 'investment' && (
                     <>
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-white/40 uppercase tracking-wider font-bold">Plan</span>
-                        <span className="text-white font-bold">{tx.plan_name ? formatTitleCase(tx.plan_name) : 'Premium Plan'}</span>
+                        <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold">Plan</span>
+                        <span className="text-slate-900 dark:text-white font-bold">{tx.plan_name ? formatTitleCase(tx.plan_name) : 'Premium Plan'}</span>
                       </div>
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-white/40 uppercase tracking-wider font-bold">Asset Class</span>
-                        <span className="text-white font-bold">Asset balance</span>
+                        <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold">Asset Class</span>
+                        <span className="text-slate-900 dark:text-white font-bold">Asset balance</span>
                       </div>
                     </>
                   )}
@@ -357,8 +357,8 @@ export const TransactionTicket: React.FC<TransactionTicketProps> = ({ tx, curren
                   {tx.type === 'deposit' && (
                     <>
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-white/40 uppercase tracking-wider font-bold">Deposit Route</span>
-                        <span className="text-white font-bold uppercase">{tx.method || 'Crypto Ledger'}</span>
+                        <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold">Deposit Route</span>
+                        <span className="text-slate-900 dark:text-white font-bold uppercase">{tx.method || 'Crypto Ledger'}</span>
                       </div>
                     </>
                   )}
@@ -366,8 +366,8 @@ export const TransactionTicket: React.FC<TransactionTicketProps> = ({ tx, curren
                   {tx.type === 'withdrawal' && (
                     <>
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-white/40 uppercase tracking-wider font-bold">Withdrawal Route</span>
-                        <span className="text-white font-bold uppercase">{tx.method || 'Crypto Wallet'}</span>
+                        <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold">Withdrawal Route</span>
+                        <span className="text-slate-900 dark:text-white font-bold uppercase">{tx.method || 'Crypto Wallet'}</span>
                       </div>
                     </>
                   )}
@@ -375,52 +375,52 @@ export const TransactionTicket: React.FC<TransactionTicketProps> = ({ tx, curren
                   {tx.type_detail === 'internal_transfer' && (
                     <>
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-white/40 uppercase tracking-wider font-bold">Transfer Mode</span>
-                        <span className="text-white font-bold uppercase">Internal Balance Swap</span>
+                        <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold">Transfer Mode</span>
+                        <span className="text-slate-900 dark:text-white font-bold uppercase">Internal Balance Swap</span>
                       </div>
                     </>
                   )}
 
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-white/40 uppercase tracking-wider font-bold">Date</span>
-                    <span className="text-white font-bold">{dateFormatted}</span>
+                    <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold">Date</span>
+                    <span className="text-slate-900 dark:text-white font-bold">{dateFormatted}</span>
                   </div>
 
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-white/40 uppercase tracking-wider font-bold">Time</span>
-                    <span className="text-white font-bold font-mono">{timeFormatted}</span>
+                    <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold">Time</span>
+                    <span className="text-slate-900 dark:text-white font-bold font-mono">{timeFormatted}</span>
                   </div>
 
                   {tx.fee !== undefined && tx.fee > 0 && (
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-white/40 uppercase tracking-wider font-bold">Network Gas Fee</span>
-                      <span className="text-red-400 font-bold">{formatCurrency(tx.fee)}</span>
+                      <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold">Network Gas Fee</span>
+                      <span className="text-red-500 dark:text-red-400 font-bold">{formatCurrency(tx.fee)}</span>
                     </div>
                   )}
 
                   {tx.description && (
-                    <div className="pt-2 border-t border-white/5 text-[10px]">
-                      <span className="text-white/40 uppercase tracking-wider font-bold block mb-0.5">Description</span>
-                      <span className="text-white/80 font-medium leading-normal block">{tx.description}</span>
+                    <div className="pt-2 border-t border-slate-100 dark:border-white/5 text-[10px]">
+                      <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold block mb-0.5">Description</span>
+                      <span className="text-slate-700 dark:text-white/80 font-medium leading-normal block">{tx.description}</span>
                     </div>
                   )}
 
                   {/* Transaction reference signature */}
                   {tx.reference && (
-                    <div className="pt-2.5 border-t border-white/5 space-y-1.5">
-                      <span className="text-white/40 uppercase tracking-wider font-bold text-[8px] block">
+                    <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 space-y-1.5">
+                      <span className="text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold text-[8px] block">
                         Transaction Signature
                       </span>
-                      <div className="bg-white/[0.02] border border-white/5 rounded-xl px-3 py-2 flex items-center justify-between gap-3">
-                        <code className="text-[9px] font-mono text-white/70 truncate max-w-[200px]">
+                      <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-xl px-3 py-2 flex items-center justify-between gap-3">
+                        <code className="text-[9px] font-mono text-slate-700 dark:text-white/70 truncate max-w-[200px]">
                           {tx.reference}
                         </code>
                         <button 
                           onClick={() => handleCopyReference(tx.reference!)}
-                          className="p-1 hover:bg-white/5 rounded transition-colors text-white/60 hover:text-[#a4d100] cursor-pointer shrink-0"
+                          className="p-1 hover:bg-slate-200 dark:hover:bg-white/5 rounded transition-colors text-slate-400 hover:text-slate-700 dark:text-white/60 dark:hover:text-[#009e42] cursor-pointer shrink-0"
                           title="Copy Signature"
                         >
-                          {isCopied ? <Check size={12} className="text-[#a4d100]" /> : <Copy size={12} />}
+                          {isCopied ? <Check size={12} className="text-[#009e42]" /> : <Copy size={12} />}
                         </button>
                       </div>
                     </div>
@@ -430,7 +430,7 @@ export const TransactionTicket: React.FC<TransactionTicketProps> = ({ tx, curren
                 {/* OK Button */}
                 <button 
                   onClick={() => setIsModalOpen(false)}
-                  className="w-full mt-4 py-3 bg-[#a4d100] text-black font-black uppercase tracking-[0.2em] text-[9px] rounded-xl hover:bg-[#b8eb00] active:scale-[0.98] transition-all cursor-pointer text-center"
+                  className="w-full mt-4 py-3 bg-[#009e42] text-white font-black uppercase tracking-[0.2em] text-[9px] rounded-xl hover:bg-[#02d147] active:scale-[0.98] transition-all cursor-pointer text-center"
                 >
                   OK
                 </button>

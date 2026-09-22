@@ -103,13 +103,13 @@ export default function PinModal({ isOpen, onClose, mode }: PinModalProps) {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-[340px] bg-white rounded-[32px] shadow-2xl overflow-hidden"
+            className="relative w-full max-w-[340px] bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-white/10 rounded-[32px] shadow-2xl overflow-hidden"
           >
             <div className="bg-gradient-to-br from-slate-800 to-slate-950 p-6 text-white relative overflow-hidden">
                <div className="relative z-10 flex justify-between items-start">
                   <div className="space-y-0.5">
                     <h2 className="text-xl font-black italic font-serif flex items-center gap-2.5 lowercase">
-                      <ShieldCheck className="text-aura-lime" size={18} /> {mode === 'set' ? 'secue_pin' : 'update_pin'}
+                      <ShieldCheck className="text-[#009e42]" size={18} /> {mode === 'set' ? 'secue_pin' : 'update_pin'}
                     </h2>
                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em]">Institutional Grade</p>
                   </div>
@@ -122,10 +122,10 @@ export default function PinModal({ isOpen, onClose, mode }: PinModalProps) {
                </div>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-5 bg-white dark:bg-[#0c1017]">
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Current Password</label>
+                  <label className="text-[9px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest ml-1">Current Password</label>
                   <div className="relative">
                     <input 
                       type={showPassword ? "text" : "password"}
@@ -136,14 +136,14 @@ export default function PinModal({ isOpen, onClose, mode }: PinModalProps) {
                         setPasswordError(null);
                       }}
                       className={cn(
-                        "w-full bg-slate-50 border rounded-xl py-3 px-4 text-sm font-bold text-slate-800 outline-none transition-all",
-                        passwordError ? "border-red-500 bg-red-50/30 text-red-600" : "border-slate-100 focus:border-slate-900"
+                        "w-full bg-slate-50 dark:bg-white/5 border rounded-xl py-3 px-4 text-sm font-bold text-slate-800 dark:text-white outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-gray-500",
+                        passwordError ? "border-red-500 bg-red-50/30 text-red-600" : "border-slate-200 dark:border-white/10 focus:border-slate-900 dark:focus:border-white/30"
                       )}
                     />
                     <button 
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -157,7 +157,7 @@ export default function PinModal({ isOpen, onClose, mode }: PinModalProps) {
                 </div>
 
                 <div className="space-y-1.5 text-center pt-1">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">{mode === 'set' ? 'Initialize' : 'New'} PIN</label>
+                  <label className="text-[9px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest ml-1">{mode === 'set' ? 'Initialize' : 'New'} PIN</label>
                   <input 
                     type="password"
                     inputMode="numeric"
@@ -168,14 +168,14 @@ export default function PinModal({ isOpen, onClose, mode }: PinModalProps) {
                       setPinError(null);
                     }}
                     className={cn(
-                      "w-full bg-slate-50 border rounded-xl py-3 px-4 text-center text-2xl font-bold tracking-[0.4em] text-slate-800 outline-none transition-all",
-                      pinError ? "border-red-500 bg-red-50/30 text-red-600" : "border-slate-100 focus:border-slate-900"
+                      "w-full bg-slate-50 dark:bg-white/5 border rounded-xl py-3 px-4 text-center text-2xl font-bold tracking-[0.4em] text-slate-800 dark:text-white outline-none transition-all",
+                      pinError ? "border-red-500 bg-red-50/30 text-red-600" : "border-slate-200 dark:border-white/10 focus:border-slate-900 dark:focus:border-white/30"
                     )}
                   />
                 </div>
 
                 <div className="space-y-1.5 text-center">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Confirm PIN</label>
+                  <label className="text-[9px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest ml-1">Confirm PIN</label>
                   <input 
                     type="password"
                     inputMode="numeric"
@@ -186,8 +186,8 @@ export default function PinModal({ isOpen, onClose, mode }: PinModalProps) {
                       setPinError(null);
                     }}
                     className={cn(
-                      "w-full bg-slate-50 border rounded-xl py-3 px-4 text-center text-2xl font-bold tracking-[0.4em] text-slate-800 outline-none transition-all",
-                      pinError ? "border-red-500 bg-red-50/30 text-red-600" : "border-slate-100 focus:border-slate-900"
+                      "w-full bg-slate-50 dark:bg-white/5 border rounded-xl py-3 px-4 text-center text-2xl font-bold tracking-[0.4em] text-slate-800 dark:text-white outline-none transition-all",
+                      pinError ? "border-red-500 bg-red-50/30 text-red-600" : "border-slate-200 dark:border-white/10 focus:border-slate-900 dark:focus:border-white/30"
                     )}
                   />
                   {pinError && (
@@ -199,7 +199,7 @@ export default function PinModal({ isOpen, onClose, mode }: PinModalProps) {
               <button 
                 disabled={!password || newPin.length < 4 || newPin !== confirmPin || isSubmitting}
                 onClick={handleUpdatePin}
-                className="w-full py-4 bg-slate-900 hover:bg-black text-white rounded-xl font-bold uppercase tracking-[0.2em] text-[10px] shadow-lg transition-all active:scale-[0.98] disabled:opacity-30"
+                className="w-full py-4 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white rounded-xl font-bold uppercase tracking-[0.2em] text-[10px] shadow-lg shadow-[#009e42]/20 transition-all active:scale-[0.98] disabled:opacity-30 cursor-pointer"
               >
                 {isSubmitting ? 'Verifying...' : mode === 'set' ? 'Set PIN' : 'Change PIN'}
               </button>

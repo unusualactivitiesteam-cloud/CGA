@@ -31,10 +31,11 @@ import {
   Award
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn, isWithdrawalAllowed, formatCurrency } from '../lib/utils';
+import { cn, isWithdrawalAllowed, formatCurrency, formatNumberWithCommas, parseFormattedNumber } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useUIConfig } from '../contexts/UIConfigContext';
 import { useUI } from '../contexts/UIContext';
+import { useMode } from '../contexts/ModeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { db, auth } from '../lib/firebase';
 import { broadcastActivity } from '../lib/activity_logger';
@@ -135,30 +136,30 @@ function BankSelectorModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md" onClick={onClose}>
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-[400px] bg-[#0d1016] border border-white/10 rounded-[28px] overflow-hidden flex flex-col max-h-[80vh] shadow-2xl"
+        className="relative w-full max-w-[400px] bg-white dark:bg-[#0d1016] border border-slate-200 dark:border-white/10 rounded-[28px] overflow-hidden flex flex-col max-h-[80vh] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 border-b border-white/5 space-y-4 shrink-0">
+        <div className="p-6 border-b border-slate-100 dark:border-white/5 space-y-4 shrink-0">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black text-white uppercase tracking-widest italic">Select Institution</h3>
-            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-white">
+            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest italic">Select Institution</h3>
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-slate-400 hover:text-slate-700 dark:text-white/40 dark:hover:text-white cursor-pointer">
               <X size={20} />
             </button>
           </div>
           <div className="relative">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/20" />
             <input 
               type="text"
               autoFocus
               placeholder="Search banks..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white outline-none focus:border-emerald-500/30 font-medium"
+              className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-slate-800 dark:text-white outline-none focus:border-emerald-500/50 font-medium placeholder:text-slate-400"
             />
           </div>
         </div>
@@ -171,8 +172,10 @@ function BankSelectorModal({
                 onClose();
               }}
               className={cn(
-                "w-full px-6 py-4 text-left rounded-2xl transition-all flex items-center justify-between",
-                selectedBank === bank ? "bg-emerald-500/10 text-emerald-400 font-bold" : "hover:bg-white/5 text-white/70 hover:text-white"
+                "w-full px-6 py-4 text-left rounded-2xl transition-all flex items-center justify-between cursor-pointer",
+                selectedBank === bank 
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold" 
+                  : "hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white"
               )}
             >
               <span className="text-xs font-bold uppercase tracking-wide">{bank}</span>
@@ -563,6 +566,7 @@ export default function Rewards() {
   const { user, profile } = useAuth();
   const { config: uiConfig } = useUIConfig();
   const { openTransferModal } = useUI();
+  const { isBeta } = useMode();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -950,7 +954,7 @@ export default function Rewards() {
   const handlePointsConversion = async () => {
     const authUser = auth.currentUser;
     if (!authUser || isSubmitting) return;
-    const ptsToConvert = parseInt(pointsInput);
+    const ptsToConvert = Math.floor(parseFormattedNumber(pointsInput));
 
     if (!pointsInput || isNaN(ptsToConvert) || ptsToConvert <= 0) {
       toast.error("Please enter a valid amount of points to convert.");
@@ -1259,7 +1263,7 @@ export default function Rewards() {
       return;
     }
 
-    const amt = parseFloat(withdrawAmount);
+    const amt = parseFormattedNumber(withdrawAmount);
     if (!withdrawAmount || isNaN(amt) || amt < 10) {
       toast.error("Minimum reward withdrawal threshold is $10.00.");
       return;
@@ -1303,7 +1307,7 @@ export default function Rewards() {
     setIsSubmitting(true);
     
     try {
-      const amount = parseFloat(withdrawAmount);
+      const amount = parseFormattedNumber(withdrawAmount);
       const fee = Math.floor((amount * 0.20) * 100) / 100;
       const finalAmount = amount - fee;
       const nowIso = new Date().toISOString();
@@ -1388,7 +1392,7 @@ export default function Rewards() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
         
         {/* Neon glowing halos */}
-        <div className="absolute -top-12 -left-12 w-64 h-64 bg-[#a4d100]/10 rounded-full blur-[80px]" />
+        <div className="absolute -top-12 -left-12 w-64 h-64 bg-[#009e42]/10 rounded-full blur-[80px]" />
         <div className="absolute -bottom-12 -right-12 w-80 h-80 bg-emerald-500/10 rounded-full blur-[100px]" />
 
         <div className="relative z-10 flex flex-row items-center justify-between gap-4 max-w-5xl mx-auto w-full">
@@ -1401,13 +1405,13 @@ export default function Rewards() {
           {/* Stylized Trophy / Gift Representation SVG */}
           <div className="relative w-16 h-16 sm:w-36 sm:h-36 flex items-center justify-center shrink-0 pointer-events-none">
             {/* Rotating backing ray */}
-            <div className="absolute inset-1 sm:inset-2 border border-dashed border-[#a4d100]/30 rounded-full animate-[spin_30s_linear_infinite]" />
+            <div className="absolute inset-1 sm:inset-2 border border-dashed border-[#009e42]/30 rounded-full animate-[spin_30s_linear_infinite]" />
             
             {/* Glowing orb */}
-            <div className="absolute w-10 h-10 sm:w-20 sm:h-20 rounded-full bg-[#a4d100]/5 blur-md" />
+            <div className="absolute w-10 h-10 sm:w-20 sm:h-20 rounded-full bg-[#009e42]/5 blur-md" />
             
             {/* Custom Trophy SVG */}
-            <svg viewBox="0 0 24 24" fill="none" stroke="#a4d100" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 sm:w-16 sm:h-16 drop-shadow-[0_0_15px_rgba(164,209,0,0.5)]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#009e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 sm:w-16 sm:h-16 drop-shadow-[0_0_15px_rgba(0,158,66,0.5)]">
               <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
               <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
               <path d="M4 22h16" />
@@ -1417,7 +1421,7 @@ export default function Rewards() {
 
             {/* Mini floaters */}
             <div className="absolute -top-1 sm:top-4 -right-1 sm:right-4 text-amber-400 font-bold text-[7px] sm:text-xs animate-bounce">+🎁</div>
-            <div className="absolute -bottom-1 sm:bottom-4 -left-1 sm:left-4 text-[#a4d100] font-mono text-[6px] sm:text-[9px] font-bold animate-pulse">$CGA</div>
+            <div className="absolute -bottom-1 sm:bottom-4 -left-1 sm:left-4 text-[#009e42] font-mono text-[6px] sm:text-[9px] font-bold animate-pulse">$CGA</div>
           </div>
         </div>
       </div>
@@ -1466,12 +1470,14 @@ export default function Rewards() {
                     >
                       Withdraw
                     </button>
-                    <button
-                      onClick={openTransferModal}
-                      className="px-2 py-1 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-400 text-[8px] xs:text-[99px] sm:text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
-                    >
-                      Transfer
-                    </button>
+                    {isBeta && (
+                      <button
+                        onClick={openTransferModal}
+                        className="px-2 py-1 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-400 text-[8px] xs:text-[99px] sm:text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                      >
+                        Transfer
+                      </button>
+                    )}
                   </div>
                   <p className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1 sm:mt-2">Supported Instantly</p>
                 </div>
@@ -2061,7 +2067,7 @@ export default function Rewards() {
                         navigator.clipboard.writeText(link);
                         toast.success("Referral invitation link copied!");
                       }}
-                      className="px-2.5 py-1.5 sm:px-4 sm:py-2 bg-purple-600 hover:bg-purple-500 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-1 cursor-pointer shadow-md transition-all shrink-0 font-sans leading-none"
+                      className="px-2.5 py-1.5 sm:px-4 sm:py-2 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-1 cursor-pointer shadow-md shadow-[#009e42]/20 transition-all shrink-0 font-sans leading-none"
                     >
                       <Copy size={10} /> Copy Link
                     </button>
@@ -2232,7 +2238,7 @@ export default function Rewards() {
                     )}
                   </div>
                   {regularUnclaimed && (
-                    <button onClick={() => handleClaimInvestmentReward(regularUnclaimed)} disabled={isSubmitting} className="w-full mt-3 py-2 bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all">
+                    <button onClick={() => handleClaimInvestmentReward(regularUnclaimed)} disabled={isSubmitting} className="w-full mt-3 py-2 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] active:scale-[0.98] text-white text-[9px] font-black uppercase tracking-widest rounded-lg shadow-md shadow-[#009e42]/20 transition-all cursor-pointer">
                       Claim 2% Incentive
                     </button>
                   )}
@@ -2253,7 +2259,7 @@ export default function Rewards() {
                     )}
                   </div>
                   {premiumUnclaimed && (
-                    <button onClick={() => handleClaimInvestmentReward(premiumUnclaimed)} disabled={isSubmitting} className="w-full mt-3 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all">
+                    <button onClick={() => handleClaimInvestmentReward(premiumUnclaimed)} disabled={isSubmitting} className="w-full mt-3 py-2 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] active:scale-[0.98] text-white text-[9px] font-black uppercase tracking-widest rounded-lg shadow-md shadow-[#009e42]/20 transition-all cursor-pointer">
                       Claim 2% Incentive
                     </button>
                   )}
@@ -2274,7 +2280,7 @@ export default function Rewards() {
                     )}
                   </div>
                   {eliteUnclaimed && (
-                    <button onClick={() => handleClaimInvestmentReward(eliteUnclaimed)} disabled={isSubmitting} className="w-full mt-3 py-2 bg-amber-600 hover:bg-amber-500 active:scale-[0.98] text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all">
+                    <button onClick={() => handleClaimInvestmentReward(eliteUnclaimed)} disabled={isSubmitting} className="w-full mt-3 py-2 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] active:scale-[0.98] text-white text-[9px] font-black uppercase tracking-widest rounded-lg shadow-md shadow-[#009e42]/20 transition-all cursor-pointer">
                       Claim 2% Incentive
                     </button>
                   )}
@@ -2725,34 +2731,35 @@ export default function Rewards() {
                 <label className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Convert Points Amount</label>
                 <div className="relative">
                   <input 
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     placeholder="Points to swap..."
                     value={pointsInput}
-                    onChange={(e) => setPointsInput(e.target.value)}
+                    onChange={(e) => setPointsInput(formatNumberWithCommas(e.target.value, false))}
                     className="w-full bg-[#0a0c10] border border-white/10 rounded-xl py-3.5 px-4 text-sm font-bold text-white outline-none focus:border-cyan-500/40 pr-16"
                   />
                   <button
-                    onClick={() => setPointsInput(points_balance.toString())}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase text-cyan-400 bg-cyan-400/10 border border-cyan-400/20 px-3 py-1.5 rounded-lg hover:bg-cyan-400/20 transition-all"
+                    onClick={() => setPointsInput(formatNumberWithCommas(points_balance.toString()))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase text-cyan-400 bg-cyan-400/10 border border-cyan-400/20 px-3 py-1.5 rounded-lg hover:bg-cyan-400/20 transition-all cursor-pointer"
                   >
                     Max
                   </button>
                 </div>
 
-                {parseFloat(pointsInput) > 0 && (
+                {parseFormattedNumber(pointsInput) > 0 && (
                   <div className="flex justify-between text-[11px] px-1 font-bold">
                     <span>You will claim:</span>
-                    <span className="text-emerald-400 font-mono">+${(parseFloat(pointsInput) * 0.10).toFixed(2)} USD</span>
+                    <span className="text-emerald-400 font-mono">+${(parseFormattedNumber(pointsInput) * 0.10).toFixed(2)} USD</span>
                   </div>
                 )}
               </div>
 
               <button
                 onClick={handlePointsConversion}
-                disabled={isSubmitting || !pointsInput || parseInt(pointsInput) <= 0}
-                className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-teal-500 hover:brightness-110 active:scale-[0.98] text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-30"
+                disabled={isSubmitting || !pointsInput || parseFormattedNumber(pointsInput) <= 0}
+                className="w-full py-3.5 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] active:scale-[0.98] text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-[#009e42]/20 transition-all disabled:opacity-30 cursor-pointer"
               >
-                Execute Point Swap Swap
+                Execute Point Swap
               </button>
             </div>
           </motion.div>
@@ -2816,7 +2823,7 @@ export default function Rewards() {
                   <h3 className="text-sm font-black text-white uppercase tracking-wider">Referral Program</h3>
                 </div>
                 <p className="text-xs text-gray-400 leading-relaxed font-bold">
-                  Expand your professional Node matrix today. Get dynamic welcome credits of $5.00 for every client you introduce, and secure persistent matrix commissions based on referrals' container operations as they level up.
+                  Expand your professional Node matrix today. Get dynamic welcome credits of $15.00 for every client you introduce, and secure persistent matrix commissions based on referrals' container operations as they level up.
                 </p>
               </div>
 
@@ -2897,38 +2904,38 @@ export default function Rewards() {
       {/* --- POPUPS & MODALS --- */}
       <AnimatePresence>
         {selectedGuide && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#0f111a] border border-white/10 rounded-[32px] max-w-lg w-full p-6 relative overflow-hidden shadow-2xl"
+              className="bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-white/10 rounded-[32px] max-w-lg w-full p-6 relative overflow-hidden shadow-2xl"
             >
               <button 
                 onClick={() => setSelectedGuide(null)}
-                className="absolute top-5 right-5 p-2 rounded-full bg-white/5 text-gray-400 hover:text-white transition-all"
+                className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-gray-400 hover:text-slate-700 dark:hover:text-white transition-all cursor-pointer"
               >
                 <X size={16} />
               </button>
-              <h3 className="text-lg font-black text-white italic tracking-tight uppercase mb-4">{selectedGuide.title}</h3>
-              <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-xl border border-white/5">{selectedGuide.fullDesc || selectedGuide.shortDesc}</p>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white italic tracking-tight uppercase mb-4">{selectedGuide.title}</h3>
+              <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed whitespace-pre-line bg-slate-50 dark:bg-black/30 p-4 rounded-xl border border-slate-200 dark:border-white/5">{selectedGuide.fullDesc || selectedGuide.shortDesc}</p>
             </motion.div>
           </div>
         )}
 
         {showMethodSelector && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md" onClick={() => setShowMethodSelector(false)}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md" onClick={() => setShowMethodSelector(false)}>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 12 }}
-              className="bg-[#0f111a] border border-white/10 rounded-[28px] max-w-lg w-full p-6 relative shadow-2xl overflow-y-auto max-h-[85vh] flex flex-col text-left"
+              className="bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-white/10 rounded-[28px] max-w-lg w-full p-6 relative shadow-2xl overflow-y-auto max-h-[85vh] flex flex-col text-left"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                  <Coins size={18} className="text-emerald-400" />
-                  <h3 className="text-sm font-black text-white uppercase italic tracking-wider">
+                  <Coins size={18} className="text-emerald-500 dark:text-emerald-400" />
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase italic tracking-wider">
                     {selectedMobileMethod ? 'USDT TRC-20 Withdrawal' : 'Choose Settlement Network'}
                   </h3>
                 </div>
@@ -2937,7 +2944,7 @@ export default function Rewards() {
                     setShowMethodSelector(false);
                     setSelectedMobileMethod(null);
                   }}
-                  className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white"
+                  className="p-2 rounded-full bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-gray-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
                 >
                   <X size={18} />
                 </button>
@@ -2945,12 +2952,12 @@ export default function Rewards() {
 
               {!isWithdrawalAllowed() ? (
                 <div className="py-8 px-4 flex flex-col items-center justify-center text-center space-y-4">
-                  <Lock size={32} className="text-rose-400 animate-pulse" />
+                  <Lock size={32} className="text-rose-500 dark:text-rose-400 animate-pulse" />
                   <div className="space-y-1">
-                    <h3 className="text-base font-bold text-white">System Protocol Closed</h3>
-                    <p className="text-[10px] text-rose-400 bg-rose-500/10 border border-rose-550/20 px-3 py-1 rounded-full inline-block font-mono">Operations Restricted Today</p>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">System Protocol Closed</h3>
+                    <p className="text-[10px] text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-550/20 px-3 py-1 rounded-full inline-block font-mono">Operations Restricted Today</p>
                   </div>
-                  <p className="text-xs text-gray-500 leading-relaxed">Reward withdrawals are open Monday 9:00 AM – Friday 4:00 PM GMT+1. Please schedule during open hours.</p>
+                  <p className="text-xs text-slate-500 dark:text-gray-500 leading-relaxed">Reward withdrawals are open Monday 9:00 AM – Friday 4:00 PM GMT+1. Please schedule during open hours.</p>
                 </div>
               ) : !selectedMobileMethod ? (
                 <div className="space-y-4">
@@ -2959,37 +2966,38 @@ export default function Rewards() {
                       setWithdrawMethod('crypto');
                       setSelectedMobileMethod('crypto');
                     }}
-                    className="w-full text-left p-4 rounded-2xl bg-white/[0.02] hover:bg-white/5 border border-white/5 hover:border-emerald-500/30 transition-all flex items-center justify-between group"
+                    className="w-full text-left p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100/80 dark:hover:bg-white/5 border border-slate-200 dark:border-white/5 hover:border-emerald-500/30 transition-all flex items-center justify-between group cursor-pointer"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400">
+                      <div className="w-11 h-11 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 dark:text-emerald-400">
                         <Wallet size={20} />
                       </div>
                       <div>
-                        <span className="block text-xs font-black uppercase text-white tracking-wider">USDT Wallet</span>
-                        <span className="text-[10px] text-gray-500">Disbursed instantly on TRC-20 protocol layer.</span>
+                        <span className="block text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">USDT Wallet</span>
+                        <span className="text-[10px] text-slate-500 dark:text-gray-500">Disbursed instantly on TRC-20 protocol layer.</span>
                       </div>
                     </div>
-                    <ChevronRight size={16} className="text-gray-500" />
+                    <ChevronRight size={16} className="text-slate-400 dark:text-gray-500" />
                   </button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <button onClick={() => setSelectedMobileMethod(null)} className="text-[10px] font-black uppercase tracking-wider text-emerald-400 block mb-2">← BACK TO SELECTION</button>
+                  <button onClick={() => setSelectedMobileMethod(null)} className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-2 cursor-pointer">← BACK TO SELECTION</button>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1.5">Withdraw Amount (USD)</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-widest block mb-1.5">Withdraw Amount (USD)</label>
                     <div className="relative">
                       <input 
-                        type="number" 
+                        type="text" 
+                        inputMode="decimal"
                         placeholder="$0.00" 
                         value={withdrawAmount}
-                        onChange={(e) => setWithdrawAmount(e.target.value)}
-                        className="w-full bg-[#0a0c10] border border-white/10 rounded-xl py-3 px-4 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                        onChange={(e) => setWithdrawAmount(formatNumberWithCommas(e.target.value, true))}
+                        className="w-full bg-slate-50 dark:bg-[#0a0c10] border border-slate-200 dark:border-white/10 rounded-xl py-3 px-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500/50 placeholder:text-slate-400"
                       />
                       <button 
-                        onClick={() => setWithdrawAmount(reward_dollar_balance.toString())}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg"
+                        onClick={() => setWithdrawAmount(formatNumberWithCommas(reward_dollar_balance.toString()))}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg cursor-pointer"
                       >
                         All
                       </button>
@@ -2998,30 +3006,30 @@ export default function Rewards() {
 
                   {selectedMobileMethod === 'crypto' ? (
                     <div>
-                      <label className="text-xs font-bold text-gray-400 block mb-1">USDT TRC-20</label>
+                      <label className="text-xs font-bold text-slate-500 dark:text-gray-400 block mb-1">USDT TRC-20</label>
                       <input 
                         type="text" 
-                        placeholder="TR7NHq..."
+                        placeholder="TR7NHq..." 
                         value={cryptoAddress}
                         onChange={(e) => setCryptoAddress(e.target.value)}
-                        className="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none"
+                        className="w-full bg-slate-50 dark:bg-[#0a0c10] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400"
                       />
 
                       {/* Warning note pop-up reminder with "I have" toggle button */}
                       <div className="mt-3 p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2 text-left">
-                        <p className="text-[10px] text-amber-400 font-bold leading-relaxed">
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold leading-relaxed">
                           ⚠️ WARNING: This is only for USDT! Please ensure your address is a **USDT TRC-20** (or CRC-20) wallet address. Sending other tokens will result in permanent loss of funds.
                         </p>
                         <div className="flex items-center justify-between pt-1">
-                          <span className="text-[10px] font-black uppercase text-gray-450">I have double checked</span>
+                          <span className="text-[10px] font-black uppercase text-slate-600 dark:text-gray-450">I have double checked</span>
                           <button
                             type="button"
                             onClick={() => setHasConfirmedTrc20(!hasConfirmedTrc20)}
                             className={cn(
-                              "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                              "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer",
                               hasConfirmedTrc20 
-                                ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20"
-                                : "bg-white/5 border border-white/10 text-gray-400 hover:text-white"
+                                ? "bg-[#009e42] text-white shadow-lg shadow-[#009e42]/20"
+                                : "bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
                             )}
                           >
                             {hasConfirmedTrc20 ? "✓ I have" : "I have"}
@@ -3032,41 +3040,41 @@ export default function Rewards() {
                   ) : (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs font-bold text-gray-400 block mb-1">Bank Name</label>
-                        <button type="button" onClick={() => setShowBankSelector(true)} className="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-500 dark:text-gray-400 block mb-1">Bank Name</label>
+                        <button type="button" onClick={() => setShowBankSelector(true)} className="w-full bg-slate-50 dark:bg-[#0a0c10] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white flex items-center justify-between cursor-pointer">
                           <span>{bankName || "Select bank institution"}</span>
-                          <ChevronDown size={14} className="text-gray-400" />
+                          <ChevronDown size={14} className="text-slate-400 dark:text-gray-400" />
                         </button>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-gray-400 block mb-1">Account Number</label>
-                        <input type="text" placeholder="10-digit numeric code" value={bankAccNumber} onChange={(e) => setBankAccNumber(e.target.value.replace(/[^0-9]/g, ''))} className="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white" />
+                        <label className="text-xs font-bold text-slate-500 dark:text-gray-400 block mb-1">Account Number</label>
+                        <input type="text" placeholder="10-digit numeric code" value={bankAccNumber} onChange={(e) => setBankAccNumber(e.target.value.replace(/[^0-9]/g, ''))} className="w-full bg-slate-50 dark:bg-[#0a0c10] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400" />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-gray-400 block mb-1">Holder Name</label>
-                        <input type="text" placeholder={profile?.name || "Perfect match required"} value={bankAccName} onChange={(e) => setBankAccName(e.target.value)} className="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white" />
+                        <label className="text-xs font-bold text-slate-500 dark:text-gray-400 block mb-1">Holder Name</label>
+                        <input type="text" placeholder={profile?.name || "Perfect match required"} value={bankAccName} onChange={(e) => setBankAccName(e.target.value)} className="w-full bg-slate-50 dark:bg-[#0a0c10] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400" />
                       </div>
                     </div>
                   )}
 
-                  <div className="bg-[#0a0c10] p-4 rounded-xl space-y-2 text-xs">
-                    <div className="flex justify-between">
+                  <div className="bg-slate-50 dark:bg-[#0a0c10] border border-slate-200 dark:border-transparent p-4 rounded-xl space-y-2 text-xs">
+                    <div className="flex justify-between text-slate-600 dark:text-gray-400">
                       <span>Protocol Processing Fee (20%):</span>
-                      <span className="text-rose-400 font-mono">-${((parseFloat(withdrawAmount) || 0) * 0.20).toFixed(2)}</span>
+                      <span className="text-rose-500 dark:text-rose-400 font-mono">-${((parseFormattedNumber(withdrawAmount) || 0) * 0.20).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between font-bold pt-2 border-t border-white/5 text-white">
+                    <div className="flex justify-between font-bold pt-2 border-t border-slate-200 dark:border-white/5 text-slate-900 dark:text-white">
                       <span>Net Payout:</span>
-                      <span className="text-emerald-400 font-mono">${((parseFloat(withdrawAmount) || 0) * 0.80).toFixed(2)}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-mono">${((parseFormattedNumber(withdrawAmount) || 0) * 0.80).toFixed(2)}</span>
                     </div>
                   </div>
 
                   <button 
                     onClick={() => {
-                      if (!withdrawAmount || parseFloat(withdrawAmount) < 10) {
+                      if (!withdrawAmount || parseFormattedNumber(withdrawAmount) < 10) {
                         toast.error("Minimum settlement is $10.00");
                         return;
                       }
-                      if (parseFloat(withdrawAmount) > reward_dollar_balance) {
+                      if (parseFormattedNumber(withdrawAmount) > reward_dollar_balance) {
                         toast.error("Amount exceeds balance.");
                         return;
                       }
@@ -3080,8 +3088,8 @@ export default function Rewards() {
                     className={cn(
                       "w-full py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all",
                       hasConfirmedTrc20
-                        ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white cursor-pointer"
-                        : "bg-white/5 text-gray-500 border border-white/5 cursor-not-allowed"
+                        ? "bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white shadow-lg shadow-[#009e42]/20 cursor-pointer"
+                        : "bg-slate-200 dark:bg-white/5 text-slate-400 dark:text-gray-500 border border-slate-300 dark:border-white/5 cursor-not-allowed"
                     )}
                   >
                     Confirm

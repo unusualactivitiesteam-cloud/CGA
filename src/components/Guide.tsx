@@ -79,19 +79,19 @@ export default function Guide() {
           <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
             {/* Animated Core Icon */}
             <div className="relative shrink-0">
-              <div className="absolute inset-0 bg-[#CCFF00] rounded-[28px] opacity-20 blur-md animate-pulse" />
-              <div className="relative w-24 h-24 rounded-[28px] bg-[#0c0d15] border-2 border-white/10 flex items-center justify-center text-[#CCFF00] shadow-2xl">
+              <div className="absolute inset-0 bg-[#009e42] rounded-[28px] opacity-20 blur-md animate-pulse" />
+              <div className="relative w-24 h-24 rounded-[28px] bg-[#0c0d15] border-2 border-white/10 flex items-center justify-center text-[#009e42] shadow-2xl">
                 <Compass size={46} className="animate-[spin_40s_linear_infinite]" />
               </div>
             </div>
             
             <div className="space-y-3">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
-                <Sparkles size={11} className="text-[#CCFF00]" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#CCFF00]">{t("Interactive Learning Portal")}</span>
+                <Sparkles size={11} className="text-[#009e42]" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-[#009e42]">{t("Interactive Learning Portal")}</span>
               </div>
               <h1 className="text-3xl lg:text-5xl font-black tracking-tight text-white uppercase italic font-serif">
-                {t("Platform Guide &")} <span className="text-[#CCFF00] not-italic">{t("User Walkthrough")}</span>
+                {t("Platform Guide &")} <span className="text-[#009e42] not-italic">{t("User Walkthrough")}</span>
               </h1>
               <p className="text-[#8E8A9E] text-xs lg:text-sm font-medium tracking-wide max-w-2xl leading-relaxed">
                 {t("Learn how to navigate Capital Growth Alliance step-by-step, from deposits and investments to rewards, referrals, withdrawals, and TWN token activities. Understand key processes with detailed visual interactive mockups representing every feature.")}
@@ -127,7 +127,7 @@ export default function Guide() {
               onClick={() => handleTabClick(tab.id as keyof typeof sectionRefs)}
               className={`flex items-center gap-2 px-4 py-3 text-[10.5px] font-bold uppercase tracking-wider whitespace-nowrap rounded-[16px] transition-all cursor-pointer ${
                 activeTab === tab.id
-                  ? 'bg-[#CCFF00] text-slate-950 shadow-[0_6px_20px_rgba(204,255,0,0.3)]'
+                  ? 'bg-[#009e42] text-white shadow-[0_6px_20px_rgba(0,158,66,0.3)]'
                   : 'text-[#8E8A9E] hover:text-white hover:bg-white/5'
               }`}
             >
@@ -177,7 +177,7 @@ export default function Guide() {
             </div>
 
             <div className="lg:col-span-7 bg-[#0b0c13] border border-white/5 rounded-[32px] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden h-[540px]">
-              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#CCFF00]" /> Dynamic Visual Mockup</div>
+              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#009e42]" /> Dynamic Visual Mockup</div>
               
               {/* Deposit Interface Mock Render */}
               <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full space-y-4">
@@ -187,9 +187,9 @@ export default function Guide() {
                   <div className="space-y-2">
                     <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider block">1. Selected Currency & Network</label>
                     <div className="flex gap-2">
-                      <div className="flex-1 bg-white/5 border-2 border-[#CCFF00]/40 rounded-xl p-2.5 flex items-center justify-between text-xs font-bold text-white relative">
-                        <span className="flex items-center gap-1.5 font-serif italic"><Coins size={12} className="text-[#CCFF00]" /> USDT</span>
-                        <span className="text-[8px] bg-[#CCFF00]/10 text-[#CCFF00] px-1.5 py-0.5 rounded uppercase font-black">Active</span>
+                      <div className="flex-1 bg-white/5 border-2 border-[#009e42]/40 rounded-xl p-2.5 flex items-center justify-between text-xs font-bold text-white relative">
+                        <span className="flex items-center gap-1.5 font-serif italic"><Coins size={12} className="text-[#009e42]" /> USDT</span>
+                        <span className="text-[8px] bg-[#009e42]/10 text-[#009e42] px-1.5 py-0.5 rounded uppercase font-black">Active</span>
                         <Hotspot size={14} className="top-1 right-1" borderClass="border-red-500" bgClass="bg-red-500" />
                       </div>
                       <div className="flex-1 bg-white/5 border border-white/10 rounded-xl p-2.5 flex items-center justify-between text-xs font-bold text-[#8E8A9E]">
@@ -209,14 +209,14 @@ export default function Guide() {
                   <div className="space-y-2 relative">
                     <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider flex items-center justify-between">
                       <span>2. Deposit Destination Address</span>
-                      <span className="text-[8px] text-[#CCFF00] font-black uppercase">Click Address to Copy</span>
+                      <span className="text-[8px] text-[#009e42] font-black uppercase">Click Address to Copy</span>
                     </label>
-                    <div className="bg-[#050608] border border-[#CCFF00]/30 rounded-xl p-3 flex items-center justify-between relative group">
-                      <code className="text-xs text-[#CCFF00] font-semibold tracking-tight truncate select-all">T9yDpxnvTsVpBjMsZ5hsHn3s8MzkHnW</code>
+                    <div className="bg-[#050608] border border-[#009e42]/30 rounded-xl p-3 flex items-center justify-between relative group">
+                      <code className="text-xs text-[#009e42] font-semibold tracking-tight truncate select-all">T9yDpxnvTsVpBjMsZ5hsHn3s8MzkHnW</code>
                       <button className="p-1 px-2.5 bg-white/5 text-xs text-white rounded font-sans cursor-pointer flex items-center gap-1">
                         <Copy size={10} /> Copied!
                       </button>
-                      <Hotspot size={20} className="-left-1 -top-1" borderClass="border-[#CCFF00]" bgClass="bg-[#CCFF00]" />
+                      <Hotspot size={20} className="-left-1 -top-1" borderClass="border-[#009e42]" bgClass="bg-[#009e42]" />
                     </div>
                   </div>
 
@@ -231,7 +231,7 @@ export default function Guide() {
                         readOnly
                         className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-slate-300 outline-none select-none"
                       />
-                      <button className="w-full py-2.5 bg-[#CCFF00] text-slate-950 font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg relative flex items-center justify-center gap-1">
+                      <button className="w-full py-2.5 bg-[#009e42] text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg relative flex items-center justify-center gap-1">
                         <Send size={11} /> Confirm & Verify Deposit
                         <Hotspot size={18} className="bottom-0 right-1/2 translate-x-1/2 translate-y-1/2" borderClass="border-red-500" bgClass="bg-red-500 animate-ping" />
                       </button>
@@ -279,7 +279,7 @@ export default function Guide() {
             </div>
 
             <div className="lg:col-span-7 bg-[#0b0c13] border border-white/5 rounded-[32px] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden h-[540px]">
-              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#CCFF00]" /> Dynamic Visual Mockup</div>
+              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#009e42]" /> Dynamic Visual Mockup</div>
 
               {/* Investment Interface Mock */}
               <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full space-y-4">
@@ -292,7 +292,7 @@ export default function Guide() {
                       <div className="bg-gradient-to-br from-[#10b981]/10 to-teal-500/5 border-2 border-emerald-500 rounded-2xl p-3 text-center relative cursor-pointer">
                         <span className="text-[7px] font-black uppercase tracking-widest bg-emerald-500 text-slate-950 px-1.5 py-0.5 rounded-full absolute -top-1.5 left-1/2 -translate-x-1/2">Pulsing Node</span>
                         <div className="text-xs font-black text-white italic font-serif">CGA Starter</div>
-                        <div className="text-lg font-black text-[#CCFF00]">2.1% <span className="text-[8px] font-sans text-slate-400">Daily</span></div>
+                        <div className="text-lg font-black text-[#009e42]">2.1% <span className="text-[8px] font-sans text-slate-400">Daily</span></div>
                         <Hotspot size={12} className="top-1 right-1" borderClass="border-red-500" bgClass="bg-red-500" />
                       </div>
                       <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-3 text-center opacity-60">
@@ -316,8 +316,8 @@ export default function Guide() {
                   </div>
 
                   {/* Action Button */}
-                  <button className="w-full py-3.5 bg-emerald-500 text-slate-950 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all hover:scale-105 relative flex items-center justify-center gap-1">
-                    <Zap size={11} className="fill-slate-950" /> Initiate Investment Node
+                  <button className="w-full py-3.5 bg-[#009e42] text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all hover:scale-105 shadow-md shadow-[#009e42]/20 relative flex items-center justify-center gap-1">
+                    <Zap size={11} className="fill-white" /> Initiate Investment Node
                     <Hotspot size={18} className="right-4 top-1/2 -translate-y-1/2" borderClass="border-red-500" bgClass="bg-red-500 animate-ping" />
                   </button>
 
@@ -362,7 +362,7 @@ export default function Guide() {
             </div>
 
             <div className="lg:col-span-7 bg-[#0b0c13] border border-white/5 rounded-[32px] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden h-[540px]">
-              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#CCFF00]" /> Dynamic Visual Mockup</div>
+              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#009e42]" /> Dynamic Visual Mockup</div>
 
               {/* Activation Timeline Simulated Render */}
               <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full space-y-4">
@@ -381,10 +381,10 @@ export default function Guide() {
 
                   {/* Flow Steps visual */}
                   <div className="space-y-2 relative pl-2">
-                    <div className="absolute left-2.5 top-2 bottom-2 w-[1px] bg-[#CCFF00]/20" />
+                    <div className="absolute left-2.5 top-2 bottom-2 w-[1px] bg-[#009e42]/20" />
                     
                     <div className="flex gap-2.5 relative">
-                      <span className="w-2 h-2 rounded-full bg-[#CCFF00] mt-1 relative z-10" />
+                      <span className="w-2 h-2 rounded-full bg-[#009e42] mt-1 relative z-10" />
                       <div>
                         <div className="text-[9px] font-bold text-white uppercase">License Authenticated</div>
                         <p className="text-[8px] text-slate-400">Node wave license digital signature matching registry</p>
@@ -392,7 +392,7 @@ export default function Guide() {
                     </div>
 
                     <div className="flex gap-2.5 relative">
-                      <span className="w-2 h-2 rounded-full bg-[#CCFF00] mt-1 relative z-10" />
+                      <span className="w-2 h-2 rounded-full bg-[#009e42] mt-1 relative z-10" />
                       <div>
                         <div className="text-[9px] font-bold text-white uppercase">Capital Dispatched to Pool</div>
                         <p className="text-[8px] text-slate-400">Submitting $1,000 deployment contract limits</p>
@@ -416,7 +416,7 @@ export default function Guide() {
                     <div className="text-[8px] uppercase tracking-wider text-slate-500 font-bold">Continuous Ledger Harvest</div>
                     <div className="text-xl font-black text-emerald-400 font-mono tracking-tight">$1,021.0425...</div>
                     <div className="w-full bg-white/5 rounded-full h-1 relative overflow-hidden">
-                      <div className="bg-gradient-to-r from-emerald-500 to-[#CCFF00] h-full w-[45%]" />
+                      <div className="bg-gradient-to-r from-emerald-500 to-[#009e42] h-full w-[45%]" />
                     </div>
                   </div>
 
@@ -461,7 +461,7 @@ export default function Guide() {
             </div>
 
             <div className="lg:col-span-7 bg-[#0b0c13] border border-white/5 rounded-[32px] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden h-[540px]">
-              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#CCFF00]" /> Dynamic Visual Mockup</div>
+              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#009e42]" /> Dynamic Visual Mockup</div>
 
               {/* Withdrawal Interface Simulated Render */}
               <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full space-y-4">
@@ -551,7 +551,7 @@ export default function Guide() {
             </div>
 
             <div className="lg:col-span-7 bg-[#0b0c13] border border-white/5 rounded-[32px] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden h-[540px]">
-              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#CCFF00]" /> Dynamic Visual Mockup</div>
+              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#009e42]" /> Dynamic Visual Mockup</div>
 
               {/* Rewards Simulated Render */}
               <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full space-y-4">
@@ -588,7 +588,7 @@ export default function Guide() {
                     <button className="w-full py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-[9px] uppercase tracking-widest rounded-lg cursor-pointer">
                       Attest Daily Attendance
                     </button>
-                    <Hotspot size={16} className="bottom-0 left-12" borderClass="border-[#CCFF00]" bgClass="bg-[#CCFF00]" />
+                    <Hotspot size={16} className="bottom-0 left-12" borderClass="border-[#009e42]" bgClass="bg-[#009e42]" />
                   </div>
 
                   {/* Loyalty Points display */}
@@ -628,7 +628,7 @@ export default function Guide() {
               </StepIndicator>
 
               <StepIndicator step={4} title="Collect 2% Node Activation Bonus">
-                When downstream network operators lock an active investment, get an instant <strong className="text-[#CCFF00] font-bold">2% activation release</strong> directly to your liquid pocket.
+                When downstream network operators lock an active investment, get an instant <strong className="text-[#009e42] font-bold">2% activation release</strong> directly to your liquid pocket.
               </StepIndicator>
 
               <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 text-xs text-[#8E8A9E] leading-relaxed">
@@ -638,7 +638,7 @@ export default function Guide() {
             </div>
 
             <div className="lg:col-span-7 bg-[#0b0c13] border border-white/5 rounded-[32px] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden h-[540px]">
-              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#CCFF00]" /> Dynamic Visual Mockup</div>
+              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#009e42]" /> Dynamic Visual Mockup</div>
 
               {/* Referrals Simulated Render */}
               <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full space-y-4">
@@ -647,9 +647,9 @@ export default function Guide() {
                   {/* Link copier mockup */}
                   <div className="space-y-1.5">
                     <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider block">Your Personal Referral Coordinate</label>
-                    <div className="bg-[#050608] border border-blue-500/30 rounded-xl p-2.5 flex items-center justify-between">
-                      <code className="text-[10px] text-blue-300 truncate">https://tavariwave.net/ref?id=US502</code>
-                      <button className="px-2.5 py-1 bg-blue-500 text-slate-950 text-[10px] font-bold rounded cursor-pointer">Copy</button>
+                    <div className="bg-[#050608] border border-[#009e42]/30 rounded-xl p-2.5 flex items-center justify-between">
+                      <code className="text-[10px] text-[#009e42] truncate">https://tavariwave.net/ref?id=US502</code>
+                      <button className="px-2.5 py-1 bg-[#009e42] text-white text-[10px] font-bold rounded cursor-pointer">Copy</button>
                     </div>
                   </div>
 
@@ -666,7 +666,7 @@ export default function Guide() {
                       </div>
 
                       <div className="bg-[#050608] border border-white/5 rounded-lg p-2.5 text-center relative">
-                        <span className="text-[7.5px] uppercase font-semibold text-[#CCFF00]">Tier 2 Deploy</span>
+                        <span className="text-[7.5px] uppercase font-semibold text-[#009e42]">Tier 2 Deploy</span>
                         <div className="text-xs font-black text-white mt-1">2% Activation</div>
                         <p className="text-[7px] text-slate-500 mt-0.5">Credited when downline activates plan</p>
                       </div>
@@ -719,7 +719,7 @@ export default function Guide() {
             </div>
 
             <div className="lg:col-span-7 bg-[#0b0c13] border border-white/5 rounded-[32px] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden h-[540px]">
-              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#CCFF00]" /> Dynamic Visual Mockup</div>
+              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#009e42]" /> Dynamic Visual Mockup</div>
 
               {/* Leaderboard Miniature render */}
               <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full space-y-4">
@@ -740,7 +740,7 @@ export default function Guide() {
                     <div className="space-y-1">
                       <div className="flex justify-between items-center p-2.5 bg-gradient-to-r from-violet-500/10 to-transparent rounded-lg text-[10px]">
                         <span className="text-white font-bold">1st. Operator_TRX</span>
-                        <span className="text-[#CCFF00]">$148,500 Locked</span>
+                        <span className="text-[#009e42]">$148,500 Locked</span>
                       </div>
                       <div className="flex justify-between items-center p-2.5 bg-white/[0.01] rounded-lg text-[10px] text-slate-400">
                         <span>2nd. Captain_CGA</span>
@@ -776,11 +776,11 @@ export default function Guide() {
               </StepIndicator>
 
               <StepIndicator step={2} title="Understand Real-Time Pricing Fluctuation">
-                CGA valuation maintains a dynamic pricing index. <strong className="text-[#CCFF00] font-black">Your final portfolio balance will automatically adapt up or down</strong> as market indexes refresh.
+                CGA valuation maintains a dynamic pricing index. <strong className="text-[#009e42] font-black">Your final portfolio balance will automatically adapt up or down</strong> as market indexes refresh.
               </StepIndicator>
 
               <StepIndicator step={3} title="Swap USDT Into CGA Utility Asset">
-                Input your USDT balance, click <strong className="text-[#CCFF00] font-bold">Trade Tokens</strong>. Conversions commit instantly onto self-contained database timelines.
+                Input your USDT balance, click <strong className="text-[#009e42] font-bold">Trade Tokens</strong>. Conversions commit instantly onto self-contained database timelines.
               </StepIndicator>
 
               <div className="p-5 bg-indigo-500/5 rounded-2xl border border-indigo-500/15 text-xs text-[#8E8A9E] leading-relaxed">
@@ -790,7 +790,7 @@ export default function Guide() {
             </div>
 
             <div className="lg:col-span-12 xl:col-span-7 bg-[#0b0c13] border border-white/5 rounded-[32px] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden min-h-[500px]">
-              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#CCFF00]" /> Dynamic Visual Mockup</div>
+              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#009e42]" /> Dynamic Visual Mockup</div>
 
               {/* CGA Simulated Swap desk */}
               <div className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full space-y-4 pt-6">
@@ -802,7 +802,7 @@ export default function Guide() {
                       <span className="text-[7.5px] uppercase font-bold text-slate-500 block">CGA Market Index</span>
                       <span className="text-sm font-black text-emerald-400 font-mono flex items-center gap-1">$0.1824 <span className="text-[8px] text-emerald-400">(+14.2% Today)</span></span>
                     </div>
-                    <Hotspot size={10} className="top-1 right-1" borderClass="border-[#CCFF00]" bgClass="bg-[#CCFF00] animate-ping" />
+                    <Hotspot size={10} className="top-1 right-1" borderClass="border-[#009e42]" bgClass="bg-[#009e42] animate-ping" />
                   </div>
 
                   {/* Swap inputs */}
@@ -816,7 +816,7 @@ export default function Guide() {
                     </div>
                     <div className="bg-white/[0.01] border border-white/5 rounded-xl p-3">
                       <span className="text-[7.5px] uppercase text-slate-500 block">You Receive</span>
-                      <div className="text-xs font-bold text-[#CCFF00] flex justify-between mt-1">
+                      <div className="text-xs font-bold text-[#009e42] flex justify-between mt-1">
                         <span>548.24</span>
                         <span>CGA</span>
                       </div>
@@ -875,7 +875,7 @@ export default function Guide() {
             </div>
 
             <div className="lg:col-span-7 bg-[#0b0c13] border border-white/5 rounded-[32px] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden h-[540px]">
-              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#CCFF00]" /> Dynamic Visual Mockup</div>
+              <div className="absolute top-3 left-4 text-[10px] uppercase font-black text-[#8E8A9E] tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-[#009e42]" /> Dynamic Visual Mockup</div>
 
               {/* Support Miniature UI render */}
               <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full space-y-4">
@@ -897,7 +897,7 @@ export default function Guide() {
                   {/* AI Floating button Mockup */}
                   <div className="flex items-center justify-between p-3.5 bg-[#050608] border border-white/5 rounded-xl">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-[#CCFF00] text-slate-950 flex items-center justify-center"><Bot size={16} /></div>
+                      <div className="w-8 h-8 rounded-lg bg-[#009e42] text-white flex items-center justify-center"><Bot size={16} /></div>
                       <div>
                         <div className="text-[10px] font-black text-white">CGA AI Assistant</div>
                         <div className="text-[8px] text-emerald-400">Online & Ready</div>
@@ -925,7 +925,7 @@ export default function Guide() {
       {/* F & G. FAQ & Essential Reminders Section */}
       <div className="border-t border-white/5 pt-12 space-y-6">
         <div className="text-center max-w-2xl mx-auto space-y-2">
-          <span className="text-[#CCFF00] text-[10px] font-black uppercase tracking-widest">Ecosystem Rules & Standards</span>
+          <span className="text-[#009e42] text-[10px] font-black uppercase tracking-widest">Ecosystem Rules & Standards</span>
           <h2 className="text-2xl lg:text-3xl font-black text-white uppercase italic font-serif">Quick FAQ & Help Tips</h2>
           <p className="text-[#8E8A9E] text-xs">Verify critical operations standards, network requirements, and security rules below.</p>
         </div>
@@ -933,7 +933,7 @@ export default function Guide() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           <div className="bg-[#0b0c13] border border-white/5 p-6 rounded-3xl space-y-3 relative">
             <h4 className="text-white font-black text-sm uppercase tracking-wide flex items-center gap-2">
-              <ShieldCheck className="text-[#CCFF00]" size={16} /> Minimum Ledger requirements
+              <ShieldCheck className="text-[#009e42]" size={16} /> Minimum Ledger requirements
             </h4>
             <p className="text-[#8E8A9E] text-xs leading-relaxed">
               Deposits require a minimum of <strong className="text-white">$10 USDT</strong> sent over the TRON TRC20 network. Double checks network protocols across every stage of processing. Withdrawals require secure authorized addresses.
@@ -942,7 +942,7 @@ export default function Guide() {
 
           <div className="bg-[#0b0c13] border border-white/5 p-6 rounded-3xl space-y-3 relative">
             <h4 className="text-white font-black text-sm uppercase tracking-wide flex items-center gap-2">
-              <Zap className="text-[#CCFF00]" size={16} /> Yield Calculations Intervals
+              <Zap className="text-[#009e42]" size={16} /> Yield Calculations Intervals
             </h4>
             <p className="text-[#8E8A9E] text-xs leading-relaxed">
               Ecosystem return variables compound automatically inside live grid architectures and settle straight onto central balances. You can track continuous balances live right from your central dashboard widget.

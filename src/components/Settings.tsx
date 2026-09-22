@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, Lock, Bell, Eye, LogOut, CheckCircle2, ChevronRight, ArrowLeft, Sun, Moon } from 'lucide-react';
+import React, { useState } from 'react';
+import { Shield, Lock, Bell, Eye, LogOut, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { sendPasswordResetEmail } from 'firebase/auth';
@@ -17,27 +17,6 @@ export default function Settings() {
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isResetSent, setIsResetSent] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-
-  const [isDarkTheme, setIsDarkTheme] = useState(() => !document.documentElement.classList.contains('light'));
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDarkTheme(!document.documentElement.classList.contains('light'));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-
-  const handleThemeChange = (newTheme: 'light' | 'dark') => {
-    localStorage.setItem('theme', newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    }
-  };
 
   const handlePasswordReset = async () => {
     if (!user?.email) return;
@@ -266,34 +245,6 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="space-y-6">
-          <h2 className="text-[10px] font-medium uppercase tracking-[0.3em] text-aura-muted border-b border-white/5 pb-4">Appearance</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div 
-              onClick={() => handleThemeChange(isDarkTheme ? 'light' : 'dark')}
-              className="bg-[#11141b] border border-white/5 p-6 rounded-[24px] flex items-center justify-between group hover:border-aura-lime/20 transition-all cursor-pointer animate-fade-in"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-aura-muted group-hover:text-aura-lime transition-colors">
-                  {isDarkTheme ? <Moon size={20} /> : <Sun size={20} />}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white uppercase tracking-tight">Theme Mode</p>
-                  <p className="text-[10px] text-aura-muted font-medium uppercase tracking-wider">{isDarkTheme ? 'Dark Mode' : 'Light Mode'}</p>
-                </div>
-              </div>
-              <div className={cn(
-                "w-10 h-5 rounded-full relative transition-colors",
-                isDarkTheme ? "bg-primary" : "bg-white/10"
-              )}>
-                <div className={cn(
-                  "absolute top-1 w-3 h-3 rounded-full transition-all",
-                  isDarkTheme ? "right-1 bg-aura-black" : "left-1 bg-aura-muted"
-                )} />
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

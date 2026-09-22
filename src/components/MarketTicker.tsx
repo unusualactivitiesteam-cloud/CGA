@@ -154,7 +154,7 @@ export default function MarketTicker({ isDark }: { isDark: boolean }) {
        const jitter = (Math.sin(seed + i) * 5);
        points.push(`${i * 10},${10 + jitter}`);
     }
-    const color = item.change >= 0 ? "#ccff00" : "#ef4444";
+    const color = item.change >= 0 ? "#009e42" : "#ef4444";
     return (
       <svg width="40" height="20" className="opacity-40" key={item.symbol}>
         <path 
@@ -185,7 +185,7 @@ export default function MarketTicker({ isDark }: { isDark: boolean }) {
             animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className={cn(
-              "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full shadow-[0_0_8px_#ccff00]",
+              "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full shadow-[0_0_8px_#009e42]",
               isDark ? "bg-aura-lime" : "bg-emerald-500"
             )}
           />

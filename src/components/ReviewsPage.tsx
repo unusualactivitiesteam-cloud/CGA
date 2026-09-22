@@ -291,7 +291,7 @@ export default function ReviewsPage() {
             <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
           </button>
           <div className="flex items-center cursor-pointer" onClick={() => navigate('/welcome')}>
-            <img src="https://i.imgur.com/loFD5nc.png" alt="Logo" className="w-8 h-8 lg:w-9 lg:h-9 object-contain" />
+            <img src="https://i.imgur.com/BPyaRYZ.png" alt="Logo" className="w-8 h-8 lg:w-9 lg:h-9 object-contain" />
           </div>
         </div>
 
@@ -653,7 +653,11 @@ function WriteReviewModal({ isOpen, onClose, onSubmit, userName, isLight }: { is
                           size={32} 
                           className={cn(
                             "transition-all duration-300",
-                            star <= rating ? "text-emerald-500 fill-emerald-500 scale-110" : "text-white/10 fill-white/10 hover:text-white/20"
+                            star <= rating 
+                              ? "text-emerald-500 fill-emerald-500 scale-110" 
+                              : isLight 
+                                ? "text-slate-200 fill-slate-200 hover:text-slate-300" 
+                                : "text-white/10 fill-white/10 hover:text-white/20"
                           )} 
                         />
                       </button>

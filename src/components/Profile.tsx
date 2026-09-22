@@ -24,9 +24,11 @@ import {
   Image as ImageIcon,
   UserCircle,
   LayoutDashboard,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Sparkles
 } from 'lucide-react';
 import { useAuth, handleFirestoreError, OperationType } from '../contexts/AuthContext';
+import { useMode } from '../contexts/ModeContext';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -72,6 +74,7 @@ const compressImage = (dataUrl: string, maxWidth = 400, maxHeight = 400): Promis
 export default function Profile() {
   const { profile, logout } = useAuth();
   const { openTransferModal } = useUI();
+  const { isBeta, toggleMode } = useMode();
   const navigate = useNavigate();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -276,7 +279,7 @@ export default function Profile() {
   const referralLink = `${window.location.origin}/signup?ref=${profile?.referral_code || ''}`;
 
   return (
-    <div className="space-y-6 pb-24 max-w-7xl mx-auto">
+    <div className="space-y-4 md:space-y-6 pb-24 max-w-7xl mx-auto">
       {/* Mobile Sticky/Floating Profile bar with Glassmorphism */}
       <div className="lg:hidden sticky top-2 z-[40] mx-0 p-3.5 rounded-2xl bg-[#0b0d14]/75 border border-white/[0.08] backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.05)] flex items-center justify-between gap-4">
         <div className="flex items-center gap-3.5 min-w-0">
@@ -323,7 +326,7 @@ export default function Profile() {
             !isEditing ? (
               <button 
                 onClick={() => setIsEditing(true)}
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-bold tracking-wider transition-all shadow-md cursor-pointer whitespace-nowrap"
+                className="px-3 py-1.5 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white rounded-xl text-[10px] font-bold tracking-wider transition-all shadow-md shadow-[#009e42]/20 cursor-pointer whitespace-nowrap"
               >
                 Edit Profile
               </button>
@@ -342,7 +345,7 @@ export default function Profile() {
                 </button>
                 <button 
                    onClick={() => setShowWarningModal(true)}
-                  className="px-2 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-bold tracking-wider transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
+                  className="px-2 py-1 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white rounded-xl text-[10px] font-bold tracking-wider transition-all shadow-md shadow-[#009e42]/20 cursor-pointer"
                 >
                   Save
                 </button>
@@ -403,19 +406,21 @@ export default function Profile() {
       </div>
 
       {/* Dashboard Action Buttons - Side-by-Side Mobile Layout */}
-      <div className="grid grid-cols-2 gap-4 px-2">
+      <div className={cn("grid gap-4 px-2", isBeta ? "grid-cols-2" : "grid-cols-1")}>
         <button 
           onClick={() => navigate('/dashboard')}
           className="flex items-center justify-center gap-2 px-4 py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-[10px] sm:text-xs tracking-widest transition-all shadow-xl hover:shadow-blue-500/20 active:scale-95 cursor-pointer"
         >
           <LayoutDashboard size={18} /> Dashboard
         </button>
-        <button 
-          onClick={openTransferModal}
-          className="flex items-center justify-center gap-2 px-4 py-5 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-[10px] sm:text-xs tracking-widest transition-all shadow-xl shadow-primary/20 active:scale-95 cursor-pointer"
-        >
-          <ArrowRightLeft size={18} /> Transfer
-        </button>
+        {isBeta && (
+          <button 
+            onClick={openTransferModal}
+            className="flex items-center justify-center gap-2 px-4 py-5 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-[10px] sm:text-xs tracking-widest transition-all shadow-xl shadow-primary/20 active:scale-95 cursor-pointer"
+          >
+            <ArrowRightLeft size={18} /> Transfer
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start pt-2">
@@ -427,7 +432,7 @@ export default function Profile() {
             <div className="px-2 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <User size={18} className="text-blue-500" /> Account Information
+                  <User size={18} className="text-[#009e42]" /> Account Information
                 </h3>
                 <p className="text-slate-400 text-xs mt-0.5">View and manage your personal account details</p>
               </div>
@@ -436,7 +441,7 @@ export default function Profile() {
                 !isEditing ? (
                   <button 
                     onClick={() => setIsEditing(true)}
-                    className="hidden lg:block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-bold tracking-wider transition-all shadow-md cursor-pointer"
+                    className="hidden lg:block px-4 py-2 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white rounded-xl text-[10px] font-bold tracking-wider transition-all shadow-md shadow-[#009e42]/20 cursor-pointer"
                   >
                     Edit Profile
                   </button>
@@ -455,7 +460,7 @@ export default function Profile() {
                     </button>
                     <button 
                       onClick={() => setShowWarningModal(true)}
-                      className="px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-bold tracking-wider transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
+                      className="px-3 py-2 bg-[#009e42] hover:bg-[#02d147] active:bg-[#008236] text-white rounded-xl text-[10px] font-bold tracking-wider transition-all shadow-md shadow-[#009e42]/20 cursor-pointer"
                     >
                       Save
                     </button>
@@ -613,6 +618,74 @@ export default function Profile() {
                 </div>
               </div>
               <ChevronRight size={16} className="text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
+            </button>
+          </div>
+
+          {/* Interface Mode Switch at the Bottom of Profile */}
+          <div className="w-full p-4 sm:p-5 bg-white/[0.03] border border-white/10 rounded-2xl flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className={cn(
+                "p-2.5 rounded-xl transition-colors flex items-center justify-center flex-shrink-0",
+                isBeta ? "bg-purple-500/10 text-purple-400" : "bg-emerald-500/10 text-emerald-400"
+              )}>
+                {isBeta ? <Sparkles size={18} /> : <Zap size={18} />}
+              </div>
+              <div className="text-left min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="block text-xs font-bold text-white tracking-wide">Interface Mode</span>
+                  <span className={cn(
+                    "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border tracking-wider",
+                    isBeta ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                  )}>
+                    {isBeta ? 'CGA Beta' : 'CGA Lite'}
+                  </span>
+                </div>
+                <span className="block text-[10px] text-slate-400 mt-0.5 truncate">
+                  {isBeta ? 'Switch to streamlined CGA Lite' : 'Switch to full CGA Beta ecosystem'}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                toggleMode(() => {
+                  navigate('/home');
+                });
+              }}
+              type="button"
+              role="switch"
+              aria-checked={isBeta}
+              aria-label="Toggle interface mode"
+              className={cn(
+                "relative inline-flex h-8 w-15 sm:w-16 flex-shrink-0 cursor-pointer rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none border shadow-inner active:scale-95",
+                isBeta
+                  ? "bg-purple-950/70 border-purple-500/40 shadow-purple-900/30"
+                  : "bg-emerald-950/40 border-emerald-500/30 shadow-emerald-900/20"
+              )}
+            >
+              {/* Subtle track indicator dots without text labels */}
+              <div className="w-full h-full flex items-center justify-between px-1.5 pointer-events-none">
+                <span className={cn("w-1.5 h-1.5 rounded-full transition-opacity", !isBeta ? "bg-emerald-400 opacity-80" : "bg-white/20 opacity-30")} />
+                <span className={cn("w-1.5 h-1.5 rounded-full transition-opacity", isBeta ? "bg-purple-400 opacity-80" : "bg-white/20 opacity-30")} />
+              </div>
+
+              {/* Sliding Knob */}
+              <motion.div
+                layout
+                transition={{ type: "spring", stiffness: 500, damping: 32 }}
+                className={cn(
+                  "absolute top-1 w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-colors pointer-events-none",
+                  isBeta
+                    ? "right-1 bg-gradient-to-tr from-purple-600 to-indigo-500 text-white shadow-purple-500/50"
+                    : "left-1 bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-emerald-500/50"
+                )}
+              >
+                {isBeta ? (
+                  <Sparkles size={11} className="text-white" />
+                ) : (
+                  <Zap size={11} className="text-white" />
+                )}
+              </motion.div>
             </button>
           </div>
 

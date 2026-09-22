@@ -49,7 +49,14 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { UIProvider } from './contexts/UIContext';
 import { UIConfigProvider } from './contexts/UIConfigContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { ModeProvider } from './contexts/ModeContext';
 import PremiumLoader from './components/PremiumLoader';
+
+function ThemedToaster() {
+  const { effectiveTheme } = useTheme();
+  return <Toaster position="top-right" theme={effectiveTheme} closeButton richColors />;
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -110,30 +117,17 @@ function CipherProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  useEffect(() => {
-    let savedTheme = localStorage.getItem('theme');
-    if (!savedTheme) {
-      localStorage.setItem('theme', 'dark');
-      savedTheme = 'dark';
-    }
-    if (savedTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-
   return (
-    <Router>
-      <ScrollToTop />
-      <LanguageProvider>
-        <AuthProvider>
-          <UIConfigProvider>
-            <UIProvider>
-              <Toaster position="top-right" theme="dark" closeButton richColors />
-              <Routes>
+    <ThemeProvider>
+      <Router>
+        <ScrollToTop />
+        <LanguageProvider>
+          <AuthProvider>
+            <UIConfigProvider>
+              <UIProvider>
+                <ModeProvider>
+                  <ThemedToaster />
+                  <Routes>
               <Route path="/welcome" element={<LandingPage />} />
               <Route path="/signup" element={<LandingPage />} />
               <Route path="/about" element={<About />} />
@@ -195,11 +189,13 @@ export default function App() {
               </Route>
               <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
-          </UIProvider>
+          </ModeProvider>
+        </UIProvider>
         </UIConfigProvider>
       </AuthProvider>
     </LanguageProvider>
     </Router>
+    </ThemeProvider>
   );
 }
 
