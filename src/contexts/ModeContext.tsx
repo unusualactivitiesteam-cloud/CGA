@@ -127,7 +127,7 @@ export const ModeProvider: React.FC<{ children: React.ReactNode }> = ({ children
               {/* CGA logo centered prominently */}
               <div className="relative mb-5 flex items-center justify-center">
                 <img
-                  src="https://i.imgur.com/BPyaRYZ.png"
+                  src="https://i.imgur.com/nRbbYnS.png"
                   alt="CGA Logo"
                   className="h-14 md:h-16 w-auto object-contain brightness-110 drop-shadow-[0_0_30px_rgba(204,255,0,0.18)]"
                 />

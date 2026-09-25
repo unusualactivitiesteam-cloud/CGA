@@ -631,17 +631,8 @@ export default function Profile() {
                 {isBeta ? <Sparkles size={18} /> : <Zap size={18} />}
               </div>
               <div className="text-left min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="block text-xs font-bold text-white tracking-wide">Interface Mode</span>
-                  <span className={cn(
-                    "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border tracking-wider",
-                    isBeta ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                  )}>
-                    {isBeta ? 'CGA Beta' : 'CGA Lite'}
-                  </span>
-                </div>
-                <span className="block text-[10px] text-slate-400 mt-0.5 truncate">
-                  {isBeta ? 'Switch to streamlined CGA Lite' : 'Switch to full CGA Beta ecosystem'}
+                <span className="block text-xs sm:text-sm font-bold text-white tracking-wide">
+                  {isBeta ? 'Switch to Lite' : 'Switch to Beta'}
                 </span>
               </div>
             </div>

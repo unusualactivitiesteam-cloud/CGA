@@ -39,7 +39,8 @@ import {
   ShieldCheck,
   Bot,
   Cpu,
-  Monitor
+  Monitor,
+  Landmark
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -878,7 +879,7 @@ export default function Layout() {
               isScrolled ? "scale-90" : "scale-100"
             )}>
               <div className="relative group">
-                <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Logo" className="h-6 md:h-7 lg:h-8 w-auto object-contain brightness-110" />
+                <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Logo" className="h-6 md:h-7 lg:h-8 w-auto object-contain brightness-110" />
                 <div className="absolute inset-0 bg-aura-lime/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </Link>
@@ -954,6 +955,8 @@ export default function Layout() {
                 >
                   <div className="flex flex-row items-center justify-center gap-2 lg:gap-4 w-full h-full">
                     {[
+                      { label: '401(k)', path: '/retirement', icon: <ShieldCheck size={14} className="text-emerald-400" />, betaOnly: true },
+                      { label: 'Loans', path: '/loans', icon: <Landmark size={14} className="text-amber-400" />, betaOnly: true },
                       { label: 'Partners', path: '/partners', icon: <Users size={14} />, betaOnly: false },
                       { label: 'Top Investors', path: '/top-investors', icon: <Trophy size={14} />, betaOnly: false },
                       { label: 'Reviews', path: '/reviews', icon: <MessageSquarePlus size={14} />, betaOnly: false },
@@ -1654,7 +1657,7 @@ export default function Layout() {
               <div className="p-8 pb-4">
                 <div className="flex justify-between items-center mb-8">
                   <div className="flex items-center">
-                    <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Logo" className="h-10 w-auto object-contain" />
+                    <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Logo" className="h-10 w-auto object-contain" />
                   </div>
                   <button 
                     onClick={() => setIsSidebarOpen(false)}
@@ -1690,6 +1693,22 @@ export default function Layout() {
                   active={activeTab === 'invest'}
                   onClick={() => handleNavigation('/invest')}
                 />
+                {isBeta && (
+                  <>
+                    <SidebarItem 
+                      icon={<ShieldCheck size={20} className="text-emerald-400" />} 
+                      label="401(k)" 
+                      active={location.pathname.startsWith('/retirement')}
+                      onClick={() => handleNavigation('/retirement')}
+                    />
+                    <SidebarItem 
+                      icon={<Landmark size={20} className="text-amber-400" />} 
+                      label="Loans" 
+                      active={location.pathname.startsWith('/loans')}
+                      onClick={() => handleNavigation('/loans')}
+                    />
+                  </>
+                )}
                 <SidebarItem 
                   icon={<PlusCircle size={20} />} 
                   label={t('fund')} 
@@ -1834,7 +1853,7 @@ export default function Layout() {
             >
               {/* Premium Top-Left Brand Logo inside Popup */}
               <div className="absolute top-5 left-6 flex items-center gap-1.5 pointer-events-none select-none">
-                <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Logo" className="h-4.5 w-auto object-contain brightness-110" />
+                <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Logo" className="h-4.5 w-auto object-contain brightness-110" />
                 <span className="text-[10px] font-serif font-black tracking-tighter uppercase italic leading-none text-white/90">CGA</span>
               </div>
 
@@ -2079,7 +2098,7 @@ export default function Layout() {
             >
               {/* Premium Top-Left Brand Logo inside Popup */}
               <div className="absolute top-5 left-6 flex items-center gap-1.5 pointer-events-none select-none">
-                <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Logo" className="h-4.5 w-auto object-contain brightness-110" />
+                <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Logo" className="h-4.5 w-auto object-contain brightness-110" />
                 <span className="text-[10px] font-serif font-black tracking-tighter uppercase italic leading-none text-white/95">CGA</span>
               </div>
 

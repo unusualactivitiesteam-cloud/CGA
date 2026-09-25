@@ -44,6 +44,9 @@ import SpinAndWinGuidelines from './components/SpinAndWinGuidelines';
 import JoinUs from './components/JoinUs';
 import AssetMultiplierPage from './components/AssetMultiplierPage';
 import AIMarketplace from './components/AIMarketplace';
+import Retirement from './components/Retirement/Retirement';
+import Loans from './components/Loans/Loans';
+import CountrySelection from './components/CountrySelection';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -129,6 +132,10 @@ export default function App() {
                   <ThemedToaster />
                   <Routes>
               <Route path="/welcome" element={<LandingPage />} />
+              <Route path="/country-selection" element={<CountrySelection />} />
+              <Route path="/select-country" element={<CountrySelection />} />
+              <Route path="/cga-traits" element={<CountrySelection />} />
+              <Route path="/traits" element={<CountrySelection />} />
               <Route path="/signup" element={<LandingPage />} />
               <Route path="/about" element={<About />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
@@ -155,6 +162,10 @@ export default function App() {
                 }
               >
                 <Route path="/home" element={<Homepage />} />
+                <Route path="/retirement" element={<Retirement />} />
+                <Route path="/retirement/:tab" element={<Retirement />} />
+                <Route path="/loans" element={<Loans />} />
+                <Route path="/loans/:type" element={<Loans />} />
                 <Route path="/multiplier-upgrade" element={<AssetMultiplierPage />} />
                 <Route path="/guide" element={<Guide />} />
                 <Route path="/token" element={<TWNTokenPortal />} />

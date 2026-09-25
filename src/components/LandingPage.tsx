@@ -5,6 +5,9 @@ import {
   signInWithEmailAndPassword, 
   sendEmailVerification,
   signInWithPopup,
+  updatePassword,
+  EmailAuthProvider,
+  linkWithCredential,
   User as FirebaseUser
 } from 'firebase/auth';
 import { 
@@ -531,10 +534,36 @@ export default function LandingPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Signin Fields
-  const [signinEmail, setSigninEmail] = useState('');
+  // Selected Country from Country Selection Landing Page
+  interface SelectedCountryState {
+    countryName: string;
+    countryCode: string;
+    countryFlag: string;
+    name?: string;
+    code?: string;
+    flag?: string;
+  }
+  const [selectedCountry, setSelectedCountry] = useState<SelectedCountryState | null>(() => {
+    try {
+      const stored = localStorage.getItem('cga_signup_country') || sessionStorage.getItem('cga_signup_country');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return null;
+  });
+
+  // Signin Fields - Normal signin uses Phone Number + Password
+  const [signinPhone, setSigninPhone] = useState('');
   const [signinPassword, setSigninPassword] = useState('');
   const [showSigninPassword, setShowSigninPassword] = useState(false);
+
+  // Google User Setup States (Phone Number + Password Setup prompt)
+  const [googleSetupUser, setGoogleSetupUser] = useState<FirebaseUser | null>(null);
+  const [isGoogleSetupOpen, setIsGoogleSetupOpen] = useState(false);
+  const [googlePhone, setGooglePhone] = useState('');
+  const [googlePassword, setGooglePassword] = useState('');
+  const [googleConfirmPassword, setGoogleConfirmPassword] = useState('');
+  const [showGooglePassword, setShowGooglePassword] = useState(false);
+  const [showGoogleConfirmPassword, setShowGoogleConfirmPassword] = useState(false);
 
   const [verificationSent, setVerificationSent] = useState(false);
   
@@ -542,6 +571,12 @@ export default function LandingPage() {
   const [requiresOtp, setRequiresOtp] = useState(false);
   const [userOtp, setUserOtp] = useState('');
   const [tempUser, setTempUser] = useState<FirebaseUser | null>(null);
+
+  const handleOpenCountrySelection = () => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    navigate(ref ? `/country-selection?ref=${encodeURIComponent(ref)}` : '/country-selection');
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -551,17 +586,53 @@ export default function LandingPage() {
     if (ref) {
       setReferralCode(ref.toUpperCase());
     }
-    
-    if (ref || isSignupPath) {
+
+    const storedCountryStr = localStorage.getItem('cga_signup_country') || sessionStorage.getItem('cga_signup_country');
+    let storedCountry = null;
+    if (storedCountryStr) {
+      try { storedCountry = JSON.parse(storedCountryStr); } catch (e) {}
+    }
+
+    if (isSignupPath) {
+      if (!storedCountry) {
+        // Redirect to Country Selection as first screen before creating account
+        navigate(ref ? `/country-selection?ref=${encodeURIComponent(ref)}` : '/country-selection', { replace: true });
+        return;
+      }
+      setSelectedCountry(storedCountry);
+      setAuthMode('signup');
+      setIsModalOpen(true);
+    } else if (ref && storedCountry) {
+      setSelectedCountry(storedCountry);
       setAuthMode('signup');
       setIsModalOpen(true);
     }
-  }, []);
+  }, [navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!fullName.trim()) {
+      toast.error("Full name is required.");
+      return;
+    }
+    if (!username.trim()) {
+      toast.error("Username is required.");
+      return;
+    }
+    if (!email.trim()) {
+      toast.error("Email address is required.");
+      return;
+    }
+    if (!phone || phone.trim().length < 5) {
+      toast.error("Valid phone number is required.");
+      return;
+    }
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error("Passwords do not match.");
+      return;
+    }
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters.");
       return;
     }
     
@@ -580,7 +651,7 @@ export default function LandingPage() {
       }
 
       // 1. Create Auth Account
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       const firebaseUser = userCredential.user;
 
       // 2. Send Verification (With Robust Retry)
@@ -600,14 +671,26 @@ export default function LandingPage() {
         }
       }
 
-      // 3. Cache signup data for post-verification profile creation
+      // 3. Cache signup data with persistent selected country for post-verification profile creation
       try {
+        const countryContext = selectedCountry || {
+          countryName: 'Nigeria',
+          countryCode: 'NG',
+          countryFlag: '🇳🇬'
+        };
+
         const pendingData = {
-          fullName,
-          username,
-          phone,
-          referralCode,
-          email,
+          fullName: fullName.trim(),
+          username: username.trim(),
+          phone: phone.trim(),
+          referralCode: referralCode.trim(),
+          email: email.trim().toLowerCase(),
+          country: countryContext.countryName,
+          countryName: countryContext.countryName,
+          country_code: countryContext.countryCode,
+          countryCode: countryContext.countryCode,
+          country_flag: countryContext.countryFlag,
+          countryFlag: countryContext.countryFlag,
           timestamp: new Date().toISOString()
         };
         localStorage.setItem(`pending_signup_${firebaseUser.uid}`, JSON.stringify(pendingData));
@@ -619,7 +702,7 @@ export default function LandingPage() {
       await auth.signOut();
 
       // 5. Trigger Success View
-      setSigninEmail(email);
+      setSigninPhone(phone);
       setSigninPassword(password);
       setVerificationSent(true);
       toast.success("Verification email sent!");
@@ -629,7 +712,7 @@ export default function LandingPage() {
       if (error.code === 'auth/email-already-in-use') {
         toast.error("Account already exists. Please sign in.");
         setAuthMode('signin');
-        setSigninEmail(email);
+        setSigninPhone(phone);
       } else if (error.message.includes('permission')) {
         toast.error("Referral validation failed due to security protocols. Please refresh and try again.");
       } else {
@@ -644,8 +727,55 @@ export default function LandingPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      const trimmedInput = signinPhone.trim();
+      if (!trimmedInput) {
+        toast.error("Please enter your phone number.");
+        setLoading(false);
+        return;
+      }
+      if (!signinPassword) {
+        toast.error("Please enter your password.");
+        setLoading(false);
+        return;
+      }
+
+      let resolvedEmail = '';
+
+      if (trimmedInput.includes('@')) {
+        resolvedEmail = trimmedInput.toLowerCase();
+      } else {
+        const cleanDigits = trimmedInput.replace(/[^\d+]/g, '');
+        const rawDigits = trimmedInput.replace(/\D/g, '');
+        const withPlus = cleanDigits.startsWith('+') ? cleanDigits : `+${cleanDigits}`;
+
+        const usersRef = collection(db, 'users');
+        let snap = await getDocs(query(usersRef, where('phone', '==', trimmedInput)));
+        if (snap.empty && cleanDigits !== trimmedInput) {
+          snap = await getDocs(query(usersRef, where('phone', '==', cleanDigits)));
+        }
+        if (snap.empty) {
+          snap = await getDocs(query(usersRef, where('phone', '==', withPlus)));
+        }
+        if (snap.empty && rawDigits.length > 0) {
+          snap = await getDocs(query(usersRef, where('phone', '==', rawDigits)));
+        }
+
+        if (snap.empty) {
+          toast.error("No account found with this phone number. Please check your phone number or sign up.");
+          setLoading(false);
+          return;
+        }
+
+        resolvedEmail = snap.docs[0].data().email;
+        if (!resolvedEmail) {
+          toast.error("No email associated with this account. Please contact support.");
+          setLoading(false);
+          return;
+        }
+      }
+
       // STEP 1: Authenticate user in Firebase Auth
-      const userCredential = await signInWithEmailAndPassword(auth, signinEmail, signinPassword);
+      const userCredential = await signInWithEmailAndPassword(auth, resolvedEmail, signinPassword);
       let firebaseUser = userCredential.user;
 
       // STEP 2: Reload auth state and check email verification first
@@ -727,6 +857,12 @@ export default function LandingPage() {
           username: isCipherUser ? 'cipher_root' : (pendingData?.username || firebaseUser.email?.split('@')[0] || 'user'),
           email: firebaseUser.email || '',
           phone: pendingData?.phone || '',
+          country: pendingData?.country || pendingData?.countryName || selectedCountry?.countryName || 'Nigeria',
+          countryName: pendingData?.countryName || pendingData?.country || selectedCountry?.countryName || 'Nigeria',
+          country_code: pendingData?.countryCode || selectedCountry?.countryCode || 'NG',
+          countryCode: pendingData?.countryCode || selectedCountry?.countryCode || 'NG',
+          country_flag: pendingData?.countryFlag || selectedCountry?.countryFlag || '🇳🇬',
+          countryFlag: pendingData?.countryFlag || selectedCountry?.countryFlag || '🇳🇬',
           public_id: generatePublicId(),
           referral_code: userRefCode,
           referral_link: `${window.location.origin}/signup?ref=${userRefCode}`,
@@ -927,92 +1063,12 @@ export default function LandingPage() {
         return;
       }
 
-      if (!userDoc || !userDoc.exists()) {
-        console.log("Creating new Google user profile...");
-        // Initial setup for Google user with referral support
-        let referrerId: string | null = null;
-        let referrerCodeValue: string | null = null;
-        
-        if (referralCode?.trim()) {
-          const cleanRef = referralCode.trim().toUpperCase();
-          const q = query(collection(db, 'users'), where('referral_code', '==', cleanRef));
-          try {
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-              referrerId = querySnapshot.docs[0].id;
-              referrerCodeValue = cleanRef;
-            }
-          } catch (e) {
-            console.warn("Failed querying referral code silently:", e);
-          }
-        }
-
-        const userRefCode = isCipher ? 'CIPHER' : generateReferralCode();
-        const newUserProfile = {
-          uid: user.uid,
-          name: isCipher ? 'Cipher' : (user.displayName || 'Nexus User'),
-          username: isCipher ? 'cipher_root' : (user.email?.split('@')[0] || 'user'),
-          email: user.email || '',
-          phone: '',
-          public_id: generatePublicId(),
-          referral_code: userRefCode,
-          referral_link: `${window.location.origin}/signup?ref=${userRefCode}`,
-          referred_by: referrerId,
-          referrer_uid: referrerId,
-          referrer_code: referrerCodeValue,
-          referrals_count: 0,
-          active_referrals: 0,
-          referral_earnings: 0,
-          role: isCipher ? 'cipher' : 'user',
-          funding_balance: 0,
-          available_balance: 0,
-          total_earnings: 0,
-          total_invested: 10, // $10 signup bonus directly into Assets Balance
-          email_verified: true,
-          suspended: false,
-          banned: false,
-          roi_disabled: false,
-          withdrawals_frozen: false,
-          transfers_frozen: false,
-          created_at: new Date().toISOString(),
-          roi_cycle_start: new Date().toISOString(),
-          last_rebook: new Date().toISOString()
-        };
-
-        if (referrerId) {
-          try {
-            await updateDoc(doc(db, 'users', referrerId), {
-              referrals_count: increment(1)
-            });
-          } catch (e) {
-            console.error("Failed to increment referrals_count", e);
-          }
-        }
-
-        try {
-          await setDoc(doc(db, 'users', user.uid), newUserProfile);
-
-          broadcastActivity(
-            newUserProfile.name || "New Partner",
-            "Registered",
-            undefined,
-            true,
-            "👤"
-          );
-
-          // Generate an idempotent signup bonus transaction record
-          const txId = `signup-bonus-${user.uid}`;
-          await setDoc(doc(db, 'transactions', txId), {
-            user_id: user.uid,
-            type: 'signup_bonus',
-            amount: 10,
-            created_at: new Date().toISOString(),
-            status: 'approved',
-            description: "Congratulations, you have just received a $10 signup bonus into your assets balance."
-          });
-        } catch (setErr) {
-          console.warn("Grace-failed setting profile on Google sign-in, AuthContext will auto-heal:", setErr);
-        }
+      if (!userDoc || !userDoc.exists() || !userDoc.data()?.phone) {
+        // If user is signing up with Google and lacks phone/password setup:
+        setGoogleSetupUser(user);
+        setIsGoogleSetupOpen(true);
+        setLoading(false);
+        return;
       }
 
       // Register device and store locally as trusted
@@ -1036,6 +1092,149 @@ export default function LandingPage() {
       } else {
         toast.error(error.message || "Google authentication failed.");
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCompleteGoogleSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!googleSetupUser) return;
+    if (!googlePhone || googlePhone.trim().length < 5) {
+      toast.error("Please enter a valid phone number.");
+      return;
+    }
+    if (!googlePassword || googlePassword.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+    if (googlePassword !== googleConfirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      try {
+        await updatePassword(googleSetupUser, googlePassword);
+      } catch (pwdErr: any) {
+        console.warn("updatePassword note:", pwdErr);
+        try {
+          if (googleSetupUser.email) {
+            const cred = EmailAuthProvider.credential(googleSetupUser.email, googlePassword);
+            await linkWithCredential(googleSetupUser, cred);
+          }
+        } catch (linkErr) {
+          console.warn("linkWithCredential note:", linkErr);
+        }
+      }
+
+      const countryContext = selectedCountry || {
+        countryName: 'Nigeria',
+        countryCode: 'NG',
+        countryFlag: '🇳🇬'
+      };
+
+      let referrerId: string | null = null;
+      let referrerCodeValue: string | null = null;
+      if (referralCode?.trim()) {
+        const cleanRef = referralCode.trim().toUpperCase();
+        try {
+          const snap = await getDocs(query(collection(db, 'users'), where('referral_code', '==', cleanRef)));
+          if (!snap.empty) {
+            referrerId = snap.docs[0].id;
+            referrerCodeValue = cleanRef;
+          }
+        } catch (e) {}
+      }
+
+      const isCipher = googleSetupUser.email === 'support@tavariwave.network' || 
+                       googleSetupUser.email === 'contact.cga.usa@gmail.com' || 
+                       googleSetupUser.uid === '3yV3rfcUzob5v9ltfVcMw0PL6tQ2';
+      const userRefCode = isCipher ? 'CIPHER' : generateReferralCode();
+      const newUserProfile = {
+        uid: googleSetupUser.uid,
+        name: isCipher ? 'Cipher' : (googleSetupUser.displayName || 'Nexus User'),
+        username: isCipher ? 'cipher_root' : (googleSetupUser.email?.split('@')[0] || 'user'),
+        email: googleSetupUser.email || '',
+        phone: googlePhone.trim(),
+        country: countryContext.countryName,
+        countryName: countryContext.countryName,
+        country_code: countryContext.countryCode,
+        countryCode: countryContext.countryCode,
+        country_flag: countryContext.countryFlag,
+        countryFlag: countryContext.countryFlag,
+        public_id: generatePublicId(),
+        referral_code: userRefCode,
+        referral_link: `${window.location.origin}/signup?ref=${userRefCode}`,
+        referred_by: referrerId,
+        referrer_uid: referrerId,
+        referrer_code: referrerCodeValue,
+        referrals_count: 0,
+        active_referrals: 0,
+        referral_earnings: 0,
+        role: isCipher ? 'cipher' : 'user',
+        funding_balance: 0,
+        available_balance: 0,
+        total_earnings: 0,
+        total_invested: 10,
+        email_verified: true,
+        suspended: false,
+        banned: false,
+        roi_disabled: false,
+        withdrawals_frozen: false,
+        transfers_frozen: false,
+        created_at: new Date().toISOString(),
+        roi_cycle_start: new Date().toISOString(),
+        last_rebook: new Date().toISOString()
+      };
+
+      if (referrerId) {
+        try {
+          await updateDoc(doc(db, 'users', referrerId), {
+            referrals_count: increment(1)
+          });
+        } catch (e) {}
+      }
+
+      await setDoc(doc(db, 'users', googleSetupUser.uid), newUserProfile);
+
+      broadcastActivity(
+        newUserProfile.name || "New Partner",
+        "Registered",
+        undefined,
+        true,
+        "👤"
+      );
+
+      const txId = `signup-bonus-${googleSetupUser.uid}`;
+      await setDoc(doc(db, 'transactions', txId), {
+        user_id: googleSetupUser.uid,
+        type: 'signup_bonus',
+        amount: 10,
+        created_at: new Date().toISOString(),
+        status: 'approved',
+        description: "Congratulations, you have just received a $10 signup bonus into your assets balance."
+      });
+
+      // Register device
+      const deviceId = getDeviceFingerprint();
+      const trustedDevicesKey = `trusted_devices_${googleSetupUser.uid}`;
+      const trustedDevices = JSON.parse(localStorage.getItem(trustedDevicesKey) || '[]');
+      if (!trustedDevices.includes(deviceId)) {
+        trustedDevices.push(deviceId);
+        localStorage.setItem(trustedDevicesKey, JSON.stringify(trustedDevices));
+      }
+      registerDevice(googleSetupUser.uid, deviceId).catch(() => {});
+      logAudit(googleSetupUser.uid, 'login_success').catch(() => {});
+
+      setIsGoogleSetupOpen(false);
+      setGoogleSetupUser(null);
+      toast.success(isCipher ? "Cipher Terminal Accessed" : "Account setup completed! Welcome to CGA.");
+      navigate(isCipher ? '/cipher' : '/home');
+    } catch (err: any) {
+      console.error("Complete Google setup error:", err);
+      toast.error(err.message || "Failed to complete account setup.");
     } finally {
       setLoading(false);
     }
@@ -1170,35 +1369,66 @@ export default function LandingPage() {
                   }} 
                   className="space-y-2"
                 >
+                  {authMode === 'signup' && selectedCountry && (
+                    <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-white mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xl shrink-0 select-none" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
+                        <div className="truncate">
+                          <span className="text-[10px] uppercase font-bold text-aura-muted block leading-none">Selected Country</span>
+                          <span className="text-xs font-bold text-white truncate block">{selectedCountry.countryName}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleOpenCountrySelection}
+                        className="text-[9px] font-bold uppercase tracking-wider text-primary hover:underline shrink-0 pl-2"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  )}
+
                   {authMode === 'signup' && (
                     <AuthInput icon={<User size={15} />} label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required compact={true} />
                   )}
 
-                  <AuthInput 
-                    icon={<Mail size={15} />} 
-                    label="Email Address" 
-                    placeholder="Email Address" 
-                    type="email" 
-                    value={authMode === 'signup' ? email : signinEmail} 
-                    onChange={authMode === 'signup' ? setEmail : setSigninEmail} 
-                    required 
-                    compact={true}
-                  />
+                  {authMode === 'signup' ? (
+                    <AuthInput 
+                      icon={<Mail size={15} />} 
+                      label="Email Address" 
+                      placeholder="Email Address" 
+                      type="email" 
+                      value={email} 
+                      onChange={setEmail} 
+                      required 
+                      compact={true}
+                    />
+                  ) : (
+                    <AuthInput 
+                      icon={<Phone size={15} />} 
+                      label="Phone Number" 
+                      placeholder="Enter your phone number" 
+                      type="tel" 
+                      value={signinPhone} 
+                      onChange={setSigninPhone} 
+                      required 
+                      compact={true}
+                    />
+                  )}
 
                   {authMode === 'signup' && (
                     <div className="space-y-1.5 is-compact">
                       <PhoneInput
-                        country={detectedCountry}
+                        country={selectedCountry ? selectedCountry.countryCode.toLowerCase() : detectedCountry}
                         value={phone}
                         onChange={(val) => setPhone(val)}
+                        disableDropdown={true}
+                        countryCodeEditable={false}
                         containerClass="nexus-phone-container"
                         inputClass="nexus-phone-input"
                         buttonClass="nexus-phone-button"
                         dropdownClass="nexus-phone-dropdown"
                         placeholder="Phone Number"
-                        enableSearch={true}
-                        disableSearchIcon={true}
-                        searchPlaceholder="Search country..."
                       />
                     </div>
                   )}
@@ -1206,7 +1436,7 @@ export default function LandingPage() {
                   <AuthInput 
                     icon={<Lock size={15} />} 
                     label="Password" 
-                    placeholder="Password" 
+                    placeholder="Enter your password" 
                     type="password" 
                     value={authMode === 'signup' ? password : signinPassword} 
                     onChange={authMode === 'signup' ? setPassword : setSigninPassword} 
@@ -1251,7 +1481,19 @@ export default function LandingPage() {
                   {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
                   <button 
                     type="button"
-                    onClick={() => setAuthMode(authMode === 'signup' ? 'signin' : 'signup')}
+                    onClick={() => {
+                      if (authMode === 'signin') {
+                        const stored = localStorage.getItem('cga_signup_country') || sessionStorage.getItem('cga_signup_country');
+                        if (!stored) {
+                          handleOpenCountrySelection();
+                        } else {
+                          try { setSelectedCountry(JSON.parse(stored)); } catch (e) {}
+                          setAuthMode('signup');
+                        }
+                      } else {
+                        setAuthMode('signin');
+                      }
+                    }}
                     className="text-secondary font-bold hover:text-accent transition-colors"
                   >
                     {authMode === 'signup' ? 'Sign In' : 'Sign Up'}
@@ -1388,9 +1630,15 @@ export default function LandingPage() {
           ? "lg:h-14 lg:bg-[#050608]/85 lg:border-primary/20 lg:shadow-[0_4px_30px_rgba(0,0,0,0.5)]" 
           : "lg:h-24 lg:bg-[#050608]/35 lg:border-transparent lg:shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
       )}>
-        <div className={cn("flex items-center gap-1.5 transition-all duration-500", isScrolled ? "scale-90" : "scale-100")}>
-          <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="h-7 w-auto lg:h-14 object-contain" />
-          <span className="text-sm lg:text-3xl font-black uppercase tracking-tighter leading-none">CGA Trades</span>
+        <div 
+          onClick={handleOpenCountrySelection}
+          className={cn("flex items-center gap-1.5 transition-all duration-500 cursor-pointer group", isScrolled ? "scale-90" : "scale-100")}
+          role="button"
+          tabIndex={0}
+          aria-label="CGA Trades Country Selection"
+        >
+          <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="h-7 w-auto lg:h-14 object-contain group-hover:scale-105 transition-transform" />
+          <span className="text-sm lg:text-3xl font-black uppercase tracking-tighter leading-none group-hover:text-primary transition-colors">CGA Trades</span>
         </div>
 
         {/* Center Nav Items */}
@@ -1427,7 +1675,7 @@ export default function LandingPage() {
 
             {/* 2. Get Started */}
             <button 
-              onClick={() => { setIsModalOpen(true); setAuthMode('signup'); }}
+              onClick={handleOpenCountrySelection}
               className="px-2.5 py-1.5 bg-primary hover:bg-primary/95 text-white text-[9px] font-black uppercase tracking-widest rounded-lg shadow-md active:scale-95 transition-all whitespace-nowrap"
             >
               {t('Get Started')}
@@ -1466,7 +1714,7 @@ export default function LandingPage() {
               {t('Sign In')}
             </button>
             <button 
-              onClick={() => { setIsModalOpen(true); setAuthMode('signup'); }}
+              onClick={handleOpenCountrySelection}
               className="px-6 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg hover:scale-105 transition-all text-xs"
             >
               {t('Get Started')}
@@ -1525,7 +1773,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-row items-center justify-center gap-4 pt-8 w-full max-w-md mx-auto">
             <button 
-              onClick={() => { setIsModalOpen(true); setAuthMode('signup'); }}
+              onClick={handleOpenCountrySelection}
               className="flex-1 h-14 bg-gradient-to-r from-primary to-secondary text-white font-black uppercase tracking-widest text-[10px] sm:text-xs rounded-2xl shadow-[0_4px_25px_rgba(124,58,237,0.35)] hover:shadow-[0_4px_35px_rgba(124,58,237,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap"
             >
               Get Started <ArrowRight size={14} className="shrink-0" />
@@ -1759,7 +2007,7 @@ export default function LandingPage() {
 
                 {/* Logo & Header */}
                 <div className="flex flex-col items-center text-center mt-6 mb-8">
-                   <img src="https://i.imgur.com/BPyaRYZ.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="w-20 h-20 lg:w-24 lg:h-24 object-contain mb-6" />
+                   <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="w-20 h-20 lg:w-24 lg:h-24 object-contain mb-6" />
                    <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
                      {authMode === 'signup' ? 'Create Account' : 'Welcome Back'}
                    </h2>
@@ -1870,6 +2118,25 @@ export default function LandingPage() {
                     </div>
 
                     <form onSubmit={authMode === 'signup' ? handleSignup : handleSignin} className="space-y-4">
+                      {authMode === 'signup' && selectedCountry && (
+                        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/10 text-white mb-2">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl select-none" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
+                            <div>
+                              <div className="text-[10px] uppercase font-bold tracking-wider text-aura-muted leading-tight">Selected Country</div>
+                              <div className="text-sm font-bold text-white leading-tight mt-0.5">{selectedCountry.countryName}</div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleOpenCountrySelection}
+                            className="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+                          >
+                            Change
+                          </button>
+                        </div>
+                      )}
+
                       {authMode === 'signup' && (
                         <>
                           <AuthInput icon={<User size={18} />} label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required />
@@ -1877,30 +2144,41 @@ export default function LandingPage() {
                         </>
                       )}
 
-                      <AuthInput 
-                        icon={<Mail size={18} />} 
-                        label="Email Address" 
-                        placeholder={authMode === 'signup' ? 'Email Address' : 'Email or Username'} 
-                        type="email" 
-                        value={authMode === 'signup' ? email : signinEmail} 
-                        onChange={authMode === 'signup' ? setEmail : setSigninEmail} 
-                        required 
-                      />
+                      {authMode === 'signup' ? (
+                        <AuthInput 
+                          icon={<Mail size={18} />} 
+                          label="Email Address" 
+                          placeholder="Email Address" 
+                          type="email" 
+                          value={email} 
+                          onChange={setEmail} 
+                          required 
+                        />
+                      ) : (
+                        <AuthInput 
+                          icon={<Phone size={18} />} 
+                          label="Phone Number" 
+                          placeholder="Enter your phone number" 
+                          type="tel" 
+                          value={signinPhone} 
+                          onChange={setSigninPhone} 
+                          required 
+                        />
+                      )}
 
                       {authMode === 'signup' && (
                         <div className="space-y-2">
                           <PhoneInput
-                            country={detectedCountry}
+                            country={selectedCountry ? selectedCountry.countryCode.toLowerCase() : detectedCountry}
                             value={phone}
                             onChange={(val) => setPhone(val)}
+                            disableDropdown={true}
+                            countryCodeEditable={false}
                             containerClass="nexus-phone-container"
                             inputClass="nexus-phone-input"
                             buttonClass="nexus-phone-button"
                             dropdownClass="nexus-phone-dropdown"
                             placeholder="Phone Number"
-                            enableSearch={true}
-                            disableSearchIcon={true}
-                            searchPlaceholder="Search country..."
                           />
                         </div>
                       )}
@@ -1909,7 +2187,7 @@ export default function LandingPage() {
                         <AuthInput 
                           icon={<Lock size={18} />} 
                           label="Password" 
-                          placeholder="Password" 
+                          placeholder="Enter your password" 
                           type="password" 
                           value={authMode === 'signup' ? password : signinPassword} 
                           onChange={authMode === 'signup' ? setPassword : setSigninPassword} 
@@ -1955,7 +2233,19 @@ export default function LandingPage() {
                     <p className="text-center text-sm font-medium text-aura-muted">
                       {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"} {' '}
                       <button 
-                        onClick={() => setAuthMode(authMode === 'signup' ? 'signin' : 'signup')}
+                        onClick={() => {
+                          if (authMode === 'signin') {
+                            const stored = localStorage.getItem('cga_signup_country') || sessionStorage.getItem('cga_signup_country');
+                            if (!stored) {
+                              handleOpenCountrySelection();
+                            } else {
+                              try { setSelectedCountry(JSON.parse(stored)); } catch (e) {}
+                              setAuthMode('signup');
+                            }
+                          } else {
+                            setAuthMode('signin');
+                          }
+                        }}
                         className="text-secondary font-bold hover:text-accent transition-colors"
                       >
                         {authMode === 'signup' ? 'Sign In' : 'Sign Up'}
@@ -1964,6 +2254,123 @@ export default function LandingPage() {
                   </div>
                 )}
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Google User Phone + Password Setup Modal (Section 22: Complete Your Account) */}
+      <AnimatePresence>
+        {isGoogleSetupOpen && (
+          <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setIsGoogleSetupOpen(false);
+                setGoogleSetupUser(null);
+                auth.signOut();
+              }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-md bg-[#0a0c10] border border-white/10 rounded-3xl p-6 sm:p-8 text-white shadow-2xl z-10"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Logo" className="h-7 w-auto object-contain" />
+                  <span className="text-xs font-black uppercase tracking-wider text-white/80">Capital Growth Alliance</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsGoogleSetupOpen(false);
+                    setGoogleSetupUser(null);
+                    auth.signOut();
+                  }}
+                  className="p-1.5 rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-black uppercase tracking-tight text-white mb-1.5">
+                  Complete Your Account
+                </h2>
+                <p className="text-xs text-aura-muted font-medium leading-relaxed">
+                  Add your phone number and create a password to finish setting up your CGA account.
+                </p>
+              </div>
+
+              {selectedCountry && (
+                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/10 text-white mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
+                    <span className="text-xs font-bold">{selectedCountry.countryName}</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                    Selected
+                  </span>
+                </div>
+              )}
+
+              <form onSubmit={handleCompleteGoogleSetup} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-aura-muted block">
+                    Phone Number <span className="text-red-400">*</span>
+                  </label>
+                  <PhoneInput
+                    country={selectedCountry ? selectedCountry.countryCode.toLowerCase() : detectedCountry}
+                    value={googlePhone}
+                    onChange={(val) => setGooglePhone(val)}
+                    disableDropdown={true}
+                    countryCodeEditable={false}
+                    containerClass="nexus-phone-container"
+                    inputClass="nexus-phone-input"
+                    buttonClass="nexus-phone-button"
+                    dropdownClass="nexus-phone-dropdown"
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+
+                <AuthInput
+                  icon={<Lock size={16} />}
+                  label="Create Password"
+                  placeholder="Create Password (min. 6 characters)"
+                  type="password"
+                  value={googlePassword}
+                  onChange={setGooglePassword}
+                  required
+                  showPasswordToggle={true}
+                  isPasswordVisible={showGooglePassword}
+                  onTogglePassword={() => setShowGooglePassword(!showGooglePassword)}
+                />
+
+                <AuthInput
+                  icon={<Lock size={16} />}
+                  label="Confirm Password"
+                  placeholder="Confirm Password"
+                  type="password"
+                  value={googleConfirmPassword}
+                  onChange={setGoogleConfirmPassword}
+                  required
+                  showPasswordToggle={true}
+                  isPasswordVisible={showGoogleConfirmPassword}
+                  onTogglePassword={() => setShowGoogleConfirmPassword(!showGoogleConfirmPassword)}
+                />
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-black uppercase tracking-wider text-xs rounded-2xl shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-98 transition-all disabled:opacity-50 mt-2"
+                >
+                  {loading ? 'Setting up Account...' : 'Complete Setup'}
+                </button>
+              </form>
             </motion.div>
           </div>
         )}

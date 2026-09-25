@@ -804,7 +804,7 @@ export default function TWNTokenPortal() {
         {/* Top Navbar Header matching visually the references */}
         <header className="hidden lg:flex items-center justify-between py-4 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <img src="https://i.imgur.com/BPyaRYZ.png" alt="ZWA" className="h-8 w-auto object-contain" referrerPolicy="no-referrer" />
+            <img src="https://i.imgur.com/nRbbYnS.png" alt="ZWA" className="h-8 w-auto object-contain" referrerPolicy="no-referrer" />
             <div className="flex flex-col">
               <span className="text-xs font-black uppercase tracking-[0.25em] text-white leading-tight font-sans">Capital Growth</span>
               <span className="text-[8px] font-bold text-purple-400 uppercase tracking-[0.4em] leading-none">Alliance</span>

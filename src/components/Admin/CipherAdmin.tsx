@@ -49,7 +49,8 @@ import {
   Trash2,
   Plus,
   Cpu,
-  Bot
+  Bot,
+  Landmark
 } from 'lucide-react';
 import { cn, formatCurrency } from '../../lib/utils';
 import { toast } from 'sonner';
@@ -73,6 +74,8 @@ import { db } from '../../lib/firebase';
 import { useAuth, getRoiByAmountDynamic, calculateExpectedDailyRoi, isLegacyUser, getEffectiveRoiRate } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { logAudit } from '../../lib/auth_security';
+import CipherRetirementAdmin from './CipherRetirementAdmin';
+import CipherLoansAdmin from './CipherLoansAdmin';
 
 // --- COMPONENTS ---
 
@@ -2404,7 +2407,7 @@ export default function CipherAdmin() {
       {/* Mobile Top Header */}
       <header className="fixed top-0 inset-x-0 h-16 bg-[#050608]/90 backdrop-blur-md border-b border-white/5 z-[100] flex items-center justify-between px-6 lg:hidden">
         <div className="flex items-center gap-3">
-          <img src="https://i.imgur.com/BPyaRYZ.png" alt="Cipher Terminal Logo" className="w-8 h-8 object-contain" />
+          <img src="https://i.imgur.com/nRbbYnS.png" alt="Cipher Terminal Logo" className="w-8 h-8 object-contain" />
           <span className="text-[10px] font-black uppercase tracking-widest text-[#ffffff80]">CIPHER MOBILE</span>
         </div>
         <button
@@ -2598,6 +2601,32 @@ export default function CipherAdmin() {
                 </button>
 
                 <button
+                  onClick={() => { handleTabChange('cretirement'); setIsMobileAdminMenuOpen(false); }}
+                  className={cn(
+                    "flex items-center justify-between w-full p-4 rounded-xl transition-all duration-300",
+                    activeTab === 'cretirement' ? "bg-aura-lime text-aura-black font-black" : "text-aura-muted hover:text-white hover:bg-white/5 font-bold"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck size={18} />
+                    <span className="text-[10px] uppercase tracking-widest">401(k) Details</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => { handleTabChange('cloans'); setIsMobileAdminMenuOpen(false); }}
+                  className={cn(
+                    "flex items-center justify-between w-full p-4 rounded-xl transition-all duration-300",
+                    activeTab === 'cloans' ? "bg-aura-lime text-aura-black font-black" : "text-aura-muted hover:text-white hover:bg-white/5 font-bold"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Landmark size={18} />
+                    <span className="text-[10px] uppercase tracking-widest">Loans Management</span>
+                  </div>
+                </button>
+
+                <button
                   onClick={() => { handleTabChange('cui_editor'); setIsMobileAdminMenuOpen(false); }}
                   className={cn(
                     "flex items-center justify-between w-full p-4 rounded-xl transition-all duration-300",
@@ -2715,7 +2744,7 @@ export default function CipherAdmin() {
       {/* Sidebar */}
       <aside className="w-64 border-r border-white/5 flex flex-col p-6 hidden lg:flex">
         <div className="flex items-center gap-3 mb-12">
-          <img src="https://i.imgur.com/BPyaRYZ.png" alt="Cipher Terminal Logo" className="w-10 h-10 lg:w-12 lg:h-12 object-contain" />
+          <img src="https://i.imgur.com/nRbbYnS.png" alt="Cipher Terminal Logo" className="w-10 h-10 lg:w-12 lg:h-12 object-contain" />
           <span className="text-sm font-black uppercase tracking-tighter">CIPHER TERMINAL</span>
         </div>
 
@@ -2731,6 +2760,8 @@ export default function CipherAdmin() {
           <SidebarItem icon={<IdCard size={18} />} label="KYC Control" active={activeTab === 'ckycs'} onClick={() => handleTabChange('ckycs')} />
           <SidebarItem icon={<ShieldCheck size={18} />} label="Security" active={activeTab === 'csecurity'} onClick={() => handleTabChange('csecurity')} />
           <SidebarItem icon={<TrendingUp size={18} />} label="ROI Plans" active={activeTab === 'cplans'} onClick={() => handleTabChange('cplans')} />
+          <SidebarItem icon={<ShieldCheck size={18} />} label="401(k) Details" active={activeTab === 'cretirement'} onClick={() => handleTabChange('cretirement')} />
+          <SidebarItem icon={<Landmark size={18} />} label="Loans Management" active={activeTab === 'cloans'} onClick={() => handleTabChange('cloans')} />
           <SidebarItem icon={<Play size={18} />} label="UI Studio" active={activeTab === 'cui_editor'} onClick={() => handleTabChange('cui_editor')} />
           <SidebarItem icon={<Mail size={18} />} label="Newsletter" active={activeTab === 'cnewsletter'} onClick={() => handleTabChange('cnewsletter')} />
           <SidebarItem icon={<Mail size={18} />} label="Notifications" active={activeTab === 'cnotifications'} onClick={() => handleTabChange('cnotifications')} />
@@ -2757,7 +2788,7 @@ export default function CipherAdmin() {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl lg:text-3xl font-black tracking-[-0.05em] leading-[0.85] text-white font-serif italic mb-2 capitalize">
-              {activeTab === 'cadverts' ? 'Global Advertising' : (activeTab === 'cuser' || activeTab === 'cinactiveusers') ? 'Users Control Panel' : activeTab.substring(1)}
+              {activeTab === 'cretirement' ? '401(k) Details' : activeTab === 'cloans' ? 'Loans Management' : activeTab === 'cadverts' ? 'Global Advertising' : (activeTab === 'cuser' || activeTab === 'cinactiveusers') ? 'Users Control Panel' : activeTab.substring(1)}
             </h1>
             <p className="text-aura-muted text-[10px] font-bold uppercase tracking-[0.3em]">System Level Access: root_alpha</p>
           </div>
@@ -6197,6 +6228,14 @@ export default function CipherAdmin() {
               </div>
             </div>
           </div>
+        )}
+
+        {activeTab === 'cretirement' && (
+          <CipherRetirementAdmin currentUserEmail={user?.email || 'cipher_root'} />
+        )}
+
+        {activeTab === 'cloans' && (
+          <CipherLoansAdmin currentUserEmail={user?.email || 'cipher_root'} />
         )}
       </main>
 

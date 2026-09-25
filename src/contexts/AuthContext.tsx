@@ -288,6 +288,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (snap.exists()) {
         setGlobalRoiConfig(snap.data());
       }
+    }, (err) => {
+      console.warn("Global ROI config sync blocked:", err);
     });
     return unsub;
   }, []);

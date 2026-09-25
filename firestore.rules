@@ -114,6 +114,7 @@ service cloud.firestore {
                           'referrals_count', 'withdraw_methods', 'last_rebook', 'roi_disabled', 
                           'withdrawals_frozen', 'transfers_frozen', 'email_verified', 'public_id',
                           'referral_code', 'referral_link', 'referred_by', 'created_at', 'last_active_at',
+                          'country', 'countryName', 'country_code', 'countryCode', 'country_flag', 'countryFlag',
                           'twn_balance', 'points_balance', 'profile_edited', 'welcome_bonus_deducted',
                           'auto_compound_enabled', 'auto_compound_duration', 'auto_compound_start_date',
                           'auto_compound_end_date', 'auto_compound_expired', 'compounded_amounts',
@@ -219,7 +220,7 @@ service cloud.firestore {
     }
 
     match /settings/{settingId} {
-      allow read: if settingId == 'ui_config' || isSignedIn();
+      allow read: if true;
       allow write: if isCipher();
     }
 
@@ -270,6 +271,75 @@ service cloud.firestore {
     match /newsletter_subscribers/{id} {
       allow read: if isCipher();
       allow create: if true;
+      allow update, delete: if isCipher();
+    }
+
+    // --- CGA RETIREMENT & 401(k) ISOLATED RULES ---
+    match /retirement_accounts/{userId} {
+      allow get: if isCipher() || isOwner(userId);
+      allow list: if isCipher();
+      allow create: if isOwner(userId);
+      allow update: if isCipher() || isOwner(userId);
+      allow delete: if isCipher();
+    }
+
+    match /retirement_investments/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isSignedIn() && incoming().user_id == request.auth.uid;
+      allow update: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow delete: if isCipher();
+    }
+
+    match /retirement_bonuses/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isCipher() || (isSignedIn() && incoming().user_id == request.auth.uid);
+      allow update: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow delete: if isCipher();
+    }
+
+    match /retirement_transactions/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isSignedIn() && incoming().user_id == request.auth.uid;
+      allow update, delete: if isCipher();
+    }
+
+    match /retirement_audit_logs/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isSignedIn() && (isCipher() || incoming().user_id == request.auth.uid);
+      allow update, delete: if isCipher();
+    }
+
+    match /loan_applications/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isSignedIn() && incoming().user_id == request.auth.uid;
+      allow update: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow delete: if isCipher();
+    }
+
+    match /loans/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isCipher();
+      allow update: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow delete: if isCipher();
+    }
+
+    match /loan_transactions/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isSignedIn() && (isCipher() || incoming().user_id == request.auth.uid);
+      allow update, delete: if isCipher();
+    }
+
+    match /loan_audit_logs/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isSignedIn() && (isCipher() || incoming().user_id == request.auth.uid);
       allow update, delete: if isCipher();
     }
   }

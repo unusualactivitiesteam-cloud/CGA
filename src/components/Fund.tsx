@@ -208,14 +208,15 @@ export default function Fund() {
         setWithdrawExchangeRate(data.usd_to_ngn_withdrawal_rate || data.usd_to_ngn_rate || 1400);
         setWithdrawalSystemBusy(!!data.withdrawal_system_busy);
       }
-    });
+    }, (err) => console.warn("Exchange rate sync blocked:", err));
 
     const unsubscribeDep = onSnapshot(
       query(collection(db, 'deposits'), where('user_id', '==', user.uid), orderBy('created_at', 'desc')),
       (snap) => {
         currentDeposits = snap.docs.map(doc => ({ id: doc.id, type: 'deposit', ...doc.data() }));
         updateCombined();
-      }
+      },
+      (err) => console.warn("Deposits sync blocked:", err)
     );
 
     const unsubscribeMining = onSnapshot(
@@ -232,7 +233,8 @@ export default function Fund() {
       (snap) => {
         currentWithdrawals = snap.docs.map(doc => ({ id: doc.id, type: 'withdrawal', ...doc.data() }));
         updateCombined();
-      }
+      },
+      (err) => console.warn("Withdrawals sync blocked:", err)
     );
 
     const unsubscribeInv = onSnapshot(
@@ -240,7 +242,8 @@ export default function Fund() {
       (snap) => {
         currentInvestments = snap.docs.map(doc => ({ id: doc.id, type: 'investment', ...doc.data() }));
         updateCombined();
-      }
+      },
+      (err) => console.warn("Investments sync blocked:", err)
     );
 
     const unsubscribeTx = onSnapshot(
@@ -250,7 +253,8 @@ export default function Fund() {
           .map(doc => ({ id: doc.id, type: 'transfer', ...doc.data() }))
           .filter(t => t.type !== 'withdrawal' && t.type !== 'deposit' && t.type !== 'investment' && t.type !== 'mining_upgrade');
         updateCombined();
-      }
+      },
+      (err) => console.warn("Transfers sync blocked:", err)
     );
 
     return () => {

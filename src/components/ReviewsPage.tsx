@@ -291,7 +291,7 @@ export default function ReviewsPage() {
             <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
           </button>
           <div className="flex items-center cursor-pointer" onClick={() => navigate('/welcome')}>
-            <img src="https://i.imgur.com/BPyaRYZ.png" alt="Logo" className="w-8 h-8 lg:w-9 lg:h-9 object-contain" />
+            <img src="https://i.imgur.com/nRbbYnS.png" alt="Logo" className="w-8 h-8 lg:w-9 lg:h-9 object-contain" />
           </div>
         </div>
 

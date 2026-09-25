@@ -215,7 +215,7 @@ export const NigeriaBankTransferFlow: React.FC<NigeriaBankTransferFlowProps> = (
                     className="w-5 h-5 object-contain rounded-md" 
                   />
                   <span className="text-xs font-black text-[#1DCF9F] uppercase tracking-wider">
-                    Opay
+                    OPay
                   </span>
                 </div>
               ) : (
@@ -224,11 +224,8 @@ export const NigeriaBankTransferFlow: React.FC<NigeriaBankTransferFlowProps> = (
                     src={MONIEPOINT_LOGO_URL} 
                     alt="Moniepoint" 
                     referrerPolicy="no-referrer"
-                    className="w-5 h-5 object-contain rounded-md" 
+                    className="w-6 h-6 object-contain rounded-md" 
                   />
-                  <span className="text-xs font-black text-[#4D8EFF] uppercase tracking-wider">
-                    Moniepoint
-                  </span>
                 </div>
               )}
             </div>

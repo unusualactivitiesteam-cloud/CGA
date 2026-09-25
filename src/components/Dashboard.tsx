@@ -161,9 +161,13 @@ export default function Dashboard() {
     const unsubReferrals = onSnapshot(qRef, async (snap) => {
       const total = snap.size;
       const promises = snap.docs.map(async (uDoc) => {
-        const invQ = query(collection(db, 'investments'), where('user_id', '==', uDoc.id), where('status', '==', 'active'), limit(1));
-        const invSnap = await getDocs(invQ);
-        return !invSnap.empty;
+        try {
+          const invQ = query(collection(db, 'investments'), where('user_id', '==', uDoc.id), where('status', '==', 'active'), limit(1));
+          const invSnap = await getDocs(invQ);
+          return !invSnap.empty;
+        } catch {
+          return false;
+        }
       });
       
       const results = await Promise.all(promises);

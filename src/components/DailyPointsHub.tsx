@@ -106,6 +106,8 @@ export default function DailyPointsHub() {
       const filtered = list.filter(tx => tx.type === 'points_conversion');
       const sorted = filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
       setConversionTransactions(sorted);
+    }, (err) => {
+      console.warn("Points conversion transactions listener blocked:", err);
     });
     return () => unsubscribe();
   }, [user]);

@@ -28,7 +28,9 @@ import {
   ArrowRightLeft,
   Settings,
   Eye,
-  EyeOff
+  EyeOff,
+  ShieldCheck,
+  Sparkles
 } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';

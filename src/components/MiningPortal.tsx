@@ -386,6 +386,8 @@ export default function MiningPortal() {
           claimed: true
         });
       }
+    }, (err) => {
+      console.warn("Free mining device listener blocked:", err);
     });
 
     // 2. Listen to user mining upgrades to determine premium mining subscriptions
@@ -399,6 +401,9 @@ export default function MiningPortal() {
         // Sort by created_at desc
         list.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setUserDeposits(list);
+      },
+      (err) => {
+        console.warn("Mining upgrades listener blocked:", err);
       }
     );
 

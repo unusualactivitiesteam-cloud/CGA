@@ -78,7 +78,7 @@ export default function PremiumLoader() {
           transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
         >
           <img 
-            src="https://i.imgur.com/BPyaRYZ.png" 
+            src="https://i.imgur.com/nRbbYnS.png" 
             alt="CGA Logo" 
             referrerPolicy="no-referrer"
             className="w-20 h-20 sm:w-[84px] sm:h-[84px] object-contain drop-shadow-[0_0_16px_rgba(0,158,66,0.35)]"
