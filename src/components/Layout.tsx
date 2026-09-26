@@ -955,6 +955,7 @@ export default function Layout() {
                 >
                   <div className="flex flex-row items-center justify-center gap-2 lg:gap-4 w-full h-full">
                     {[
+                      { label: 'Markets', path: '/markets', icon: <TrendingUp size={14} className="text-cyan-400" />, betaOnly: false },
                       { label: '401(k)', path: '/retirement', icon: <ShieldCheck size={14} className="text-emerald-400" />, betaOnly: true },
                       { label: 'Loans', path: '/loans', icon: <Landmark size={14} className="text-amber-400" />, betaOnly: true },
                       { label: 'Partners', path: '/partners', icon: <Users size={14} />, betaOnly: false },
@@ -1692,6 +1693,12 @@ export default function Layout() {
                   label={t('invest')} 
                   active={activeTab === 'invest'}
                   onClick={() => handleNavigation('/invest')}
+                />
+                <SidebarItem 
+                  icon={<TrendingUp size={20} className="text-cyan-400" />} 
+                  label="Markets / Securities" 
+                  active={location.pathname.startsWith('/markets')}
+                  onClick={() => handleNavigation('/markets')}
                 />
                 {isBeta && (
                   <>

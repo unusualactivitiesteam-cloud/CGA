@@ -47,8 +47,15 @@ import AIMarketplace from './components/AIMarketplace';
 import Retirement from './components/Retirement/Retirement';
 import Loans from './components/Loans/Loans';
 import CountrySelection from './components/CountrySelection';
+import StocksPage from './components/Markets/StocksPage';
+import BondsPage from './components/Markets/BondsPage';
+import MutualFundsPage from './components/Markets/MutualFundsPage';
+import SecuritiesPortfolioPage from './components/Markets/SecuritiesPortfolioPage';
+import SecuritiesOrdersPage from './components/Markets/SecuritiesOrdersPage';
+import SecuritiesWatchlistPage from './components/Markets/SecuritiesWatchlistPage';
 import { Toaster } from 'sonner';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth, isCipherAdmin } from './contexts/AuthContext';
+import { auth } from './lib/firebase';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { UIProvider } from './contexts/UIContext';
 import { UIConfigProvider } from './contexts/UIConfigContext';
@@ -75,11 +82,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  // If AuthContext is resolving or Firebase has an active authenticated session syncing into state
+  if (loading || (auth.currentUser && !user)) {
     return <PremiumLoader />;
   }
 
-  if (!user) {
+  if (!user && !auth.currentUser) {
     return <Navigate to="/welcome" replace />;
   }
 
@@ -91,8 +99,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   // Check if we just came from a successful login that reloaded the user
   const isVerifiedFromState = location.state?.verified === true;
+  const isCipher = isCipherAdmin(user) || (auth.currentUser && isCipherAdmin(auth.currentUser)) || profile?.role === 'cipher';
 
-  if (!user.emailVerified && !isVerifiedFromState) {
+  if (!user?.emailVerified && !isVerifiedFromState && !isCipher) {
      return <Navigate to="/welcome" replace />;
   }
 
@@ -102,17 +111,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function CipherProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth();
 
-  if (loading) {
+  if (loading || (auth.currentUser && !user)) {
     return <PremiumLoader />;
   }
 
-  const CIPHER_UID = '3yV3rfcUzob5v9ltfVcMw0PL6tQ2';
-  const CIPHER_EMAIL = 'support@tavariwave.network';
-  const OLD_CIPHER_EMAIL = 'contact.cga.usa@gmail.com';
-  
-  const isCipher = user?.uid === CIPHER_UID || user?.email === CIPHER_EMAIL || user?.email === OLD_CIPHER_EMAIL || profile?.role === 'cipher';
+  const isCipher = isCipherAdmin(user) || (auth.currentUser && isCipherAdmin(auth.currentUser)) || profile?.role === 'cipher';
 
-  if (!user || !isCipher) {
+  if ((!user && !auth.currentUser) || !isCipher) {
     return <Navigate to="/" replace />;
   }
 
@@ -190,7 +195,17 @@ export default function App() {
                 <Route path="/about" element={<About />} />
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/partners" element={<Partners />} />
-                <Route path="/markets" element={<MarketTickers />} />
+                <Route path="/markets" element={<StocksPage />} />
+                <Route path="/markets/stocks" element={<StocksPage />} />
+                <Route path="/markets/bonds" element={<BondsPage />} />
+                <Route path="/markets/mutual-funds" element={<MutualFundsPage />} />
+                <Route path="/markets/portfolio" element={<SecuritiesPortfolioPage />} />
+                <Route path="/markets/orders" element={<SecuritiesOrdersPage />} />
+                <Route path="/markets/watchlist" element={<SecuritiesWatchlistPage />} />
+                <Route path="/stocks" element={<Navigate to="/markets/stocks" replace />} />
+                <Route path="/bonds" element={<Navigate to="/markets/bonds" replace />} />
+                <Route path="/mutual-funds" element={<Navigate to="/markets/mutual-funds" replace />} />
+                <Route path="/market-tickers" element={<MarketTickers />} />
                 <Route path="/nodes" element={<StrategicNodes />} />
                 <Route path="/pools" element={<LiquidityPools />} />
                 <Route path="/neural-analytics" element={<NeuralAnalytics />} />

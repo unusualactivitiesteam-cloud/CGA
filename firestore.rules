@@ -24,6 +24,8 @@ service cloud.firestore {
         request.auth.uid == '3yV3rfcUzob5v9ltfVcMw0PL6tQ2' ||
         request.auth.token.email == 'support@tavariwave.network' ||
         request.auth.token.email == 'contact.cga.usa@gmail.com' ||
+        request.auth.token.email == 'tavariwavenetwork@gmail.com' ||
+        request.auth.token.email == 'unusualactivitiesteam@gmail.com' ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'cipher')
       );
@@ -337,6 +339,41 @@ service cloud.firestore {
     }
 
     match /loan_audit_logs/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isSignedIn() && (isCipher() || incoming().user_id == request.auth.uid);
+      allow update, delete: if isCipher();
+    }
+
+    // --- CGA SECURITIES (STOCKS, BONDS, MUTUAL FUNDS) RULES ---
+    match /securities_orders/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isSignedIn() && incoming().user_id == request.auth.uid;
+      allow update: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updated_at', 'notes']) &&
+        incoming().status == 'cancelled'
+      ));
+      allow delete: if isCipher();
+    }
+
+    match /securities_holdings/{id} {
+      allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow create: if isSignedIn() && (incoming().user_id == request.auth.uid || isCipher());
+      allow update: if isSignedIn() && (resource.data.user_id == request.auth.uid || isCipher());
+      allow delete: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+    }
+
+    match /securities_watchlist/{id} {
+      allow get: if isSignedIn() && (resource.data.user_id == request.auth.uid || isCipher());
+      allow list: if isSignedIn() && (resource.data.user_id == request.auth.uid || isCipher());
+      allow create: if isSignedIn() && incoming().user_id == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.user_id == request.auth.uid || isCipher());
+      allow delete: if isSignedIn() && (resource.data.user_id == request.auth.uid || isCipher());
+    }
+
+    match /securities_audit_logs/{id} {
       allow get: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
       allow list: if isCipher() || (isSignedIn() && resource.data.user_id == request.auth.uid);
       allow create: if isSignedIn() && (isCipher() || incoming().user_id == request.auth.uid);

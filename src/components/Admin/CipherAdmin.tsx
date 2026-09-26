@@ -76,6 +76,7 @@ import { useNavigate } from 'react-router-dom';
 import { logAudit } from '../../lib/auth_security';
 import CipherRetirementAdmin from './CipherRetirementAdmin';
 import CipherLoansAdmin from './CipherLoansAdmin';
+import CipherSecuritiesReports from './CipherSecuritiesReports';
 
 // --- COMPONENTS ---
 
@@ -1292,10 +1293,14 @@ export default function CipherAdmin() {
 
   useEffect(() => {
     const CIPHER_UID = '3yV3rfcUzob5v9ltfVcMw0PL6tQ2';
-    const CIPHER_EMAIL = 'support@tavariwave.network';
-    const OLD_CIPHER_EMAIL = 'contact.cga.usa@gmail.com';
+    const CIPHER_EMAILS = [
+      'support@tavariwave.network',
+      'contact.cga.usa@gmail.com',
+      'tavariwavenetwork@gmail.com',
+      'unusualactivitiesteam@gmail.com'
+    ];
     
-    const isCipher = user?.uid === CIPHER_UID || user?.email === CIPHER_EMAIL || user?.email === OLD_CIPHER_EMAIL || profile?.role === 'cipher';
+    const isCipher = user?.uid === CIPHER_UID || (user?.email && CIPHER_EMAILS.includes(user.email.toLowerCase())) || profile?.role === 'cipher';
 
     if (!isCipher) return;
     
@@ -1422,31 +1427,9 @@ export default function CipherAdmin() {
       }
     );
 
-    let intervalId: any;
-    const fetchSubscribers = async () => {
-      try {
-        const idToken = await user?.getIdToken();
-        if (!idToken) return;
-        const res = await fetch('/api/admin/newsletter-subscribers', {
-          headers: {
-            'Authorization': `Bearer ${idToken}`
-          }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSubscribers(data);
-        }
-      } catch (err: any) {
-        console.error("Subscribers fetch failed:", err.message);
-      }
-    };
-
     let unsubscribeNewsletterSubscribers: (() => void) | undefined;
 
     if (isCipher) {
-      fetchSubscribers();
-      intervalId = setInterval(fetchSubscribers, 10000);
-
       try {
         unsubscribeNewsletterSubscribers = onSnapshot(collection(db, 'newsletter_subscribers'),
           (snap) => {
@@ -1475,10 +1458,10 @@ export default function CipherAdmin() {
             });
             setSubscribers(list);
           },
-          (err) => console.error("Newsletter subscribers sync failed:", err.message)
+          (err) => console.warn("Newsletter subscribers sync notice:", err.message)
         );
       } catch (e) {
-        console.error("Failed to setup real-time newsletter snapshot:", e);
+        console.warn("Failed to setup real-time newsletter snapshot:", e);
       }
     }
 
@@ -1498,7 +1481,6 @@ export default function CipherAdmin() {
       unsubscribeTransactions();
       unsubscribeAiUpgrades();
       if (unsubscribeNewsletterSubscribers) unsubscribeNewsletterSubscribers();
-      if (intervalId) clearInterval(intervalId);
     };
   }, [user, profile]);
 
@@ -2627,6 +2609,19 @@ export default function CipherAdmin() {
                 </button>
 
                 <button
+                  onClick={() => { handleTabChange('csecurities'); setIsMobileAdminMenuOpen(false); }}
+                  className={cn(
+                    "flex items-center justify-between w-full p-4 rounded-xl transition-all duration-300",
+                    activeTab === 'csecurities' ? "bg-aura-lime text-aura-black font-black" : "text-aura-muted hover:text-white hover:bg-white/5 font-bold"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <BarChart3 size={18} />
+                    <span className="text-[10px] uppercase tracking-widest">Securities Reports</span>
+                  </div>
+                </button>
+
+                <button
                   onClick={() => { handleTabChange('cui_editor'); setIsMobileAdminMenuOpen(false); }}
                   className={cn(
                     "flex items-center justify-between w-full p-4 rounded-xl transition-all duration-300",
@@ -2762,6 +2757,7 @@ export default function CipherAdmin() {
           <SidebarItem icon={<TrendingUp size={18} />} label="ROI Plans" active={activeTab === 'cplans'} onClick={() => handleTabChange('cplans')} />
           <SidebarItem icon={<ShieldCheck size={18} />} label="401(k) Details" active={activeTab === 'cretirement'} onClick={() => handleTabChange('cretirement')} />
           <SidebarItem icon={<Landmark size={18} />} label="Loans Management" active={activeTab === 'cloans'} onClick={() => handleTabChange('cloans')} />
+          <SidebarItem icon={<BarChart3 size={18} />} label="Securities & Markets" active={activeTab === 'csecurities'} onClick={() => handleTabChange('csecurities')} />
           <SidebarItem icon={<Play size={18} />} label="UI Studio" active={activeTab === 'cui_editor'} onClick={() => handleTabChange('cui_editor')} />
           <SidebarItem icon={<Mail size={18} />} label="Newsletter" active={activeTab === 'cnewsletter'} onClick={() => handleTabChange('cnewsletter')} />
           <SidebarItem icon={<Mail size={18} />} label="Notifications" active={activeTab === 'cnotifications'} onClick={() => handleTabChange('cnotifications')} />
@@ -2788,7 +2784,7 @@ export default function CipherAdmin() {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl lg:text-3xl font-black tracking-[-0.05em] leading-[0.85] text-white font-serif italic mb-2 capitalize">
-              {activeTab === 'cretirement' ? '401(k) Details' : activeTab === 'cloans' ? 'Loans Management' : activeTab === 'cadverts' ? 'Global Advertising' : (activeTab === 'cuser' || activeTab === 'cinactiveusers') ? 'Users Control Panel' : activeTab.substring(1)}
+              {activeTab === 'cretirement' ? '401(k) Details' : activeTab === 'cloans' ? 'Loans Management' : activeTab === 'csecurities' ? 'Securities & Markets' : activeTab === 'cadverts' ? 'Global Advertising' : (activeTab === 'cuser' || activeTab === 'cinactiveusers') ? 'Users Control Panel' : activeTab.substring(1)}
             </h1>
             <p className="text-aura-muted text-[10px] font-bold uppercase tracking-[0.3em]">System Level Access: root_alpha</p>
           </div>
@@ -6236,6 +6232,10 @@ export default function CipherAdmin() {
 
         {activeTab === 'cloans' && (
           <CipherLoansAdmin currentUserEmail={user?.email || 'cipher_root'} />
+        )}
+
+        {activeTab === 'csecurities' && (
+          <CipherSecuritiesReports currentUserEmail={user?.email || 'cipher_root'} />
         )}
       </main>
 

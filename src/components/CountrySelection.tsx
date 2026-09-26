@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, ArrowRight, X, Globe2 } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { COUNTRIES, Country } from '../constants/countries';
 import Footer from './Footer';
 import { useTheme } from '../contexts/ThemeContext';
@@ -88,22 +88,9 @@ export default function CountrySelection() {
             />
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest mb-3">
-            <Globe2 size={12} />
-            <span>Global Onboarding</span>
-          </div>
-
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight leading-tight">
             Choose your country
           </h1>
-          <p
-            className={cn(
-              "text-xs sm:text-sm mt-2 max-w-md font-medium tracking-wide leading-relaxed",
-              isDark ? "text-aura-muted" : "text-slate-500"
-            )}
-          >
-            Select your country of residence to begin your institutional account setup.
-          </p>
         </div>
 
         {/* Search Field */}
@@ -200,15 +187,6 @@ export default function CountrySelection() {
                   >
                     {country.code}
                   </span>
-                  <ArrowRight
-                    size={16}
-                    className={cn(
-                      "transition-all duration-300",
-                      isDark
-                        ? "text-white/20 group-hover:text-primary group-hover:translate-x-1"
-                        : "text-slate-300 group-hover:text-primary group-hover:translate-x-1"
-                    )}
-                  />
                 </div>
               </button>
             ))

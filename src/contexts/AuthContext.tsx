@@ -21,7 +21,21 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { getRoiByAmount, isWeekendROI } from '../lib/utils';
-import PremiumLoader from '../components/PremiumLoader';
+
+export const CIPHER_ADMIN_EMAILS = [
+  'support@tavariwave.network',
+  'contact.cga.usa@gmail.com',
+  'tavariwavenetwork@gmail.com',
+  'unusualactivitiesteam@gmail.com'
+];
+export const CIPHER_ADMIN_UID = '3yV3rfcUzob5v9ltfVcMw0PL6tQ2';
+
+export const isCipherAdmin = (u?: { email?: string | null; uid?: string | null } | null): boolean => {
+  if (!u) return false;
+  if (u.uid === CIPHER_ADMIN_UID) return true;
+  if (u.email && CIPHER_ADMIN_EMAILS.includes(u.email.toLowerCase())) return true;
+  return false;
+};
 
 export const getCutoffTime = () => {
   return new Date("2026-06-21T17:35:00-07:00").getTime();
@@ -263,6 +277,7 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
+  syncAuthSession: (signedInUser?: FirebaseUser) => Promise<void>;
   plans: any[];
   expectedDailyRoi: number;
 }
@@ -1086,28 +1101,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchProfileWithRetry = useCallback(async (firebaseUser: FirebaseUser, retryCount = 0): Promise<void> => {
-    const isCipher = firebaseUser.email === 'support@tavariwave.network' || 
-                     firebaseUser.email === 'contact.cga.usa@gmail.com' || 
-                     firebaseUser.uid === '3yV3rfcUzob5v9ltfVcMw0PL6tQ2';
-
     // Reload user state to ensure we have the absolute latest verification status
     // This addresses the "verified users unable to sign in" permission issue
     if (retryCount === 0) {
       try {
         await firebaseUser.reload();
         await firebaseUser.getIdToken(true);
+        const active = auth.currentUser;
+        if (active) {
+          setUser(Object.assign(Object.create(Object.getPrototypeOf(active)), active));
+        }
       } catch (e) {
         console.warn("Auth reload failed during profile fetch", e);
       }
     }
 
-    if (!firebaseUser.emailVerified && !isCipher) {
+    const currentCheckUser = auth.currentUser || firebaseUser;
+    const isCipher = isCipherAdmin(currentCheckUser);
+
+    if (!currentCheckUser.emailVerified && !isCipher) {
         setProfile(null);
         setLoading(false);
         return;
     }
 
-    const docRef = doc(db, 'users', firebaseUser.uid);
+    const docRef = doc(db, 'users', currentCheckUser.uid);
     
     try {
       // Clear existing subscription
@@ -1230,31 +1248,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [user, profile, checkAndProcessROI]);
 
-  const refreshAuth = useCallback(async () => {
-    if (auth.currentUser) {
-      await auth.currentUser.reload();
-      const updatedUser = auth.currentUser;
-      setUser(updatedUser);
-      if (updatedUser) {
-        await fetchProfileWithRetry(updatedUser);
+  const syncAuthSession = useCallback(async (signedInUser?: FirebaseUser) => {
+    setLoading(true);
+    const targetUser = signedInUser || auth.currentUser;
+    if (targetUser) {
+      try {
+        await targetUser.reload();
+        await targetUser.getIdToken(true);
+      } catch (e) {
+        console.warn("Auth reload in syncAuthSession:", e);
       }
+      const activeUser = auth.currentUser || targetUser;
+      setUser(Object.assign(Object.create(Object.getPrototypeOf(activeUser)), activeUser));
+      const isCipher = isCipherAdmin(activeUser);
+      if (activeUser.emailVerified || isCipher) {
+        await fetchProfileWithRetry(activeUser);
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
+    } else {
+      setUser(null);
+      setProfile(null);
+      setLoading(false);
     }
   }, [fetchProfileWithRetry]);
 
+  const refreshAuth = useCallback(async () => {
+    await syncAuthSession();
+  }, [syncAuthSession]);
+
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
-      setUser(firebaseUser);
-      
       if (firebaseUser) {
-        // Wait for verification before fetching profile
-        const isCipher = firebaseUser.email === 'support@tavariwave.network' || 
-                         firebaseUser.email === 'contact.cga.usa@gmail.com' || 
-                         firebaseUser.uid === '3yV3rfcUzob5v9ltfVcMw0PL6tQ2';
+        setLoading(true);
+        try {
+          await firebaseUser.reload();
+        } catch (e) {
+          console.warn("Auth reload in onAuthStateChanged:", e);
+        }
+        const activeUser = auth.currentUser || firebaseUser;
+        setUser(Object.assign(Object.create(Object.getPrototypeOf(activeUser)), activeUser));
         
-        if (firebaseUser.emailVerified || isCipher) {
-          await fetchProfileWithRetry(firebaseUser);
+        const isCipher = isCipherAdmin(activeUser);
+        if (activeUser.emailVerified || isCipher) {
+          await fetchProfileWithRetry(activeUser);
         } else {
-          // If not verified, we set profile to null and wait
           setProfile(null);
           setLoading(false);
         }
@@ -1263,6 +1302,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           unsubscribeProfileRef.current();
           unsubscribeProfileRef.current = null;
         }
+        setUser(null);
         setProfile(null);
         setLoading(false);
       }
@@ -1290,9 +1330,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const isCipher = user.email === 'support@tavariwave.network' || 
-                     user.email === 'contact.cga.usa@gmail.com' || 
-                     user.uid === '3yV3rfcUzob5v9ltfVcMw0PL6tQ2';
+    const isCipher = isCipherAdmin(user);
                      
     if (!user.emailVerified && !isCipher) {
       setActiveInvestments([]);
@@ -1321,9 +1359,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const isCipher = user.email === 'support@tavariwave.network' || 
-                     user.email === 'contact.cga.usa@gmail.com' || 
-                     user.uid === '3yV3rfcUzob5v9ltfVcMw0PL6tQ2';
+    const isCipher = isCipherAdmin(user);
                      
     if (!user.emailVerified && !isCipher) {
       setCompoundTransactions([]);
@@ -1400,9 +1436,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return lastValidRoiRef.current || 0;
   }, [activeInvestments, derivedCompoundedAmounts, dynamicPlans, profile, globalRoiConfig]);
 
+  useEffect(() => {
+    if (!loading) {
+      const loader = document.getElementById('startup-loader');
+      if (loader) {
+        loader.style.transition = 'opacity 0.25s ease-out';
+        loader.style.opacity = '0';
+        loader.style.pointerEvents = 'none';
+        const timeout = setTimeout(() => {
+          loader.remove();
+        }, 250);
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [loading]);
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, logout, refreshAuth, plans: dynamicPlans, expectedDailyRoi }}>
-      {loading ? <PremiumLoader /> : children}
+    <AuthContext.Provider value={{ user, profile, loading, logout, refreshAuth, syncAuthSession, plans: dynamicPlans, expectedDailyRoi }}>
+      {children}
     </AuthContext.Provider>
   );
 }

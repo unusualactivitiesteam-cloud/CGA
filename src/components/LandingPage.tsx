@@ -500,17 +500,30 @@ export default function LandingPage() {
     setNewsletterLoading(true);
     const cleanEmail = emailStr.toLowerCase().trim();
     try {
-      const response = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: cleanEmail })
-      });
+      let saved = false;
+      try {
+        await addDoc(collection(db, 'newsletter_subscribers'), {
+          email: cleanEmail,
+          created_at: serverTimestamp()
+        });
+        saved = true;
+      } catch (clientErr) {
+        console.warn("Direct Firestore subscription write notice, trying server fallback:", clientErr);
+      }
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Subscription could not be processed at this time.");
+      if (!saved) {
+        const response = await fetch('/api/newsletter/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: cleanEmail })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Subscription could not be processed at this time.");
+        }
       }
 
       setNewsletterEmail('');
@@ -1242,35 +1255,42 @@ export default function LandingPage() {
 
   if (isMobile) {
     return (
-      <div className="relative min-h-[100dvh] w-full text-white overflow-hidden bg-black flex flex-col justify-between select-none">
-        {/* Fixed Full-screen Background Image with exact centering and cover style scaling */}
-        <div className="fixed inset-0 w-full h-full z-0 pointer-events-none bg-black overflow-hidden select-none">
-          <img 
-            src="https://i.imgur.com/OOBmUsR.png"
-            className="w-full h-full object-cover object-center select-none bg-black"
-            referrerPolicy="no-referrer"
-            loading="eager"
-            alt="Mobile Background"
-            style={{ willChange: 'transform' }}
-          />
-        </div>
+      <div className={cn(
+        "relative min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 transition-colors duration-200 overflow-x-hidden selection:bg-primary selection:text-white",
+        isDark ? "bg-[#050608] text-white" : "bg-[#f8fafc] text-slate-900"
+      )}>
+        {/* Subtle ambient lighting glows */}
+        <div className="fixed top-[15%] left-[-10%] w-[320px] h-[320px] rounded-full bg-primary/10 blur-[100px] pointer-events-none -z-0" />
+        <div className="fixed bottom-[15%] right-[-10%] w-[320px] h-[320px] rounded-full bg-secondary/10 blur-[100px] pointer-events-none -z-0" />
 
-        {/* Content Overlay */}
-        <div className="relative z-10 flex flex-col justify-between min-h-[100dvh] w-full">
-          {/* Top spacer (artwork/logo safe area - no overlap) */}
-          <div className={`flex-none pointer-events-none transition-all duration-300 ${authMode === 'signup' ? 'h-[17vh] min-h-[125px]' : 'h-[14vh] min-h-[100px]'}`} />
+        {/* The Approved Authentication Card */}
+        <div className="relative w-full max-w-md bg-white border border-slate-200 text-slate-900 dark:bg-[#0c0f14] dark:border-white/10 dark:text-white rounded-3xl overflow-hidden shadow-2xl transition-colors duration-200 my-auto z-10">
+          <div className="p-6 sm:p-8 max-h-[92vh] overflow-y-auto scrollbar-hide">
+            {/* Logo & Header */}
+            <div className="flex flex-col items-center text-center mt-2 mb-6 sm:mb-8">
+              <img 
+                src="https://i.imgur.com/nRbbYnS.png" 
+                alt="CGA Trades Logo" 
+                loading="lazy" 
+                decoding="async" 
+                className="w-20 h-20 lg:w-24 lg:h-24 object-contain mb-4 sm:mb-6 drop-shadow-sm" 
+              />
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
+                {authMode === 'signup' ? 'Create Account' : 'Welcome Back'}
+              </h2>
+              <p className="text-slate-500 dark:text-aura-muted text-sm font-medium">
+                {authMode === 'signup' ? 'Join us and start your journey' : 'Sign in to continue your journey'}
+              </p>
+            </div>
 
-          {/* Central black area content */}
-          <div className="flex-1 flex flex-col justify-center px-8 w-full max-w-[400px] mx-auto overflow-y-auto scrollbar-hide py-2 md:py-4">
-            
             {verificationSent ? (
-              <div className="text-center space-y-4">
-                <div className="w-14 h-14 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
-                  <CheckCircle2 size={28} className="text-emerald-500" />
+              <div className="text-center space-y-6 py-6">
+                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+                  <CheckCircle2 size={40} className="text-emerald-500" />
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-bold uppercase tracking-wide">Verify Your Email</h3>
-                  <p className="text-aura-muted text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                <div className="space-y-3 px-2">
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Verify Your Email</h3>
+                  <p className="text-slate-500 dark:text-aura-muted text-xs font-semibold leading-relaxed">
                     Your account has been created successfully.<br/>
                     Please check your inbox or spam folder to verify your email before signing in.
                   </p>
@@ -1280,24 +1300,24 @@ export default function LandingPage() {
                     setVerificationSent(false); 
                     setAuthMode('signin'); 
                   }}
-                  className="w-full py-3 bg-primary text-white font-black uppercase tracking-wider text-[10px] rounded-2xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm"
                 >
-                  OK <ArrowRight size={14} />
+                  OK <ArrowRight size={16} />
                 </button>
               </div>
             ) : requiresOtp ? (
-              <div className="text-center space-y-4">
-                <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto border border-primary/20">
-                  <Lock size={24} className="text-primary animate-pulse" />
+              <div className="text-center space-y-6 py-6">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto border border-primary/20">
+                  <Lock size={32} className="text-primary animate-pulse" />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-lg font-bold uppercase tracking-wide">Confirm Device</h3>
-                  <p className="text-aura-muted text-[9px] font-bold uppercase tracking-widest leading-relaxed">
-                    Unrecognized device. Enter your Transaction PIN to authorize.
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Confirm Device</h3>
+                  <p className="text-slate-500 dark:text-aura-muted text-xs font-medium leading-relaxed px-2">
+                    Unrecognized device detected. Enter your Transaction PIN to authorize this device.
                   </p>
                 </div>
 
-                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <form onSubmit={handleVerifyOtp} className="space-y-6">
                   <div className="flex justify-center">
                     <input 
                       type="password" 
@@ -1305,18 +1325,20 @@ export default function LandingPage() {
                       placeholder="••••"
                       value={userOtp}
                       onChange={(e) => setUserOtp(e.target.value.replace(/\D/g, ''))}
-                      className="w-full max-w-[180px] bg-white/[0.04] border border-white/10 rounded-2xl py-3 text-center text-xl font-black tracking-[0.4em] text-primary focus:border-primary focus:bg-white/[0.08] outline-none transition-all placeholder:text-white/10 font-mono"
+                      className="w-full max-w-[220px] bg-slate-100 border border-slate-200 text-primary focus:border-primary focus:bg-white dark:bg-white/5 dark:border-white/10 dark:focus:bg-white/10 rounded-2xl py-4 text-center text-2xl font-black tracking-[0.4em] outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-white/10 font-mono"
                       required
                       autoFocus
                     />
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <button 
                       disabled={loading || userOtp.length < 4}
-                      className="w-full py-3 bg-primary text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all disabled:opacity-30 flex items-center justify-center gap-2"
+                      className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-30 flex items-center justify-center gap-2 text-sm"
                     >
-                      {loading ? 'Authenticating...' : 'Authorize Device'}
+                      {loading ? 'Authenticating...' : (
+                        <>Authorize Device <CheckCircle2 size={16} /></>
+                      )}
                     </button>
                     
                     <button 
@@ -1326,98 +1348,97 @@ export default function LandingPage() {
                         setTempUser(null);
                         setUserOtp('');
                       }}
-                      className="text-[9px] font-black uppercase tracking-widest text-aura-muted hover:text-white transition-colors"
+                      className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-slate-900 dark:text-aura-muted dark:hover:text-white transition-colors"
                     >
-                      Cancel
+                      Cancel session
                     </button>
                   </div>
                 </form>
+
+                <div className="pt-2 flex items-center justify-center gap-2 text-[10px] font-bold text-slate-500 dark:text-aura-muted uppercase tracking-widest">
+                   <Shield className="w-3.5 h-3.5 text-primary" />
+                   Fortified Endpoint Active
+                </div>
               </div>
             ) : (
-              <div className="space-y-3.5">
-                {/* Social Button - Visible on both Sign-In and Sign-Up modes */}
-                <div>
+              <div className="space-y-6">
+                {/* Google Sign-Up / Sign-In Button */}
+                <div className="space-y-3">
                   <button 
                     disabled={loading}
                     onClick={handleGoogleAuth}
-                    className="w-full py-2.5 bg-white text-black rounded-2xl flex items-center justify-center gap-3 font-semibold text-xs hover:bg-white/90 active:scale-98 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3.5 bg-white text-slate-900 border border-slate-200 dark:border-transparent dark:text-black rounded-xl flex items-center justify-center gap-3 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-white/90 active:scale-[0.99] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" alt="Google logo" />
-                    {authMode === 'signup' ? 'Sign Up with Google' : 'Sign In with Google'}
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google logo" />
+                    {authMode === 'signup' ? 'Sign up with Google' : 'Sign in with Google'}
                   </button>
                 </div>
 
                 {/* Divider */}
-                <div className="relative flex items-center gap-3">
-                  <div className="h-px bg-white/10 flex-1"></div>
-                  <span className="text-[9px] font-bold text-white/25 uppercase tracking-widest leading-none">or</span>
-                  <div className="h-px bg-white/10 flex-1"></div>
+                <div className="relative flex items-center gap-4">
+                  <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-widest leading-none">or</span>
+                  <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
                 </div>
 
-                {/* Form fields */}
-                <form 
-                  onSubmit={(e) => {
-                    // Pre-fill username on mobile if signing up
-                    if (authMode === 'signup' && !username) {
-                      setUsername(email.split('@')[0] || 'user');
-                    }
-                    if (authMode === 'signup') {
-                      handleSignup(e);
-                    } else {
-                      handleSignin(e);
-                    }
-                  }} 
-                  className="space-y-2"
-                >
+                {/* Form fields in approved order */}
+                <form onSubmit={authMode === 'signup' ? handleSignup : handleSignin} className="space-y-4">
+                  {/* Selected Country pill */}
                   {authMode === 'signup' && selectedCountry && (
-                    <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-white mb-1.5">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xl shrink-0 select-none" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
-                        <div className="truncate">
-                          <span className="text-[10px] uppercase font-bold text-aura-muted block leading-none">Selected Country</span>
-                          <span className="text-xs font-bold text-white truncate block">{selectedCountry.countryName}</span>
+                    <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-slate-100 border border-slate-200 text-slate-900 dark:bg-white/[0.04] dark:border-white/10 dark:text-white mb-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl select-none" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
+                        <div>
+                          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-aura-muted leading-tight">Selected Country</div>
+                          <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">{selectedCountry.countryName}</div>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={handleOpenCountrySelection}
-                        className="text-[9px] font-bold uppercase tracking-wider text-primary hover:underline shrink-0 pl-2"
+                        className="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
                       >
                         Change
                       </button>
                     </div>
                   )}
 
+                  {/* 1. Full Name */}
                   {authMode === 'signup' && (
-                    <AuthInput icon={<User size={15} />} label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required compact={true} />
+                    <AuthInput icon={<User size={18} />} label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required />
                   )}
 
+                  {/* 2. Username */}
+                  {authMode === 'signup' && (
+                    <AuthInput icon={<UserPlus size={18} />} label="Username" placeholder="Username" value={username} onChange={setUsername} required />
+                  )}
+
+                  {/* 3. Email Address (or Phone Number on signin) */}
                   {authMode === 'signup' ? (
                     <AuthInput 
-                      icon={<Mail size={15} />} 
+                      icon={<Mail size={18} />} 
                       label="Email Address" 
                       placeholder="Email Address" 
                       type="email" 
                       value={email} 
                       onChange={setEmail} 
                       required 
-                      compact={true}
                     />
                   ) : (
                     <AuthInput 
-                      icon={<Phone size={15} />} 
+                      icon={<Phone size={18} />} 
                       label="Phone Number" 
                       placeholder="Enter your phone number" 
                       type="tel" 
                       value={signinPhone} 
                       onChange={setSigninPhone} 
                       required 
-                      compact={true}
                     />
                   )}
 
+                  {/* 4. Phone Number */}
                   {authMode === 'signup' && (
-                    <div className="space-y-1.5 is-compact">
+                    <div className="space-y-2">
                       <PhoneInput
                         country={selectedCountry ? selectedCountry.countryCode.toLowerCase() : detectedCountry}
                         value={phone}
@@ -1433,51 +1454,62 @@ export default function LandingPage() {
                     </div>
                   )}
 
-                  <AuthInput 
-                    icon={<Lock size={15} />} 
-                    label="Password" 
-                    placeholder="Enter your password" 
-                    type="password" 
-                    value={authMode === 'signup' ? password : signinPassword} 
-                    onChange={authMode === 'signup' ? setPassword : setSigninPassword} 
-                    required 
-                    showPasswordToggle={true}
-                    isPasswordVisible={authMode === 'signup' ? showPassword : showSigninPassword}
-                    onTogglePassword={() => authMode === 'signup' ? setShowPassword(!showPassword) : setShowSigninPassword(!showSigninPassword)}
-                    compact={true}
-                  />
-
-                  {authMode === 'signup' && (
+                  {/* 5. Password */}
+                  <div className="space-y-4">
                     <AuthInput 
-                      icon={<Lock size={15} />} 
-                      label="Confirm Password" 
-                      placeholder="Confirm Password" 
+                      icon={<Lock size={18} />} 
+                      label="Password" 
+                      placeholder="Enter your password" 
                       type="password" 
-                      value={confirmPassword} 
-                      onChange={setConfirmPassword} 
+                      value={authMode === 'signup' ? password : signinPassword} 
+                      onChange={authMode === 'signup' ? setPassword : setSigninPassword} 
                       required 
                       showPasswordToggle={true}
-                      isPasswordVisible={showConfirmPassword}
-                      onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
-                      compact={true}
+                      isPasswordVisible={authMode === 'signup' ? showPassword : showSigninPassword}
+                      onTogglePassword={() => authMode === 'signup' ? setShowPassword(!showPassword) : setShowSigninPassword(!showSigninPassword)}
                     />
+
+                    {/* 6. Confirm Password */}
+                    {authMode === 'signup' && (
+                      <AuthInput 
+                        icon={<Lock size={18} />} 
+                        label="Confirm Password" 
+                        placeholder="Confirm Password" 
+                        type="password" 
+                        value={confirmPassword} 
+                        onChange={setConfirmPassword} 
+                        required 
+                        showPasswordToggle={true}
+                        isPasswordVisible={showConfirmPassword}
+                        onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                      />
+                    )}
+                  </div>
+
+                  {/* Forgot Password (Sign In only) */}
+                  {authMode === 'signin' && (
+                    <div className="flex justify-end">
+                       <button type="button" className="text-xs font-bold text-primary hover:underline transition-colors">Forgot Password?</button>
+                    </div>
                   )}
 
+                  {/* 7. Referral Code (Optional) */}
                   {authMode === 'signup' && (
-                    <AuthInput icon={<TrendingUp size={15} />} label="Referral Code" placeholder="Referral Code (Optional)" value={referralCode} onChange={setReferralCode} compact={true} />
+                     <AuthInput icon={<TrendingUp size={18} />} label="Referral Code (Optional)" placeholder="Referral Code (Optional)" value={referralCode} onChange={setReferralCode} />
                   )}
 
+                  {/* Submit Button */}
                   <button 
                     disabled={loading}
                     type="submit"
-                    className="w-full py-3 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_15px_rgba(124,58,237,0.25)] hover:scale-[1.01] transition-all disabled:opacity-50 mt-2 text-xs"
+                    className="w-full py-4.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 mt-4 text-base"
                   >
-                    {loading ? 'Processing...' : authMode === 'signup' ? 'Sign Up' : 'Sign In'}
+                    {loading ? 'Processing...' : authMode === 'signup' ? 'Create Account' : 'Sign In'}
                   </button>
                 </form>
 
-                {/* Switch Link / Switch Button */}
-                <p className="text-center text-xs font-semibold text-aura-muted pt-1 pb-0 flex-none leading-normal">
+                {/* Sign Up / Sign In switch link */}
+                <p className="text-center text-sm font-medium text-slate-500 dark:text-aura-muted">
                   {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
                   <button 
                     type="button"
@@ -1494,7 +1526,7 @@ export default function LandingPage() {
                         setAuthMode('signin');
                       }
                     }}
-                    className="text-secondary font-bold hover:text-accent transition-colors"
+                    className="text-primary font-bold hover:underline transition-colors"
                   >
                     {authMode === 'signup' ? 'Sign In' : 'Sign Up'}
                   </button>
@@ -1502,16 +1534,16 @@ export default function LandingPage() {
               </div>
             )}
           </div>
-
-          {/* Bottom spacer (bottom graphic safe area - no overlap) */}
-          <div className="flex-none h-[14vh] min-h-[80px] pointer-events-none" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050608] text-white selection:bg-primary selection:text-white overflow-hidden relative">
+    <div className={cn(
+      "min-h-screen selection:bg-primary selection:text-white overflow-hidden relative transition-colors duration-200",
+      isDark ? "bg-[#050608] text-white" : "bg-[#f8fafc] text-slate-900"
+    )}>
       {/* Premium Visual Enhancements: Ambient Glow Blobs */}
       <div className="absolute top-[20%] left-[-15%] w-[450px] h-[450px] rounded-full bg-primary/10 blur-[130px] pointer-events-none z-0" />
       <div className="absolute top-[55%] right-[-15%] w-[500px] h-[500px] rounded-full bg-secondary/8 blur-[150px] pointer-events-none z-0" />
@@ -1519,7 +1551,7 @@ export default function LandingPage() {
 
       {/* Welcome Landing Full Width Header Photo */}
       <div 
-        className="w-full relative z-[101] overflow-hidden bg-[#050608] mt-20 lg:mt-24"
+        className={cn("w-full relative z-[101] overflow-hidden mt-20 lg:mt-24", isDark ? "bg-[#050608]" : "bg-[#f8fafc]")}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -1989,29 +2021,29 @@ export default function LandingPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-[#0c0f14] border border-white/5 rounded-3xl overflow-hidden shadow-2xl"
+              className="relative w-full max-w-md bg-white border border-slate-200 text-slate-900 dark:bg-[#0c0f14] dark:border-white/10 dark:text-white rounded-3xl overflow-hidden shadow-2xl transition-colors duration-200"
             >
               <div className="p-8 max-h-[90vh] overflow-y-auto scrollbar-hide">
                 <button 
                   onClick={() => setIsModalOpen(false)}
-                  className="absolute top-6 left-6 p-2 bg-white/5 hover:bg-white/10 rounded-full text-aura-muted hover:text-white transition-colors"
+                  className="absolute top-6 left-6 p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 dark:bg-white/5 dark:hover:bg-white/10 dark:text-aura-muted dark:hover:text-white rounded-full transition-colors"
                 >
                   <ChevronLeft size={20} />
                 </button>
 
                 {/* Logo & Header */}
                 <div className="flex flex-col items-center text-center mt-6 mb-8">
-                   <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="w-20 h-20 lg:w-24 lg:h-24 object-contain mb-6" />
-                   <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
+                   <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="w-20 h-20 lg:w-24 lg:h-24 object-contain mb-6 drop-shadow-sm" />
+                   <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
                      {authMode === 'signup' ? 'Create Account' : 'Welcome Back'}
                    </h2>
-                   <p className="text-aura-muted text-sm font-medium">
+                   <p className="text-slate-500 dark:text-aura-muted text-sm font-medium">
                      {authMode === 'signup' ? 'Join us and start your journey' : 'Sign in to continue your journey'}
                    </p>
                 </div>
@@ -2026,8 +2058,8 @@ export default function LandingPage() {
                       <CheckCircle2 size={40} className="text-emerald-500" />
                     </motion.div>
                     <div className="space-y-4 px-4">
-                      <h3 className="text-2xl font-black italic font-serif">Verify Your Email</h3>
-                      <p className="text-aura-muted text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                      <h3 className="text-2xl font-black italic font-serif text-slate-900 dark:text-white">Verify Your Email</h3>
+                      <p className="text-slate-500 dark:text-aura-muted text-[10px] font-bold uppercase tracking-widest leading-relaxed">
                         Your account has been created successfully.<br/>
                         Please check your inbox or spam folder to verify your email before signing in.
                       </p>
@@ -2048,8 +2080,8 @@ export default function LandingPage() {
                       <Lock size={32} className="text-primary animate-pulse" />
                     </div>
                     <div className="space-y-3">
-                      <h3 className="text-2xl font-bold text-white uppercase tracking-tighter italic">Confirm Device</h3>
-                      <p className="text-aura-muted text-[10px] font-bold uppercase tracking-widest leading-relaxed px-4">
+                      <h3 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tighter italic">Confirm Device</h3>
+                      <p className="text-slate-500 dark:text-aura-muted text-[10px] font-bold uppercase tracking-widest leading-relaxed px-4">
                         We've detected a sign-in attempt from an unrecognized device. For your protection, enter your Transaction PIN to authorize this device.
                       </p>
                     </div>
@@ -2062,7 +2094,7 @@ export default function LandingPage() {
                           placeholder="••••"
                           value={userOtp}
                           onChange={(e) => setUserOtp(e.target.value.replace(/\D/g, ''))}
-                          className="w-full max-w-[240px] bg-white/5 border border-white/10 rounded-2xl py-5 text-center text-3xl font-black tracking-[0.4em] text-primary focus:border-primary focus:bg-white/10 outline-none transition-all placeholder:text-white/10 font-mono"
+                          className="w-full max-w-[240px] bg-slate-100 border border-slate-200 text-primary focus:border-primary focus:bg-white dark:bg-white/5 dark:border-white/10 dark:focus:bg-white/10 rounded-2xl py-5 text-center text-3xl font-black tracking-[0.4em] outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-white/10 font-mono"
                           required
                           autoFocus
                         />
@@ -2085,14 +2117,14 @@ export default function LandingPage() {
                             setTempUser(null);
                             setUserOtp('');
                           }}
-                          className="text-[10px] font-black uppercase tracking-widest text-aura-muted hover:text-white transition-colors"
+                          className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:text-aura-muted dark:hover:text-white transition-colors"
                         >
                           Cancel session
                         </button>
                       </div>
                     </form>
 
-                    <div className="pt-4 flex items-center justify-center gap-2 text-[10px] font-bold text-aura-muted uppercase tracking-[0.2em]">
+                    <div className="pt-4 flex items-center justify-center gap-2 text-[10px] font-bold text-slate-500 dark:text-aura-muted uppercase tracking-[0.2em]">
                        <Shield className="w-3 h-3 text-primary" />
                        Fortified Endpoint Active
                     </div>
@@ -2104,7 +2136,7 @@ export default function LandingPage() {
                        <button 
                          disabled={loading}
                          onClick={handleGoogleAuth}
-                         className="w-full py-3.5 bg-white text-black rounded-xl flex items-center justify-center gap-3 font-semibold text-sm hover:bg-white/90 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                         className="w-full py-3.5 bg-white text-slate-900 border border-slate-200 dark:border-transparent dark:text-black rounded-xl flex items-center justify-center gap-3 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-white/90 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                        >
                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google logo" />
                          {authMode === 'signup' ? 'Sign up with Google' : 'Sign in with Google'}
@@ -2112,19 +2144,19 @@ export default function LandingPage() {
                     </div>
 
                     <div className="relative flex items-center gap-4">
-                       <div className="h-px bg-white/5 flex-1"></div>
-                       <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest leading-none">or</span>
-                       <div className="h-px bg-white/5 flex-1"></div>
+                       <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
+                       <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-widest leading-none">or</span>
+                       <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
                     </div>
 
                     <form onSubmit={authMode === 'signup' ? handleSignup : handleSignin} className="space-y-4">
                       {authMode === 'signup' && selectedCountry && (
-                        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/10 text-white mb-2">
+                        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-slate-100 border border-slate-200 text-slate-900 dark:bg-white/[0.04] dark:border-white/10 dark:text-white mb-2">
                           <div className="flex items-center gap-3">
                             <span className="text-2xl select-none" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
                             <div>
-                              <div className="text-[10px] uppercase font-bold tracking-wider text-aura-muted leading-tight">Selected Country</div>
-                              <div className="text-sm font-bold text-white leading-tight mt-0.5">{selectedCountry.countryName}</div>
+                              <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-aura-muted leading-tight">Selected Country</div>
+                              <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">{selectedCountry.countryName}</div>
                             </div>
                           </div>
                           <button
@@ -2214,7 +2246,7 @@ export default function LandingPage() {
 
                       {authMode === 'signin' && (
                         <div className="flex justify-end">
-                           <button type="button" className="text-xs font-bold text-secondary hover:text-accent transition-colors">Forgot Password?</button>
+                           <button type="button" className="text-xs font-bold text-primary hover:underline transition-colors">Forgot Password?</button>
                         </div>
                       )}
 
@@ -2224,13 +2256,14 @@ export default function LandingPage() {
 
                       <button 
                         disabled={loading}
-                        className="w-full py-4.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-[1.01] transition-all disabled:opacity-50 mt-4 text-base"
+                        type="submit"
+                        className="w-full py-4.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 mt-4 text-base"
                       >
                         {loading ? 'Processing...' : authMode === 'signup' ? 'Create Account' : 'Sign In'}
                       </button>
                     </form>
 
-                    <p className="text-center text-sm font-medium text-aura-muted">
+                    <p className="text-center text-sm font-medium text-slate-500 dark:text-aura-muted">
                       {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"} {' '}
                       <button 
                         onClick={() => {
@@ -2246,7 +2279,7 @@ export default function LandingPage() {
                             setAuthMode('signin');
                           }
                         }}
-                        className="text-secondary font-bold hover:text-accent transition-colors"
+                        className="text-primary font-bold hover:underline transition-colors"
                       >
                         {authMode === 'signup' ? 'Sign In' : 'Sign Up'}
                       </button>
@@ -2278,12 +2311,12 @@ export default function LandingPage() {
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="relative w-full max-w-md bg-[#0a0c10] border border-white/10 rounded-3xl p-6 sm:p-8 text-white shadow-2xl z-10"
+              className="relative w-full max-w-md bg-white border border-slate-200 text-slate-900 dark:bg-[#0a0c10] dark:border-white/10 dark:text-white rounded-3xl p-6 sm:p-8 shadow-2xl z-10 transition-colors duration-200"
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Logo" className="h-7 w-auto object-contain" />
-                  <span className="text-xs font-black uppercase tracking-wider text-white/80">Capital Growth Alliance</span>
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-white/80">Capital Growth Alliance</span>
                 </div>
                 <button
                   onClick={() => {
@@ -2291,28 +2324,28 @@ export default function LandingPage() {
                     setGoogleSetupUser(null);
                     auth.signOut();
                   }}
-                  className="p-1.5 rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                  className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 dark:hover:bg-white/10 dark:text-white/60 dark:hover:text-white transition-colors"
                 >
                   <X size={18} />
                 </button>
               </div>
 
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-black uppercase tracking-tight text-white mb-1.5">
+                <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white mb-1.5">
                   Complete Your Account
                 </h2>
-                <p className="text-xs text-aura-muted font-medium leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-aura-muted font-medium leading-relaxed">
                   Add your phone number and create a password to finish setting up your CGA account.
                 </p>
               </div>
 
               {selectedCountry && (
-                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/10 text-white mb-4">
+                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-slate-900 dark:bg-white/[0.04] dark:border-white/10 dark:text-white mb-4">
                   <div className="flex items-center gap-2.5">
                     <span className="text-xl" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
-                    <span className="text-xs font-bold">{selectedCountry.countryName}</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">{selectedCountry.countryName}</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                     Selected
                   </span>
                 </div>
@@ -2320,7 +2353,7 @@ export default function LandingPage() {
 
               <form onSubmit={handleCompleteGoogleSetup} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-aura-muted block">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-aura-muted block">
                     Phone Number <span className="text-red-400">*</span>
                   </label>
                   <PhoneInput
@@ -2540,7 +2573,11 @@ function AuthInput({
   return (
     <div className={cn("space-y-2", compact && "space-y-0.5")}>
       <div className="relative group">
-        {icon && <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-secondary transition-colors">{icon}</div>}
+        {icon && (
+          <div className="absolute inset-y-0 left-4 flex items-center text-slate-400 group-focus-within:text-primary dark:text-white/30 dark:group-focus-within:text-secondary transition-colors pointer-events-none">
+            {icon}
+          </div>
+        )}
         <input 
           type={inputType}
           inputMode={inputMode}
@@ -2550,7 +2587,9 @@ function AuthInput({
           onChange={(e) => onChange(e.target.value)}
           required={required}
           className={cn(
-            "w-full bg-white/[0.04] border border-white/10 backdrop-blur-md rounded-2xl transition-all outline-none focus:border-white/20 focus:bg-white/[0.06] text-white placeholder:text-white/30",
+            "w-full rounded-2xl transition-all outline-none",
+            "bg-slate-100 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-primary/50 focus:bg-white",
+            "dark:bg-white/[0.04] dark:border-white/10 dark:text-white dark:placeholder:text-white/30 dark:focus:border-white/20 dark:focus:bg-white/[0.06] backdrop-blur-md",
             compact ? "py-2 px-4 text-xs font-semibold" : "py-4 text-base md:text-sm font-medium",
             icon ? "pl-12" : "pl-4",
             showPasswordToggle ? "pr-12" : "pr-4"
@@ -2560,9 +2599,9 @@ function AuthInput({
           <button
             type="button"
             onClick={onTogglePassword}
-            className="absolute inset-y-0 right-4 flex items-center text-white/20 hover:text-white transition-colors focus:outline-none"
+            className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-700 dark:text-white/30 dark:hover:text-white transition-colors focus:outline-none"
           >
-            {isPasswordVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+            {isPasswordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         )}
       </div>

@@ -396,6 +396,87 @@
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "user_id", "action", "actor", "timestamp"]
+    },
+    "SecuritiesOrder": {
+      "title": "Securities Order",
+      "description": "Buy and sell orders for stocks, bonds, and mutual funds.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "user_name": { "type": "string" },
+        "user_email": { "type": "string" },
+        "asset_type": { "type": "string", "enum": ["stock", "bond", "mutual_fund"] },
+        "symbol": { "type": "string" },
+        "name": { "type": "string" },
+        "side": { "type": "string", "enum": ["buy", "sell"] },
+        "order_type": { "type": "string", "enum": ["market", "limit", "stop", "stop_limit"] },
+        "quantity": { "type": "number" },
+        "price": { "type": "number" },
+        "limit_price": { "type": "number" },
+        "stop_price": { "type": "number" },
+        "total_amount": { "type": "number" },
+        "fee": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "submitted", "partially_filled", "filled", "cancelled", "rejected", "failed"] },
+        "settlement_date": { "type": "string", "format": "date-time" },
+        "execution_price": { "type": "number" },
+        "execution_time": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "user_id", "asset_type", "symbol", "side", "order_type", "quantity", "total_amount", "status", "created_at"]
+    },
+    "SecuritiesHolding": {
+      "title": "Securities Holding",
+      "description": "User position in a specific stock, bond, or mutual fund.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "asset_type": { "type": "string", "enum": ["stock", "bond", "mutual_fund"] },
+        "symbol": { "type": "string" },
+        "name": { "type": "string" },
+        "quantity": { "type": "number" },
+        "average_price": { "type": "number" },
+        "total_invested": { "type": "number" },
+        "current_price": { "type": "number" },
+        "current_value": { "type": "number" },
+        "unrealized_gain_loss": { "type": "number" },
+        "unrealized_gain_loss_pct": { "type": "number" },
+        "category": { "type": "string" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "user_id", "asset_type", "symbol", "quantity", "average_price", "total_invested"]
+    },
+    "SecuritiesWatchlist": {
+      "title": "Securities Watchlist Item",
+      "description": "User saved watchlist item for stocks, bonds, or funds.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "asset_type": { "type": "string", "enum": ["stock", "bond", "mutual_fund"] },
+        "symbol": { "type": "string" },
+        "name": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "user_id", "asset_type", "symbol", "created_at"]
+    },
+    "SecuritiesAuditLog": {
+      "title": "Securities Audit Log",
+      "description": "Administrative audit trail for securities order execution and status updates.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "order_id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "action": { "type": "string" },
+        "actor": { "type": "string" },
+        "details": { "type": "object" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "action", "actor", "timestamp"]
     }
   },
   "firestore": {
@@ -470,6 +551,22 @@
     "/loan_audit_logs/{id}": {
       "schema": "LoanAuditLog",
       "description": "Audit trails for loan actions and reviewer decisions."
+    },
+    "/securities_orders/{id}": {
+      "schema": "SecuritiesOrder",
+      "description": "Securities market, limit, and stop orders."
+    },
+    "/securities_holdings/{id}": {
+      "schema": "SecuritiesHolding",
+      "description": "Securities portfolios and active holdings."
+    },
+    "/securities_watchlist/{id}": {
+      "schema": "SecuritiesWatchlist",
+      "description": "User saved securities watchlist items."
+    },
+    "/securities_audit_logs/{id}": {
+      "schema": "SecuritiesAuditLog",
+      "description": "Securities audit trail and status change events."
     }
   }
 }
