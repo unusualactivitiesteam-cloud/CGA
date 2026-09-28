@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { broadcastActivity } from '../lib/activity_logger';
 import { 
   createUserWithEmailAndPassword, 
@@ -34,7 +34,7 @@ import {
   logAudit 
 } from '../lib/auth_security';
 import { EditableText } from './Editable';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { cn } from '../lib/utils';
 import { 
   X, 
@@ -57,16 +57,19 @@ import {
   Zap,
   Sun,
   Moon,
-  Monitor
+  Monitor,
+  Search
 } from 'lucide-react';
 import { REVIEWS } from '../constants/landingData';
+import { COUNTRIES, Country } from '../constants/countries';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 import { useLanguage, LANGUAGES } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { normalizePhoneNumber, getPhoneLookupCandidates } from '../utils/phone';
 
 // --- HELPERS ---
 const generateReferralCode = () => {
@@ -393,54 +396,75 @@ export default function LandingPage() {
     </div>
   );
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+
+  const isCountryPath = 
+    typeof window !== 'undefined' && (
+      window.location.pathname === '/country-selection' || 
+      window.location.pathname === '/select-country' || 
+      window.location.pathname === '/cga-traits' || 
+      window.location.pathname === '/traits'
+    );
+  const isSignupPath = typeof window !== 'undefined' && window.location.pathname === '/signup';
+
+  const [showCountrySelection, setShowCountrySelection] = useState<boolean>(() => {
+    if (isCountryPath) return true;
+    if (isSignupPath) {
+      try {
+        const stored = localStorage.getItem('cga_signup_country') || sessionStorage.getItem('cga_signup_country');
+        if (!stored) return true;
+      } catch (e) {}
+    }
+    return false;
+  });
+
+  const [countrySearchTerm, setCountrySearchTerm] = useState('');
+  const filteredCountries = useMemo(() => {
+    const term = countrySearchTerm.trim().toLowerCase();
+    if (!term) return COUNTRIES;
+    return COUNTRIES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(term) ||
+        c.code.toLowerCase().includes(term)
+    );
+  }, [countrySearchTerm]);
+
+  const [isModalOpen, setIsModalOpen] = useState(() => {
+    if (isCountryPath) return false;
+    if (isSignupPath) {
+      try {
+        const stored = localStorage.getItem('cga_signup_country') || sessionStorage.getItem('cga_signup_country');
+        if (stored) return true;
+      } catch (e) {}
+    }
+    return false;
+  });
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
   const [loading, setLoading] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [detectedCountry, setDetectedCountry] = useState('us');
-  useEffect(() => {
-    const detectCountry = async () => {
-      try {
-        const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        if (data && data.country_code) {
-          setDetectedCountry(data.country_code.toLowerCase());
-          return;
-        }
-      } catch (err) {
-        console.warn("ipapi.co failed, trying fallback country detection:", err);
-      }
-
-      try {
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        if (tz) {
-          if (tz.includes('Europe/London')) { setDetectedCountry('gb'); return; }
-          if (tz.includes('Africa/Lagos')) { setDetectedCountry('ng'); return; }
-          if (tz.includes('Africa/Nairobi')) { setDetectedCountry('ke'); return; }
-          if (tz.includes('Africa/Johannesburg')) { setDetectedCountry('za'); return; }
-          if (tz.includes('Asia/Kolkata')) { setDetectedCountry('in'); return; }
-          if (tz.includes('America/New_York') || tz.includes('America/Chicago') || tz.includes('America/Los_Angeles')) { setDetectedCountry('us'); return; }
-        }
-      } catch (e) {
-        console.warn("Fallback timezone detection failed:", e);
-      }
-
-      // Default language check
-      try {
-        const lang = window.navigator.language || '';
-        if (lang.includes('GB') || lang.includes('gb')) setDetectedCountry('gb');
-        else if (lang.includes('NG') || lang.includes('ng')) setDetectedCountry('ng');
-        else if (lang.includes('KE') || lang.includes('ke')) setDetectedCountry('ke');
-        else if (lang.includes('IN') || lang.includes('in')) setDetectedCountry('in');
-      } catch (e) {
-        console.warn("Language detection failed:", e);
-      }
-    };
-    detectCountry();
-  }, []);
+  const [detectedCountry, setDetectedCountry] = useState(() => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      if (tz.includes('Europe/London')) return 'gb';
+      if (tz.includes('Africa/Lagos')) return 'ng';
+      if (tz.includes('Africa/Nairobi')) return 'ke';
+      if (tz.includes('Africa/Johannesburg')) return 'za';
+      if (tz.includes('Asia/Kolkata')) return 'in';
+      if (tz.includes('America/New_York') || tz.includes('America/Chicago') || tz.includes('America/Los_Angeles')) return 'us';
+    } catch (e) {}
+    try {
+      const lang = typeof navigator !== 'undefined' ? (navigator.language || '') : '';
+      if (lang.includes('GB') || lang.includes('gb')) return 'gb';
+      if (lang.includes('NG') || lang.includes('ng')) return 'ng';
+      if (lang.includes('KE') || lang.includes('ke')) return 'ke';
+      if (lang.includes('IN') || lang.includes('in')) return 'in';
+    } catch (e) {}
+    return 'us';
+  });
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -585,16 +609,53 @@ export default function LandingPage() {
   const [userOtp, setUserOtp] = useState('');
   const [tempUser, setTempUser] = useState<FirebaseUser | null>(null);
 
+  const handleSelectCountry = (country: Country) => {
+    const signupContext = {
+      countryName: country.name,
+      countryCode: country.code,
+      countryFlag: country.flag,
+      name: country.name,
+      code: country.code,
+      flag: country.flag
+    };
+
+    try {
+      localStorage.setItem('cga_signup_country', JSON.stringify(signupContext));
+      sessionStorage.setItem('cga_signup_country', JSON.stringify(signupContext));
+    } catch (e) {
+      console.warn("Storage quota / error saving selected country:", e);
+    }
+
+    setSelectedCountry(signupContext);
+    setAuthMode('signup');
+    setIsModalOpen(true);
+    setShowCountrySelection(false);
+
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref') || referralCode;
+    const targetUrl = ref ? `/signup?ref=${encodeURIComponent(ref)}` : '/signup';
+    window.history.pushState(null, '', targetUrl);
+  };
+
   const handleOpenCountrySelection = () => {
     const params = new URLSearchParams(window.location.search);
-    const ref = params.get('ref');
-    navigate(ref ? `/country-selection?ref=${encodeURIComponent(ref)}` : '/country-selection');
+    const ref = params.get('ref') || referralCode;
+    const targetUrl = ref ? `/country-selection?ref=${encodeURIComponent(ref)}` : '/country-selection';
+    window.history.pushState(null, '', targetUrl);
+    setCountrySearchTerm('');
+    setShowCountrySelection(true);
+    setIsModalOpen(false);
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(location.search);
     const ref = params.get('ref');
-    const isSignupPath = window.location.pathname === '/signup';
+    const isSignup = location.pathname === '/signup';
+    const isCountry = 
+      location.pathname === '/country-selection' || 
+      location.pathname === '/select-country' || 
+      location.pathname === '/cga-traits' || 
+      location.pathname === '/traits';
     
     if (ref) {
       setReferralCode(ref.toUpperCase());
@@ -606,21 +667,44 @@ export default function LandingPage() {
       try { storedCountry = JSON.parse(storedCountryStr); } catch (e) {}
     }
 
-    if (isSignupPath) {
+    if (isCountry) {
+      setShowCountrySelection(true);
+      setIsModalOpen(false);
+    } else if (isSignup) {
       if (!storedCountry) {
-        // Redirect to Country Selection as first screen before creating account
-        navigate(ref ? `/country-selection?ref=${encodeURIComponent(ref)}` : '/country-selection', { replace: true });
-        return;
+        setShowCountrySelection(true);
+        setIsModalOpen(false);
+      } else {
+        setSelectedCountry(storedCountry);
+        setAuthMode('signup');
+        setIsModalOpen(true);
+        setShowCountrySelection(false);
       }
-      setSelectedCountry(storedCountry);
-      setAuthMode('signup');
-      setIsModalOpen(true);
     } else if (ref && storedCountry) {
       setSelectedCountry(storedCountry);
       setAuthMode('signup');
       setIsModalOpen(true);
+      setShowCountrySelection(false);
     }
-  }, [navigate]);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const isCountry = path === '/country-selection' || path === '/select-country' || path === '/cga-traits' || path === '/traits';
+      const isSignup = path === '/signup';
+      if (isCountry) {
+        setShowCountrySelection(true);
+        setIsModalOpen(false);
+      } else if (isSignup) {
+        setShowCountrySelection(false);
+        setIsModalOpen(true);
+        setAuthMode('signup');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -651,7 +735,33 @@ export default function LandingPage() {
     
     setLoading(true);
     try {
+      const countryContext = selectedCountry || {
+        countryName: 'Nigeria',
+        countryCode: 'NG',
+        countryFlag: '🇳🇬'
+      };
+
+      const normalizedPhone = normalizePhoneNumber(phone, countryContext.countryCode);
+      if (!normalizedPhone) {
+        toast.error("Valid phone number is required.");
+        setLoading(false);
+        return;
+      }
+
+      // Check if another account is already registered with this phone number in Firestore
+      const phoneCandidates = getPhoneLookupCandidates(phone, countryContext.countryCode);
+      const existingPhoneSnap = await getDocs(query(collection(db, 'users'), where('phone', 'in', phoneCandidates.slice(0, 30))));
+      if (!existingPhoneSnap.empty) {
+        toast.error("An account with this phone number already exists. Please sign in.");
+        setAuthMode('signin');
+        setSigninPhone(phone);
+        setLoading(false);
+        return;
+      }
+
       // Validate Referral Code if provided
+      let referrerId: string | null = null;
+      let referrerCodeValue: string | null = null;
       if (referralCode.trim()) {
         const cleanRef = referralCode.trim().toUpperCase();
         const q = query(collection(db, 'users'), where('referral_code', '==', cleanRef));
@@ -661,13 +771,92 @@ export default function LandingPage() {
           setLoading(false);
           return;
         }
+        referrerId = snap.docs[0].id;
+        referrerCodeValue = cleanRef;
       }
 
       // 1. Create Auth Account
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       const firebaseUser = userCredential.user;
 
-      // 2. Send Verification (With Robust Retry)
+      // 2. Create the Firestore User Profile IMMEDIATELY while user is authenticated!
+      const isCipherUser = firebaseUser.email === 'support@tavariwave.network' || 
+                           firebaseUser.email === 'contact.cga.usa@gmail.com' || 
+                           firebaseUser.uid === '3yV3rfcUzob5v9ltfVcMw0PL6tQ2';
+      const userRefCode = isCipherUser ? 'CIPHER' : generateReferralCode();
+      const newUserProfile = {
+        uid: firebaseUser.uid,
+        name: fullName.trim() || 'Nexus User',
+        username: username.trim() || 'user',
+        email: email.trim().toLowerCase(),
+        phone: normalizedPhone,
+        country: countryContext.countryName,
+        countryName: countryContext.countryName,
+        country_code: countryContext.countryCode,
+        countryCode: countryContext.countryCode,
+        country_flag: countryContext.countryFlag,
+        countryFlag: countryContext.countryFlag,
+        public_id: generatePublicId(),
+        referral_code: userRefCode,
+        referral_link: `${window.location.origin}/signup?ref=${userRefCode}`,
+        referred_by: referrerId,
+        referrer_uid: referrerId,
+        referrer_code: referrerCodeValue,
+        referrals_count: 0,
+        active_referrals: 0,
+        referral_earnings: 0,
+        role: isCipherUser ? 'cipher' : 'user',
+        funding_balance: 0,
+        available_balance: 0,
+        total_earnings: 0,
+        total_invested: 10, // $10 signup bonus directly into Assets Balance
+        email_verified: false,
+        suspended: false,
+        banned: false,
+        roi_disabled: false,
+        withdrawals_frozen: false,
+        transfers_frozen: false,
+        created_at: new Date().toISOString(),
+        roi_cycle_start: new Date().toISOString(),
+        last_rebook: new Date().toISOString()
+      };
+
+      try {
+        await setDoc(doc(db, 'users', firebaseUser.uid), newUserProfile);
+        
+        broadcastActivity(
+          newUserProfile.name || "New Partner",
+          "Registered",
+          undefined,
+          true,
+          "👤"
+        );
+        
+        // Generate an idempotent signup bonus transaction record
+        const txId = `signup-bonus-${firebaseUser.uid}`;
+        await setDoc(doc(db, 'transactions', txId), {
+          user_id: firebaseUser.uid,
+          type: 'signup_bonus',
+          amount: 10,
+          created_at: new Date().toISOString(),
+          status: 'approved',
+          description: "Congratulations, you have just received a $10 signup bonus into your assets balance."
+        });
+
+        if (referrerId) {
+          try {
+            await updateDoc(doc(db, 'users', referrerId), {
+              referrals_count: increment(1)
+            });
+          } catch (e) {
+            console.error("Failed to increment referrals_count", e);
+          }
+        }
+      } catch (profileErr) {
+        console.error("Error setting initial profile in Firestore during signup:", profileErr);
+      }
+
+      // 3. Send Verification (With Robust Retry)
       let emailSent = false;
       let emailAttempts = 0;
       while (!emailSent && emailAttempts < 2) {
@@ -684,18 +873,12 @@ export default function LandingPage() {
         }
       }
 
-      // 3. Cache signup data with persistent selected country for post-verification profile creation
+      // 4. Cache signup data with persistent selected country for post-verification profile creation
       try {
-        const countryContext = selectedCountry || {
-          countryName: 'Nigeria',
-          countryCode: 'NG',
-          countryFlag: '🇳🇬'
-        };
-
         const pendingData = {
           fullName: fullName.trim(),
           username: username.trim(),
-          phone: phone.trim(),
+          phone: normalizedPhone,
           referralCode: referralCode.trim(),
           email: email.trim().toLowerCase(),
           country: countryContext.countryName,
@@ -711,10 +894,10 @@ export default function LandingPage() {
         console.error("Critical: Failed to cache signup data", cacheError);
       }
       
-      // 4. Sign out to enforce verification on next login
+      // 5. Sign out to enforce verification on next login
       await auth.signOut();
 
-      // 5. Trigger Success View
+      // 6. Trigger Success View
       setSigninPhone(phone);
       setSigninPassword(password);
       setVerificationSent(true);
@@ -757,20 +940,17 @@ export default function LandingPage() {
       if (trimmedInput.includes('@')) {
         resolvedEmail = trimmedInput.toLowerCase();
       } else {
-        const cleanDigits = trimmedInput.replace(/[^\d+]/g, '');
-        const rawDigits = trimmedInput.replace(/\D/g, '');
-        const withPlus = cleanDigits.startsWith('+') ? cleanDigits : `+${cleanDigits}`;
+        const countryCode = selectedCountry?.countryCode || 'NG';
+        const candidates = getPhoneLookupCandidates(trimmedInput, countryCode);
 
         const usersRef = collection(db, 'users');
-        let snap = await getDocs(query(usersRef, where('phone', '==', trimmedInput)));
-        if (snap.empty && cleanDigits !== trimmedInput) {
-          snap = await getDocs(query(usersRef, where('phone', '==', cleanDigits)));
-        }
+        let snap = await getDocs(query(usersRef, where('phone', 'in', candidates.slice(0, 30))));
+
         if (snap.empty) {
-          snap = await getDocs(query(usersRef, where('phone', '==', withPlus)));
-        }
-        if (snap.empty && rawDigits.length > 0) {
-          snap = await getDocs(query(usersRef, where('phone', '==', rawDigits)));
+          const canonical = normalizePhoneNumber(trimmedInput, countryCode);
+          if (canonical && !candidates.includes(canonical)) {
+            snap = await getDocs(query(usersRef, where('phone', '==', canonical)));
+          }
         }
 
         if (snap.empty) {
@@ -779,7 +959,20 @@ export default function LandingPage() {
           return;
         }
 
-        resolvedEmail = snap.docs[0].data().email;
+        // Verify exactly one account associated with this phone number
+        if (snap.docs.length > 1) {
+          const uniqueEmails = Array.from(new Set(snap.docs.map(d => d.data().email).filter(Boolean)));
+          if (uniqueEmails.length === 1) {
+            resolvedEmail = uniqueEmails[0];
+          } else {
+            toast.error("Multiple accounts found with this phone number. Please sign in with your email or contact support.");
+            setLoading(false);
+            return;
+          }
+        } else {
+          resolvedEmail = snap.docs[0].data().email;
+        }
+
         if (!resolvedEmail) {
           toast.error("No email associated with this account. Please contact support.");
           setLoading(false);
@@ -815,6 +1008,19 @@ export default function LandingPage() {
         userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       } catch (err: any) {
         console.warn("Soft-caught Firestore permission/fetch error in handleSignin:", err);
+      }
+
+      // Update email_verified in Firestore if it was false
+      if (userDoc?.exists() && userDoc.data()?.email_verified !== true) {
+        updateDoc(doc(db, 'users', firebaseUser.uid), { email_verified: true }).catch(() => {});
+      }
+
+      // Harmonize phone to canonical format if needed
+      if (userDoc?.exists() && userDoc.data()?.phone) {
+        const canonicalPhone = normalizePhoneNumber(userDoc.data().phone, userDoc.data().countryCode || selectedCountry?.countryCode);
+        if (canonicalPhone && userDoc.data().phone !== canonicalPhone) {
+          updateDoc(doc(db, 'users', firebaseUser.uid), { phone: canonicalPhone }).catch(() => {});
+        }
       }
 
       // STEP 4: Device Fingerprint & Security Verification
@@ -869,7 +1075,7 @@ export default function LandingPage() {
           name: isCipherUser ? 'Cipher' : (pendingData?.fullName || firebaseUser.displayName || 'Nexus User'),
           username: isCipherUser ? 'cipher_root' : (pendingData?.username || firebaseUser.email?.split('@')[0] || 'user'),
           email: firebaseUser.email || '',
-          phone: pendingData?.phone || '',
+          phone: normalizePhoneNumber(pendingData?.phone || signinPhone, pendingData?.countryCode || selectedCountry?.countryCode),
           country: pendingData?.country || pendingData?.countryName || selectedCountry?.countryName || 'Nigeria',
           countryName: pendingData?.countryName || pendingData?.country || selectedCountry?.countryName || 'Nigeria',
           country_code: pendingData?.countryCode || selectedCountry?.countryCode || 'NG',
@@ -1170,7 +1376,7 @@ export default function LandingPage() {
         name: isCipher ? 'Cipher' : (googleSetupUser.displayName || 'Nexus User'),
         username: isCipher ? 'cipher_root' : (googleSetupUser.email?.split('@')[0] || 'user'),
         email: googleSetupUser.email || '',
-        phone: googlePhone.trim(),
+        phone: normalizePhoneNumber(googlePhone, countryContext.countryCode),
         country: countryContext.countryName,
         countryName: countryContext.countryName,
         country_code: countryContext.countryCode,
@@ -1256,285 +1462,495 @@ export default function LandingPage() {
   if (isMobile) {
     return (
       <div className={cn(
-        "relative min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 transition-colors duration-200 overflow-x-hidden selection:bg-primary selection:text-white",
+        "relative min-h-[100dvh] w-full flex items-center justify-center p-3 sm:p-6 transition-colors duration-200 overflow-x-hidden selection:bg-primary selection:text-white",
         isDark ? "bg-[#050608] text-white" : "bg-[#f8fafc] text-slate-900"
       )}>
         {/* Subtle ambient lighting glows */}
         <div className="fixed top-[15%] left-[-10%] w-[320px] h-[320px] rounded-full bg-primary/10 blur-[100px] pointer-events-none -z-0" />
         <div className="fixed bottom-[15%] right-[-10%] w-[320px] h-[320px] rounded-full bg-secondary/10 blur-[100px] pointer-events-none -z-0" />
 
-        {/* The Approved Authentication Card */}
-        <div className="relative w-full max-w-md bg-white border border-slate-200 text-slate-900 dark:bg-[#0c0f14] dark:border-white/10 dark:text-white rounded-3xl overflow-hidden shadow-2xl transition-colors duration-200 my-auto z-10">
-          <div className="p-6 sm:p-8 max-h-[92vh] overflow-y-auto scrollbar-hide">
-            {/* Logo & Header */}
-            <div className="flex flex-col items-center text-center mt-2 mb-6 sm:mb-8">
-              <img 
-                src="https://i.imgur.com/nRbbYnS.png" 
-                alt="CGA Trades Logo" 
-                loading="lazy" 
-                decoding="async" 
-                className="w-20 h-20 lg:w-24 lg:h-24 object-contain mb-4 sm:mb-6 drop-shadow-sm" 
-              />
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
-                {authMode === 'signup' ? 'Create Account' : 'Welcome Back'}
-              </h2>
-              <p className="text-slate-500 dark:text-aura-muted text-sm font-medium">
-                {authMode === 'signup' ? 'Join us and start your journey' : 'Sign in to continue your journey'}
-              </p>
-            </div>
-
-            {verificationSent ? (
-              <div className="text-center space-y-6 py-6">
-                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
-                  <CheckCircle2 size={40} className="text-emerald-500" />
-                </div>
-                <div className="space-y-3 px-2">
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Verify Your Email</h3>
-                  <p className="text-slate-500 dark:text-aura-muted text-xs font-semibold leading-relaxed">
-                    Your account has been created successfully.<br/>
-                    Please check your inbox or spam folder to verify your email before signing in.
-                  </p>
-                </div>
-                <button 
-                  onClick={() => { 
-                    setVerificationSent(false); 
-                    setAuthMode('signin'); 
-                  }}
-                  className="w-full py-4.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm"
-                >
-                  OK <ArrowRight size={16} />
-                </button>
+        <AnimatePresence mode="wait">
+          {showCountrySelection ? (
+            <motion.div
+              key="mobile-country-selection-view"
+              initial={shouldReduceMotion ? { opacity: 0 } : { y: '-100%', opacity: 1 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { y: '-100%', opacity: 0.95 }}
+              transition={
+                shouldReduceMotion 
+                  ? { duration: 0 } 
+                  : { duration: 0.32, ease: [0.22, 1, 0.36, 1] }
+              }
+              className={cn(
+                "fixed inset-0 z-[250] flex flex-col justify-between overflow-y-auto transition-colors duration-200",
+                isDark ? "bg-[#050608] text-white" : "bg-slate-50 text-slate-900"
+              )}
+            >
+              {/* Background ambient lighting */}
+              <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+                <div
+                  className={cn(
+                    "absolute -top-32 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full blur-[120px] opacity-30",
+                    isDark ? "bg-primary/20" : "bg-primary/10"
+                  )}
+                />
               </div>
-            ) : requiresOtp ? (
-              <div className="text-center space-y-6 py-6">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto border border-primary/20">
-                  <Lock size={32} className="text-primary animate-pulse" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Confirm Device</h3>
-                  <p className="text-slate-500 dark:text-aura-muted text-xs font-medium leading-relaxed px-2">
-                    Unrecognized device detected. Enter your Transaction PIN to authorize this device.
-                  </p>
-                </div>
 
-                <form onSubmit={handleVerifyOtp} className="space-y-6">
-                  <div className="flex justify-center">
-                    <input 
-                      type="password" 
-                      maxLength={8}
-                      placeholder="••••"
-                      value={userOtp}
-                      onChange={(e) => setUserOtp(e.target.value.replace(/\D/g, ''))}
-                      className="w-full max-w-[220px] bg-slate-100 border border-slate-200 text-primary focus:border-primary focus:bg-white dark:bg-white/5 dark:border-white/10 dark:focus:bg-white/10 rounded-2xl py-4 text-center text-2xl font-black tracking-[0.4em] outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-white/10 font-mono"
-                      required
-                      autoFocus
+              {/* Main Content Area */}
+              <main className="relative z-10 flex-1 max-w-xl w-full mx-auto px-4 pt-8 pb-16">
+                {/* Minimal CGA Branding */}
+                <div className="flex flex-col items-center text-center mb-6">
+                  <div 
+                    className="relative mb-3 group cursor-pointer" 
+                    onClick={() => {
+                      setShowCountrySelection(false);
+                      window.history.pushState(null, '', '/welcome');
+                    }}
+                  >
+                    <img
+                      src="https://i.imgur.com/nRbbYnS.png"
+                      alt="CGA Logo"
+                      className="h-12 w-auto object-contain drop-shadow-[0_4px_20px_rgba(0,158,66,0.25)] transition-transform active:scale-95"
                     />
                   </div>
-                  
-                  <div className="space-y-3">
-                    <button 
-                      disabled={loading || userOtp.length < 4}
-                      className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-30 flex items-center justify-center gap-2 text-sm"
-                    >
-                      {loading ? 'Authenticating...' : (
-                        <>Authorize Device <CheckCircle2 size={16} /></>
+
+                  <h1 className="text-2xl font-black uppercase tracking-tight leading-tight">
+                    Choose your country
+                  </h1>
+                </div>
+
+                {/* Search Field */}
+                <div className="relative mb-4">
+                  <div className="relative flex items-center">
+                    <Search
+                      size={16}
+                      className={cn(
+                        "absolute left-4 pointer-events-none transition-colors",
+                        isDark ? "text-white/40" : "text-slate-400"
                       )}
-                    </button>
-                    
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setRequiresOtp(false);
-                        setTempUser(null);
-                        setUserOtp('');
-                      }}
-                      className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-slate-900 dark:text-aura-muted dark:hover:text-white transition-colors"
-                    >
-                      Cancel session
-                    </button>
-                  </div>
-                </form>
-
-                <div className="pt-2 flex items-center justify-center gap-2 text-[10px] font-bold text-slate-500 dark:text-aura-muted uppercase tracking-widest">
-                   <Shield className="w-3.5 h-3.5 text-primary" />
-                   Fortified Endpoint Active
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Google Sign-Up / Sign-In Button */}
-                <div className="space-y-3">
-                  <button 
-                    disabled={loading}
-                    onClick={handleGoogleAuth}
-                    className="w-full py-3.5 bg-white text-slate-900 border border-slate-200 dark:border-transparent dark:text-black rounded-xl flex items-center justify-center gap-3 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-white/90 active:scale-[0.99] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google logo" />
-                    {authMode === 'signup' ? 'Sign up with Google' : 'Sign in with Google'}
-                  </button>
-                </div>
-
-                {/* Divider */}
-                <div className="relative flex items-center gap-4">
-                  <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-widest leading-none">or</span>
-                  <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
-                </div>
-
-                {/* Form fields in approved order */}
-                <form onSubmit={authMode === 'signup' ? handleSignup : handleSignin} className="space-y-4">
-                  {/* Selected Country pill */}
-                  {authMode === 'signup' && selectedCountry && (
-                    <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-slate-100 border border-slate-200 text-slate-900 dark:bg-white/[0.04] dark:border-white/10 dark:text-white mb-2">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl select-none" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
-                        <div>
-                          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-aura-muted leading-tight">Selected Country</div>
-                          <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">{selectedCountry.countryName}</div>
-                        </div>
-                      </div>
+                    />
+                    <input
+                      type="text"
+                      value={countrySearchTerm}
+                      onChange={(e) => setCountrySearchTerm(e.target.value)}
+                      placeholder="Search your country"
+                      autoFocus
+                      className={cn(
+                        "w-full h-12 pl-11 pr-10 rounded-xl text-sm font-medium transition-all outline-none shadow-sm",
+                        isDark
+                          ? "bg-white/[0.04] border border-white/10 text-white placeholder:text-white/30 focus:border-primary/60 focus:bg-white/[0.07]"
+                          : "bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-primary/70"
+                      )}
+                    />
+                    {countrySearchTerm && (
                       <button
-                        type="button"
-                        onClick={handleOpenCountrySelection}
-                        className="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+                        onClick={() => setCountrySearchTerm('')}
+                        className={cn(
+                          "absolute right-3.5 p-1 rounded-full transition-colors",
+                          isDark ? "text-white/40 hover:text-white hover:bg-white/10" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                        )}
+                        aria-label="Clear search"
                       >
-                        Change
+                        <X size={15} />
+                      </button>
+                    )}
+                  </div>
+                  {countrySearchTerm && (
+                    <div
+                      className={cn(
+                        "mt-1.5 text-[10px] font-semibold uppercase tracking-wider pl-1.5",
+                        isDark ? "text-aura-muted" : "text-slate-500"
+                      )}
+                    >
+                      Found {filteredCountries.length} {filteredCountries.length === 1 ? 'country' : 'countries'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Complete Country List */}
+                <div className="space-y-1.5">
+                  {filteredCountries.length > 0 ? (
+                    filteredCountries.map((country) => (
+                      <button
+                        key={country.code}
+                        onClick={() => handleSelectCountry(country)}
+                        type="button"
+                        className={cn(
+                          "w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left group select-none cursor-pointer",
+                          isDark
+                            ? "bg-white/[0.02] border-white/5 hover:border-primary/40 hover:bg-white/[0.06] active:bg-white/[0.08]"
+                            : "bg-white border-slate-200 hover:border-primary/50 hover:bg-slate-50 active:bg-slate-100 shadow-sm"
+                        )}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span
+                            className="text-2xl leading-none shrink-0 select-none w-7 text-center"
+                            role="img"
+                            aria-label={`${country.name} flag`}
+                          >
+                            {country.flag}
+                          </span>
+                          <div className="truncate">
+                            <span
+                              className={cn(
+                                "text-sm font-bold tracking-tight block truncate group-hover:text-primary transition-colors",
+                                isDark ? "text-white" : "text-slate-900"
+                              )}
+                            >
+                              {country.name}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 pl-2">
+                          <span
+                            className={cn(
+                              "text-[10px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 rounded",
+                              isDark
+                                ? "bg-white/5 border border-white/10 text-white/50"
+                                : "bg-slate-100 border border-slate-200 text-slate-500"
+                            )}
+                          >
+                            {country.code}
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div
+                      className={cn(
+                        "py-12 text-center rounded-xl border flex flex-col items-center justify-center gap-2",
+                        isDark ? "bg-white/[0.02] border-white/5 text-aura-muted" : "bg-white border-slate-200 text-slate-500"
+                      )}
+                    >
+                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-lg">
+                        🌍
+                      </div>
+                      <div className="text-xs font-bold uppercase tracking-wider">No country found</div>
+                      <button
+                        onClick={() => setCountrySearchTerm('')}
+                        className="mt-1 text-xs font-bold text-primary hover:underline uppercase tracking-wider"
+                      >
+                        Clear Search
                       </button>
                     </div>
                   )}
-
-                  {/* 1. Full Name */}
-                  {authMode === 'signup' && (
-                    <AuthInput icon={<User size={18} />} label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required />
-                  )}
-
-                  {/* 2. Username */}
-                  {authMode === 'signup' && (
-                    <AuthInput icon={<UserPlus size={18} />} label="Username" placeholder="Username" value={username} onChange={setUsername} required />
-                  )}
-
-                  {/* 3. Email Address (or Phone Number on signin) */}
-                  {authMode === 'signup' ? (
-                    <AuthInput 
-                      icon={<Mail size={18} />} 
-                      label="Email Address" 
-                      placeholder="Email Address" 
-                      type="email" 
-                      value={email} 
-                      onChange={setEmail} 
-                      required 
+                </div>
+              </main>
+              <Footer />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="mobile-auth-card"
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              className="w-full flex justify-center z-10"
+            >
+              {/* The Approved Authentication Card */}
+              <div className="relative w-full max-w-md bg-white border border-slate-200 text-slate-900 dark:bg-[#0c0f14] dark:border-white/10 dark:text-white rounded-3xl overflow-hidden shadow-2xl transition-colors duration-200 my-auto">
+                <div className={cn(
+                  "overflow-y-auto scrollbar-hide",
+                  authMode === 'signup' ? "p-4 sm:p-6 max-h-[94vh] sm:max-h-[92vh]" : "p-6 sm:p-8 max-h-[92vh]"
+                )}>
+                  {/* Logo & Header */}
+                  <div className={cn(
+                    "flex flex-col items-center text-center",
+                    authMode === 'signup' ? "mt-1 mb-2.5 sm:mt-2 sm:mb-6" : "mt-2 mb-6 sm:mb-8"
+                  )}>
+                    <img 
+                      src="https://i.imgur.com/nRbbYnS.png" 
+                      alt="CGA Trades Logo" 
+                      loading="lazy" 
+                      decoding="async" 
+                      className={cn(
+                        "object-contain drop-shadow-sm",
+                        authMode === 'signup' ? "w-12 h-12 sm:w-16 sm:h-16 mb-1.5 sm:mb-4" : "w-20 h-20 lg:w-24 lg:h-24 mb-4 sm:mb-6"
+                      )} 
                     />
-                  ) : (
-                    <AuthInput 
-                      icon={<Phone size={18} />} 
-                      label="Phone Number" 
-                      placeholder="Enter your phone number" 
-                      type="tel" 
-                      value={signinPhone} 
-                      onChange={setSigninPhone} 
-                      required 
-                    />
-                  )}
-
-                  {/* 4. Phone Number */}
-                  {authMode === 'signup' && (
-                    <div className="space-y-2">
-                      <PhoneInput
-                        country={selectedCountry ? selectedCountry.countryCode.toLowerCase() : detectedCountry}
-                        value={phone}
-                        onChange={(val) => setPhone(val)}
-                        disableDropdown={true}
-                        countryCodeEditable={false}
-                        containerClass="nexus-phone-container"
-                        inputClass="nexus-phone-input"
-                        buttonClass="nexus-phone-button"
-                        dropdownClass="nexus-phone-dropdown"
-                        placeholder="Phone Number"
-                      />
-                    </div>
-                  )}
-
-                  {/* 5. Password */}
-                  <div className="space-y-4">
-                    <AuthInput 
-                      icon={<Lock size={18} />} 
-                      label="Password" 
-                      placeholder="Enter your password" 
-                      type="password" 
-                      value={authMode === 'signup' ? password : signinPassword} 
-                      onChange={authMode === 'signup' ? setPassword : setSigninPassword} 
-                      required 
-                      showPasswordToggle={true}
-                      isPasswordVisible={authMode === 'signup' ? showPassword : showSigninPassword}
-                      onTogglePassword={() => authMode === 'signup' ? setShowPassword(!showPassword) : setShowSigninPassword(!showSigninPassword)}
-                    />
-
-                    {/* 6. Confirm Password */}
-                    {authMode === 'signup' && (
-                      <AuthInput 
-                        icon={<Lock size={18} />} 
-                        label="Confirm Password" 
-                        placeholder="Confirm Password" 
-                        type="password" 
-                        value={confirmPassword} 
-                        onChange={setConfirmPassword} 
-                        required 
-                        showPasswordToggle={true}
-                        isPasswordVisible={showConfirmPassword}
-                        onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
-                      />
-                    )}
+                    <h2 className={cn(
+                      "font-bold tracking-tight text-slate-900 dark:text-white",
+                      authMode === 'signup' ? "text-xl sm:text-2xl mb-0.5 sm:mb-1" : "text-2xl sm:text-3xl mb-2"
+                    )}>
+                      {authMode === 'signup' ? 'Create Account' : 'Welcome Back'}
+                    </h2>
+                    <p className={cn(
+                      "text-slate-500 dark:text-aura-muted font-medium",
+                      authMode === 'signup' ? "text-xs sm:text-sm" : "text-sm"
+                    )}>
+                      {authMode === 'signup' ? 'Join us and start your journey' : 'Sign in to continue your journey'}
+                    </p>
                   </div>
 
-                  {/* Forgot Password (Sign In only) */}
-                  {authMode === 'signin' && (
-                    <div className="flex justify-end">
-                       <button type="button" className="text-xs font-bold text-primary hover:underline transition-colors">Forgot Password?</button>
+                  {verificationSent ? (
+                    <div className="text-center space-y-6 py-6">
+                      <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+                        <CheckCircle2 size={40} className="text-emerald-500" />
+                      </div>
+                      <div className="space-y-3 px-2">
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Verify Your Email</h3>
+                        <p className="text-slate-500 dark:text-aura-muted text-xs font-semibold leading-relaxed">
+                          Your account has been created successfully.<br/>
+                          Please check your inbox or spam folder to verify your email before signing in.
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => { 
+                          setVerificationSent(false); 
+                          setAuthMode('signin'); 
+                        }}
+                        className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm"
+                      >
+                        OK <ArrowRight size={16} />
+                      </button>
+                    </div>
+                  ) : requiresOtp ? (
+                    <div className="text-center space-y-6 py-6">
+                      <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto border border-primary/20">
+                        <Lock size={32} className="text-primary animate-pulse" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Confirm Device</h3>
+                        <p className="text-slate-500 dark:text-aura-muted text-xs font-medium leading-relaxed px-2">
+                          Unrecognized device detected. Enter your Transaction PIN to authorize this device.
+                        </p>
+                      </div>
+
+                      <form onSubmit={handleVerifyOtp} className="space-y-6">
+                        <div className="flex justify-center">
+                          <input 
+                            type="password" 
+                            maxLength={8}
+                            placeholder="••••"
+                            value={userOtp}
+                            onChange={(e) => setUserOtp(e.target.value.replace(/\D/g, ''))}
+                            className="w-full max-w-[220px] bg-slate-100 border border-slate-200 text-primary focus:border-primary focus:bg-white dark:bg-white/5 dark:border-white/10 dark:focus:bg-white/10 rounded-2xl py-4 text-center text-2xl font-black tracking-[0.4em] outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-white/10 font-mono"
+                            required
+                            autoFocus
+                          />
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <button 
+                            disabled={loading || userOtp.length < 4}
+                            className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-30 flex items-center justify-center gap-2 text-sm"
+                          >
+                            {loading ? 'Authenticating...' : (
+                              <>Authorize Device <CheckCircle2 size={16} /></>
+                            )}
+                          </button>
+                          
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setRequiresOtp(false);
+                              setTempUser(null);
+                              setUserOtp('');
+                            }}
+                            className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-slate-900 dark:text-aura-muted dark:hover:text-white transition-colors"
+                          >
+                            Cancel session
+                          </button>
+                        </div>
+                      </form>
+
+                      <div className="pt-2 flex items-center justify-center gap-2 text-[10px] font-bold text-slate-500 dark:text-aura-muted uppercase tracking-widest">
+                         <Shield className="w-3.5 h-3.5 text-primary" />
+                         Fortified Endpoint Active
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={authMode === 'signup' ? "space-y-3 sm:space-y-5" : "space-y-6"}>
+                      {/* Google Sign-Up / Sign-In Button */}
+                      <div className={authMode === 'signup' ? "space-y-1.5 sm:space-y-2.5" : "space-y-3"}>
+                        <button 
+                          disabled={loading}
+                          onClick={handleGoogleAuth}
+                          className={cn(
+                            "w-full bg-white text-slate-900 border border-slate-200 dark:border-transparent dark:text-black rounded-xl flex items-center justify-center gap-3 font-semibold hover:bg-slate-50 dark:hover:bg-white/90 active:scale-[0.99] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
+                            authMode === 'signup' ? "py-2.5 sm:py-3.5 text-xs sm:text-sm" : "py-3.5 text-sm"
+                          )}
+                        >
+                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className={authMode === 'signup' ? "w-4 h-4 sm:w-5 sm:h-5" : "w-5 h-5"} alt="Google logo" />
+                          {authMode === 'signup' ? 'Sign up with Google' : 'Sign in with Google'}
+                        </button>
+                      </div>
+
+                      {/* Divider */}
+                      <div className={cn("relative flex items-center gap-4", authMode === 'signup' && "-my-1 sm:my-0")}>
+                        <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-widest leading-none">or</span>
+                        <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
+                      </div>
+
+                      {/* Form fields in approved order */}
+                      <form onSubmit={authMode === 'signup' ? handleSignup : handleSignin} className={authMode === 'signup' ? "space-y-2 sm:space-y-3" : "space-y-4"}>
+                        {/* Selected Country pill */}
+                        {authMode === 'signup' && selectedCountry && (
+                          <div className="flex items-center justify-between px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 dark:bg-white/[0.04] dark:border-white/10 dark:text-white mb-1.5 sm:mb-2">
+                            <div className="flex items-center gap-2.5 sm:gap-3">
+                              <span className="text-xl sm:text-2xl select-none" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
+                              <div>
+                                <div className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-aura-muted leading-tight">Selected Country</div>
+                                <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">{selectedCountry.countryName}</div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleOpenCountrySelection}
+                              className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+                            >
+                              Change
+                            </button>
+                          </div>
+                        )}
+
+                        {/* 1. Full Name */}
+                        {authMode === 'signup' && (
+                          <AuthInput icon={<User size={16} />} label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required compact={true} />
+                        )}
+
+                        {/* 2. Username */}
+                        {authMode === 'signup' && (
+                          <AuthInput icon={<UserPlus size={16} />} label="Username" placeholder="Username" value={username} onChange={setUsername} required compact={true} />
+                        )}
+
+                        {/* 3. Email Address (or Phone Number on signin) */}
+                        {authMode === 'signup' ? (
+                          <AuthInput 
+                            icon={<Mail size={16} />} 
+                            label="Email Address" 
+                            placeholder="Email Address" 
+                            type="email" 
+                            value={email} 
+                            onChange={setEmail} 
+                            required 
+                            compact={true}
+                          />
+                        ) : (
+                          <AuthInput 
+                            icon={<Phone size={18} />} 
+                            label="Phone Number" 
+                            placeholder="Enter your phone number" 
+                            type="tel" 
+                            value={signinPhone} 
+                            onChange={setSigninPhone} 
+                            required 
+                            compact={false}
+                          />
+                        )}
+
+                        {/* 4. Phone Number */}
+                        {authMode === 'signup' && (
+                          <div className="space-y-0.5 sm:space-y-1">
+                            <PhoneInput
+                              country={selectedCountry ? selectedCountry.countryCode.toLowerCase() : detectedCountry}
+                              value={phone}
+                              onChange={(val) => setPhone(val)}
+                              disableDropdown={true}
+                              countryCodeEditable={false}
+                              containerClass="nexus-phone-container"
+                              inputClass="nexus-phone-input-signup"
+                              buttonClass="nexus-phone-button-signup"
+                              dropdownClass="nexus-phone-dropdown"
+                              placeholder="Phone Number"
+                            />
+                          </div>
+                        )}
+
+                        {/* 5. Password */}
+                        <div className={authMode === 'signup' ? "space-y-2 sm:space-y-3" : "space-y-4"}>
+                          <AuthInput 
+                            icon={<Lock size={authMode === 'signup' ? 16 : 18} />} 
+                            label="Password" 
+                            placeholder="Enter your password" 
+                            type="password" 
+                            value={authMode === 'signup' ? password : signinPassword} 
+                            onChange={authMode === 'signup' ? setPassword : setSigninPassword} 
+                            required 
+                            showPasswordToggle={true}
+                            isPasswordVisible={authMode === 'signup' ? showPassword : showSigninPassword}
+                            onTogglePassword={() => authMode === 'signup' ? setShowPassword(!showPassword) : setShowSigninPassword(!showSigninPassword)}
+                            compact={authMode === 'signup'}
+                          />
+
+                          {/* 6. Confirm Password */}
+                          {authMode === 'signup' && (
+                            <AuthInput 
+                              icon={<Lock size={16} />} 
+                              label="Confirm Password" 
+                              placeholder="Confirm Password" 
+                              type="password" 
+                              value={confirmPassword} 
+                              onChange={setConfirmPassword} 
+                              required 
+                              showPasswordToggle={true}
+                              isPasswordVisible={showConfirmPassword}
+                              onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                              compact={true}
+                            />
+                          )}
+                        </div>
+
+                        {/* Forgot Password (Sign In only) */}
+                        {authMode === 'signin' && (
+                          <div className="flex justify-end">
+                             <button type="button" className="text-xs font-bold text-primary hover:underline transition-colors">Forgot Password?</button>
+                          </div>
+                        )}
+
+                        {/* 7. Referral Code (Optional) */}
+                        {authMode === 'signup' && (
+                           <AuthInput icon={<TrendingUp size={16} />} label="Referral Code (Optional)" placeholder="Referral Code (Optional)" value={referralCode} onChange={setReferralCode} compact={true} />
+                        )}
+
+                        {/* Submit Button */}
+                        <button 
+                          disabled={loading}
+                          type="submit"
+                          className={cn(
+                            "w-full bg-gradient-to-r from-primary to-secondary text-white font-bold shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50",
+                            authMode === 'signup' ? "py-3 sm:py-4 rounded-xl sm:rounded-2xl mt-2 sm:mt-3 text-sm sm:text-base" : "py-4.5 rounded-2xl mt-4 text-base"
+                          )}
+                        >
+                          {loading ? 'Processing...' : authMode === 'signup' ? 'Create Account' : 'Sign In'}
+                        </button>
+                      </form>
+
+                      {/* Sign Up / Sign In switch link */}
+                      <p className={cn(
+                        "text-center font-medium text-slate-500 dark:text-aura-muted",
+                        authMode === 'signup' ? "text-xs sm:text-sm mt-2 sm:mt-3" : "text-sm"
+                      )}>
+                        {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            if (authMode === 'signin') {
+                              const stored = localStorage.getItem('cga_signup_country') || sessionStorage.getItem('cga_signup_country');
+                              if (!stored) {
+                                handleOpenCountrySelection();
+                              } else {
+                                try { setSelectedCountry(JSON.parse(stored)); } catch (e) {}
+                                setAuthMode('signup');
+                              }
+                            } else {
+                              setAuthMode('signin');
+                            }
+                          }}
+                          className="text-primary font-bold hover:underline transition-colors"
+                        >
+                          {authMode === 'signup' ? 'Sign In' : 'Sign Up'}
+                        </button>
+                      </p>
                     </div>
                   )}
-
-                  {/* 7. Referral Code (Optional) */}
-                  {authMode === 'signup' && (
-                     <AuthInput icon={<TrendingUp size={18} />} label="Referral Code (Optional)" placeholder="Referral Code (Optional)" value={referralCode} onChange={setReferralCode} />
-                  )}
-
-                  {/* Submit Button */}
-                  <button 
-                    disabled={loading}
-                    type="submit"
-                    className="w-full py-4.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 mt-4 text-base"
-                  >
-                    {loading ? 'Processing...' : authMode === 'signup' ? 'Create Account' : 'Sign In'}
-                  </button>
-                </form>
-
-                {/* Sign Up / Sign In switch link */}
-                <p className="text-center text-sm font-medium text-slate-500 dark:text-aura-muted">
-                  {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      if (authMode === 'signin') {
-                        const stored = localStorage.getItem('cga_signup_country') || sessionStorage.getItem('cga_signup_country');
-                        if (!stored) {
-                          handleOpenCountrySelection();
-                        } else {
-                          try { setSelectedCountry(JSON.parse(stored)); } catch (e) {}
-                          setAuthMode('signup');
-                        }
-                      } else {
-                        setAuthMode('signin');
-                      }
-                    }}
-                    className="text-primary font-bold hover:underline transition-colors"
-                  >
-                    {authMode === 'signup' ? 'Sign In' : 'Sign Up'}
-                  </button>
-                </p>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
@@ -1555,23 +1971,42 @@ export default function LandingPage() {
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#050608]/70 via-[#050608]/20 to-transparent z-25 pointer-events-none" />
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#050608] to-transparent z-25 pointer-events-none" />
+        <div className={cn(
+          "absolute inset-x-0 top-0 h-24 bg-gradient-to-b to-transparent z-25 pointer-events-none transition-colors duration-200",
+          isDark ? "from-[#050608]/70 via-[#050608]/20" : "from-[#f8fafc]/70 via-[#f8fafc]/20"
+        )} />
+        <div className={cn(
+          "absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t to-transparent z-25 pointer-events-none transition-colors duration-200",
+          isDark ? "from-[#050608]" : "from-[#f8fafc]"
+        )} />
         
         {/* Desktop Custom Designed High-Tech Hero Background (No external image) */}
-        <div className="hidden lg:block relative w-full h-[320px] xl:h-[380px] overflow-hidden bg-gradient-to-r from-[#070b13] via-[#040609] to-[#0e1422] border-y border-white/5">
+        <div className={cn(
+          "hidden lg:block relative w-full h-[320px] xl:h-[380px] overflow-hidden border-y transition-colors duration-200",
+          isDark 
+            ? "bg-gradient-to-r from-[#070b13] via-[#040609] to-[#0e1422] border-white/5" 
+            : "bg-gradient-to-r from-slate-100 via-[#f8fafc] to-emerald-50/40 border-slate-200/80"
+        )}>
           {/* Subtle Grid network & digital connections */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
+          <div className={cn(
+            "absolute inset-0 bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none transition-opacity",
+            isDark 
+              ? "bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)]"
+              : "bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)]"
+          )} />
           
           {/* Animated Sine-Wave or Wave graphics representation */}
-          <div className="absolute inset-x-0 bottom-0 top-1/4 opacity-15 pointer-events-none">
+          <div className={cn(
+            "absolute inset-x-0 bottom-0 top-1/4 pointer-events-none transition-opacity",
+            isDark ? "opacity-15" : "opacity-25"
+          )}>
             <svg className="w-full h-full" viewBox="0 0 1440 200" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M0 80 C 320 180, 720 0, 1080 120 C 1260 180, 1380 110, 1440 80 L 1440 200 L 0 200 Z" fill="url(#waveWelcomeGrad)" />
               <path d="M0 80 C 320 180, 720 0, 1080 120 C 1260 180, 1380 110, 1440 80" stroke="#009e42" strokeWidth="2.5" />
               <path d="M0 120 C 400 30, 800 150, 1200 60 C 1320 30, 1400 80, 1440 100" stroke="#02d147" strokeWidth="1" strokeDasharray="4 4" className="opacity-50" />
               <defs>
                 <linearGradient id="waveWelcomeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#009e42" stopOpacity="0.8" />
+                  <stop offset="0%" stopColor="#009e42" stopOpacity={isDark ? "0.8" : "0.5"} />
                   <stop offset="100%" stopColor="transparent" stopOpacity="0" />
                 </linearGradient>
               </defs>
@@ -1584,20 +2019,38 @@ export default function LandingPage() {
 
           {/* Welcome Interactive Dashboard / Stats Banner overlay */}
           <div className="absolute inset-0 flex items-center justify-between px-20 max-w-7xl mx-auto w-full z-10">
-            <div className="max-w-xl space-y-4 text-left">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#009e42] bg-[#009e42]/10 px-3.5 py-1.5 rounded-full border border-[#009e42]/20 inline-block">
-                CGA Trades Investment Suite
-              </span>
-              <h1 className="text-4xl xl:text-5xl font-black text-white tracking-tight leading-none uppercase italic font-serif">
-                Welcome to CGA Trades
+            <div className="max-w-2xl space-y-3.5 text-left">
+              <h1 className="leading-tight">
+                <span className={cn(
+                  "block text-xs xl:text-sm font-extrabold uppercase tracking-[0.3em] font-sans transition-colors duration-200 mb-1",
+                  isDark ? "text-emerald-400/90" : "text-emerald-700"
+                )}>
+                  Welcome to
+                </span>
+                <span className={cn(
+                  "text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tight font-sans whitespace-nowrap block",
+                  isDark 
+                    ? "bg-gradient-to-r from-white via-emerald-200 to-[#02d147] bg-clip-text text-transparent drop-shadow-[0_4px_24px_rgba(0,158,66,0.4)]" 
+                    : "bg-gradient-to-r from-slate-900 via-emerald-800 to-[#009e42] bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(0,158,66,0.15)]"
+                )}>
+                  CGA Trades
+                </span>
               </h1>
-              <p className="text-sm text-white/50 leading-relaxed font-medium">
+              <p className={cn(
+                "text-sm xl:text-base leading-relaxed font-medium transition-colors duration-200 max-w-lg",
+                isDark ? "text-white/60" : "text-slate-600"
+              )}>
                 Access premium high-yield algorithmic allocation pipelines, secured multi-tier staking channels, and real-time market telemetry.
               </p>
             </div>
 
             {/* Glowing Tech Dashboard Visualizer */}
-            <div className="relative w-[340px] h-[180px] bg-black/40 border border-[#009e42]/20 rounded-2xl p-5 shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden hidden xl:flex flex-col justify-between">
+            <div className={cn(
+              "relative w-[340px] h-[180px] rounded-2xl p-5 overflow-hidden hidden xl:flex flex-col justify-between transition-all duration-200",
+              isDark 
+                ? "bg-black/40 border border-[#009e42]/20 shadow-[0_12px_40px_rgba(0,0,0,0.5)]" 
+                : "bg-white/80 border border-[#009e42]/25 shadow-[0_12px_30px_rgba(0,158,66,0.08)] backdrop-blur-md"
+            )}>
               <div className="absolute top-0 right-0 w-24 h-24 bg-[#009e42]/5 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono text-[#009e42] tracking-widest uppercase font-bold">CGA SECURE NODE</span>
@@ -1614,9 +2067,18 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              <div className="flex justify-between items-baseline border-t border-white/5 pt-2">
-                <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider">Ecosystem TVL</span>
-                <span className="text-lg font-black text-white">$148,940,201</span>
+              <div className={cn(
+                "flex justify-between items-baseline border-t pt-2 transition-colors duration-200",
+                isDark ? "border-white/5" : "border-slate-100"
+              )}>
+                <span className={cn(
+                  "text-[9px] font-bold uppercase tracking-wider transition-colors duration-200",
+                  isDark ? "text-white/40" : "text-slate-500"
+                )}>Ecosystem TVL</span>
+                <span className={cn(
+                  "text-lg font-black transition-colors duration-200",
+                  isDark ? "text-white" : "text-slate-900"
+                )}>$148,940,201</span>
               </div>
             </div>
           </div>
@@ -2012,6 +2474,190 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
+      {/* Country Selection Page / Screen with swipe up transition */}
+      <AnimatePresence>
+        {showCountrySelection && (
+          <motion.div
+            key="country-selection-screen"
+            initial={shouldReduceMotion ? { opacity: 0 } : { y: '-100%', opacity: 1 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { y: '-100%', opacity: 0.95 }}
+            transition={
+              shouldReduceMotion 
+                ? { duration: 0 } 
+                : { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
+            }
+            className={cn(
+              "fixed inset-0 z-[250] flex flex-col justify-between overflow-y-auto transition-colors duration-200",
+              isDark ? "bg-[#050608] text-white" : "bg-slate-50 text-slate-900"
+            )}
+          >
+            {/* Background ambient lighting */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+              <div
+                className={cn(
+                  "absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] rounded-full blur-[140px] opacity-30",
+                  isDark ? "bg-primary/20" : "bg-primary/10"
+                )}
+              />
+              <div
+                className={cn(
+                  "absolute top-1/3 right-10 w-[450px] h-[450px] rounded-full blur-[160px] opacity-20",
+                  isDark ? "bg-secondary/15" : "bg-secondary/10"
+                )}
+              />
+            </div>
+
+            {/* Main Content Area */}
+            <main className="relative z-10 flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-20">
+              {/* Minimal CGA Branding */}
+              <div className="flex flex-col items-center text-center mb-8 sm:mb-10">
+                <div 
+                  className="relative mb-5 group cursor-pointer" 
+                  onClick={() => {
+                    setShowCountrySelection(false);
+                    window.history.pushState(null, '', '/welcome');
+                  }}
+                >
+                  <img
+                    src="https://i.imgur.com/nRbbYnS.png"
+                    alt="CGA Logo"
+                    className="h-14 sm:h-16 w-auto object-contain drop-shadow-[0_4px_20px_rgba(0,158,66,0.25)] transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight leading-tight">
+                  Choose your country
+                </h1>
+              </div>
+
+              {/* Search Field */}
+              <div className="relative mb-6 sm:mb-8">
+                <div className="relative flex items-center">
+                  <Search
+                    size={18}
+                    className={cn(
+                      "absolute left-4.5 pointer-events-none transition-colors",
+                      isDark ? "text-white/40" : "text-slate-400"
+                    )}
+                  />
+                  <input
+                    type="text"
+                    value={countrySearchTerm}
+                    onChange={(e) => setCountrySearchTerm(e.target.value)}
+                    placeholder="Search your country"
+                    autoFocus
+                    className={cn(
+                      "w-full h-14 pl-12 pr-11 rounded-2xl text-sm sm:text-base font-medium transition-all outline-none shadow-sm",
+                      isDark
+                        ? "bg-white/[0.04] border border-white/10 text-white placeholder:text-white/30 focus:border-primary/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-primary/10"
+                        : "bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-primary/70 focus:ring-4 focus:ring-primary/10"
+                    )}
+                  />
+                  {countrySearchTerm && (
+                    <button
+                      onClick={() => setCountrySearchTerm('')}
+                      className={cn(
+                        "absolute right-4 p-1 rounded-full transition-colors",
+                        isDark ? "text-white/40 hover:text-white hover:bg-white/10" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                      )}
+                      aria-label="Clear search"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                {countrySearchTerm && (
+                  <div
+                    className={cn(
+                      "mt-2 text-[11px] font-semibold uppercase tracking-wider pl-2",
+                      isDark ? "text-aura-muted" : "text-slate-500"
+                    )}
+                  >
+                    Found {filteredCountries.length} {filteredCountries.length === 1 ? 'country' : 'countries'}
+                  </div>
+                )}
+              </div>
+
+              {/* Complete Country List */}
+              <div className="space-y-2">
+                {filteredCountries.length > 0 ? (
+                  filteredCountries.map((country) => (
+                    <button
+                      key={country.code}
+                      onClick={() => handleSelectCountry(country)}
+                      type="button"
+                      className={cn(
+                        "w-full flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border transition-all text-left group select-none cursor-pointer",
+                        isDark
+                          ? "bg-white/[0.02] border-white/5 hover:border-primary/40 hover:bg-white/[0.06] active:bg-white/[0.08]"
+                          : "bg-white border-slate-200 hover:border-primary/50 hover:bg-slate-50 active:bg-slate-100 shadow-sm"
+                      )}
+                    >
+                      <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                        <span
+                          className="text-2xl sm:text-3xl leading-none shrink-0 select-none w-9 text-center"
+                          role="img"
+                          aria-label={`${country.name} flag`}
+                        >
+                          {country.flag}
+                        </span>
+                        <div className="truncate">
+                          <span
+                            className={cn(
+                              "text-sm sm:text-base font-bold tracking-tight block truncate group-hover:text-primary transition-colors",
+                              isDark ? "text-white" : "text-slate-900"
+                            )}
+                          >
+                            {country.name}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 shrink-0 pl-3">
+                        <span
+                          className={cn(
+                            "text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-md",
+                            isDark
+                              ? "bg-white/5 border border-white/10 text-white/50"
+                              : "bg-slate-100 border border-slate-200 text-slate-500"
+                          )}
+                        >
+                          {country.code}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div
+                    className={cn(
+                      "py-16 text-center rounded-2xl border flex flex-col items-center justify-center gap-3",
+                      isDark ? "bg-white/[0.02] border-white/5 text-aura-muted" : "bg-white border-slate-200 text-slate-500"
+                    )}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-xl">
+                      🌍
+                    </div>
+                    <div className="text-sm font-bold uppercase tracking-wider">No country found</div>
+                    <p className="text-xs max-w-xs text-center font-medium opacity-75">
+                      We couldn't find any country matching "{countrySearchTerm}". Please check your spelling.
+                    </p>
+                    <button
+                      onClick={() => setCountrySearchTerm('')}
+                      className="mt-2 text-xs font-bold text-primary hover:underline uppercase tracking-wider"
+                    >
+                      Clear Search
+                    </button>
+                  </div>
+                )}
+              </div>
+            </main>
+
+            <Footer />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Auth Modal */}
       <AnimatePresence>
         {isModalOpen && (
@@ -2024,26 +2670,56 @@ export default function LandingPage() {
               className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white border border-slate-200 text-slate-900 dark:bg-[#0c0f14] dark:border-white/10 dark:text-white rounded-3xl overflow-hidden shadow-2xl transition-colors duration-200"
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 20 }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              className={cn(
+                "relative w-full bg-white border border-slate-200 text-slate-900 dark:bg-[#0c0f14] dark:border-white/10 dark:text-white rounded-3xl overflow-hidden shadow-2xl transition-all duration-300",
+                authMode === 'signup' 
+                  ? "max-w-md lg:max-w-[780px]" 
+                  : "max-w-md"
+              )}
             >
-              <div className="p-8 max-h-[90vh] overflow-y-auto scrollbar-hide">
+              <div className={cn(
+                "overflow-y-auto scrollbar-hide",
+                authMode === 'signup' ? "p-5 sm:p-7 lg:p-8 max-h-[92vh] sm:max-h-[90vh] lg:max-h-[92vh]" : "p-8 max-h-[90vh]"
+              )}>
                 <button 
                   onClick={() => setIsModalOpen(false)}
-                  className="absolute top-6 left-6 p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 dark:bg-white/5 dark:hover:bg-white/10 dark:text-aura-muted dark:hover:text-white rounded-full transition-colors"
+                  className={cn(
+                    "absolute p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 dark:bg-white/5 dark:hover:bg-white/10 dark:text-aura-muted dark:hover:text-white rounded-full transition-colors z-20",
+                    authMode === 'signup' ? "top-4 left-4 sm:top-5 sm:left-5 lg:top-6 lg:left-6" : "top-6 left-6"
+                  )}
                 >
                   <ChevronLeft size={20} />
                 </button>
 
                 {/* Logo & Header */}
-                <div className="flex flex-col items-center text-center mt-6 mb-8">
-                   <img src="https://i.imgur.com/nRbbYnS.png" alt="CGA Trades Logo" loading="lazy" decoding="async" className="w-20 h-20 lg:w-24 lg:h-24 object-contain mb-6 drop-shadow-sm" />
-                   <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
+                <div className={cn(
+                  "flex flex-col items-center text-center",
+                  authMode === 'signup' ? "mt-1 sm:mt-2 lg:mt-1 mb-2 sm:mb-3 lg:mb-3" : "mt-6 mb-8"
+                )}>
+                   <img 
+                     src="https://i.imgur.com/nRbbYnS.png" 
+                     alt="CGA Trades Logo" 
+                     loading="lazy" 
+                     decoding="async" 
+                     className={cn(
+                       "object-contain drop-shadow-sm",
+                       authMode === 'signup' ? "w-14 h-14 sm:w-16 sm:h-16 lg:w-16 lg:h-16 mb-2" : "w-20 h-20 lg:w-24 lg:h-24 mb-6"
+                     )} 
+                   />
+                   <h2 className={cn(
+                     "font-bold tracking-tight text-slate-900 dark:text-white",
+                     authMode === 'signup' ? "text-xl sm:text-2xl lg:text-2xl mb-0.5" : "text-3xl mb-2"
+                   )}>
                      {authMode === 'signup' ? 'Create Account' : 'Welcome Back'}
                    </h2>
-                   <p className="text-slate-500 dark:text-aura-muted text-sm font-medium">
+                   <p className={cn(
+                     "text-slate-500 dark:text-aura-muted font-medium",
+                     authMode === 'signup' ? "text-xs sm:text-sm" : "text-sm font-medium"
+                   )}>
                      {authMode === 'signup' ? 'Join us and start your journey' : 'Sign in to continue your journey'}
                    </p>
                 </div>
@@ -2130,140 +2806,166 @@ export default function LandingPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className={authMode === 'signup' ? "space-y-3 sm:space-y-3.5 lg:space-y-3.5" : "space-y-6"}>
                     {/* Social Buttons */}
-                    <div className="space-y-3">
+                    <div className={authMode === 'signup' ? "space-y-2 sm:space-y-3" : "space-y-3"}>
                        <button 
                          disabled={loading}
                          onClick={handleGoogleAuth}
-                         className="w-full py-3.5 bg-white text-slate-900 border border-slate-200 dark:border-transparent dark:text-black rounded-xl flex items-center justify-center gap-3 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-white/90 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                         className={cn(
+                           "w-full bg-white text-slate-900 border border-slate-200 dark:border-transparent dark:text-black rounded-xl flex items-center justify-center gap-3 font-semibold hover:bg-slate-50 dark:hover:bg-white/90 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
+                           authMode === 'signup' ? "py-2.5 sm:py-3 lg:py-2.5 text-xs sm:text-sm" : "py-3.5 text-sm"
+                         )}
                        >
-                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google logo" />
+                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className={authMode === 'signup' ? "w-4 h-4 sm:w-5 sm:h-5" : "w-5 h-5"} alt="Google logo" />
                          {authMode === 'signup' ? 'Sign up with Google' : 'Sign in with Google'}
                        </button>
                     </div>
 
-                    <div className="relative flex items-center gap-4">
+                    <div className={cn("relative flex items-center gap-4", authMode === 'signup' && "-my-0.5 sm:my-0 lg:-my-0.5")}>
                        <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
                        <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-widest leading-none">or</span>
                        <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
                     </div>
 
-                    <form onSubmit={authMode === 'signup' ? handleSignup : handleSignin} className="space-y-4">
+                    <form onSubmit={authMode === 'signup' ? handleSignup : handleSignin} className={authMode === 'signup' ? "space-y-2 sm:space-y-3" : "space-y-4"}>
                       {authMode === 'signup' && selectedCountry && (
-                        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-slate-100 border border-slate-200 text-slate-900 dark:bg-white/[0.04] dark:border-white/10 dark:text-white mb-2">
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl select-none" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
+                        <div className="flex items-center justify-between px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl bg-slate-100 border border-slate-200 text-slate-900 dark:bg-white/[0.04] dark:border-white/10 dark:text-white mb-1.5 sm:mb-2 lg:mb-2.5">
+                          <div className="flex items-center gap-2.5 sm:gap-3">
+                            <span className="text-xl sm:text-2xl select-none" role="img" aria-label={selectedCountry.countryName}>{selectedCountry.countryFlag}</span>
                             <div>
-                              <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-aura-muted leading-tight">Selected Country</div>
-                              <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">{selectedCountry.countryName}</div>
+                              <div className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-aura-muted leading-tight">Selected Country</div>
+                              <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">{selectedCountry.countryName}</div>
                             </div>
                           </div>
                           <button
                             type="button"
                             onClick={handleOpenCountrySelection}
-                            className="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+                            className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
                           >
                             Change
                           </button>
                         </div>
                       )}
 
-                      {authMode === 'signup' && (
-                        <>
-                          <AuthInput icon={<User size={18} />} label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required />
-                          <AuthInput icon={<UserPlus size={18} />} label="Username" placeholder="Username" value={username} onChange={setUsername} required />
-                        </>
-                      )}
-
                       {authMode === 'signup' ? (
-                        <AuthInput 
-                          icon={<Mail size={18} />} 
-                          label="Email Address" 
-                          placeholder="Email Address" 
-                          type="email" 
-                          value={email} 
-                          onChange={setEmail} 
-                          required 
-                        />
-                      ) : (
-                        <AuthInput 
-                          icon={<Phone size={18} />} 
-                          label="Phone Number" 
-                          placeholder="Enter your phone number" 
-                          type="tel" 
-                          value={signinPhone} 
-                          onChange={setSigninPhone} 
-                          required 
-                        />
-                      )}
+                        <div className="space-y-2 sm:space-y-2.5 lg:space-y-2.5">
+                          {/* Row 1 — Three fields horizontally on desktop: Full Name | Username | Email Address */}
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-2.5 lg:gap-3">
+                            <AuthInput icon={<User size={16} />} label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required compact={true} />
+                            <AuthInput icon={<UserPlus size={16} />} label="Username" placeholder="Username" value={username} onChange={setUsername} required compact={true} />
+                            <AuthInput 
+                              icon={<Mail size={16} />} 
+                              label="Email Address" 
+                              placeholder="Email Address" 
+                              type="email" 
+                              value={email} 
+                              onChange={setEmail} 
+                              required 
+                              compact={true}
+                            />
+                          </div>
 
-                      {authMode === 'signup' && (
-                        <div className="space-y-2">
-                          <PhoneInput
-                            country={selectedCountry ? selectedCountry.countryCode.toLowerCase() : detectedCountry}
-                            value={phone}
-                            onChange={(val) => setPhone(val)}
-                            disableDropdown={true}
-                            countryCodeEditable={false}
-                            containerClass="nexus-phone-container"
-                            inputClass="nexus-phone-input"
-                            buttonClass="nexus-phone-button"
-                            dropdownClass="nexus-phone-dropdown"
-                            placeholder="Phone Number"
-                          />
+                          {/* Row 2 — Two fields horizontally on desktop: Phone Number | Password */}
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-2.5 lg:gap-3">
+                            <div className="w-full">
+                              <PhoneInput
+                                country={selectedCountry ? selectedCountry.countryCode.toLowerCase() : detectedCountry}
+                                value={phone}
+                                onChange={(val) => setPhone(val)}
+                                disableDropdown={true}
+                                countryCodeEditable={false}
+                                containerClass="nexus-phone-container"
+                                inputClass="nexus-phone-input-signup"
+                                buttonClass="nexus-phone-button-signup"
+                                dropdownClass="nexus-phone-dropdown"
+                                placeholder="Phone Number"
+                              />
+                            </div>
+                            <AuthInput 
+                              icon={<Lock size={16} />} 
+                              label="Password" 
+                              placeholder="Enter your password" 
+                              type="password" 
+                              value={password} 
+                              onChange={setPassword} 
+                              required 
+                              showPasswordToggle={true}
+                              isPasswordVisible={showPassword}
+                              onTogglePassword={() => setShowPassword(!showPassword)}
+                              compact={true}
+                            />
+                          </div>
+
+                          {/* Row 3 — Two fields horizontally on desktop: Confirm Password | Referral Code (Optional) */}
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-2.5 lg:gap-3">
+                            <AuthInput 
+                              icon={<Lock size={16} />} 
+                              label="Confirm Password" 
+                              placeholder="Confirm Password" 
+                              type="password" 
+                              value={confirmPassword} 
+                              onChange={setConfirmPassword} 
+                              required 
+                              showPasswordToggle={true}
+                              isPasswordVisible={showConfirmPassword}
+                              onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                              compact={true}
+                            />
+                            <AuthInput 
+                              icon={<TrendingUp size={16} />} 
+                              label="Referral Code (Optional)" 
+                              placeholder="Referral Code (Optional)" 
+                              value={referralCode} 
+                              onChange={setReferralCode} 
+                              compact={true} 
+                            />
+                          </div>
                         </div>
-                      )}
-
-                      <div className="space-y-4">
-                        <AuthInput 
-                          icon={<Lock size={18} />} 
-                          label="Password" 
-                          placeholder="Enter your password" 
-                          type="password" 
-                          value={authMode === 'signup' ? password : signinPassword} 
-                          onChange={authMode === 'signup' ? setPassword : setSigninPassword} 
-                          required 
-                          showPasswordToggle={true}
-                          isPasswordVisible={authMode === 'signup' ? showPassword : showSigninPassword}
-                          onTogglePassword={() => authMode === 'signup' ? setShowPassword(!showPassword) : setShowSigninPassword(!showSigninPassword)}
-                        />
-                        {authMode === 'signup' && (
+                      ) : (
+                        <div className="space-y-4">
+                          <AuthInput 
+                            icon={<Phone size={18} />} 
+                            label="Phone Number" 
+                            placeholder="Enter your phone number" 
+                            type="tel" 
+                            value={signinPhone} 
+                            onChange={setSigninPhone} 
+                            required 
+                            compact={false}
+                          />
                           <AuthInput 
                             icon={<Lock size={18} />} 
-                            label="Confirm Password" 
-                            placeholder="Confirm Password" 
+                            label="Password" 
+                            placeholder="Enter your password" 
                             type="password" 
-                            value={confirmPassword} 
-                            onChange={setConfirmPassword} 
+                            value={signinPassword} 
+                            onChange={setSigninPassword} 
                             required 
                             showPasswordToggle={true}
-                            isPasswordVisible={showConfirmPassword}
-                            onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                            isPasswordVisible={showSigninPassword}
+                            onTogglePassword={() => setShowSigninPassword(!showSigninPassword)}
+                            compact={false}
                           />
-                        )}
-                      </div>
-
-                      {authMode === 'signin' && (
-                        <div className="flex justify-end">
-                           <button type="button" className="text-xs font-bold text-primary hover:underline transition-colors">Forgot Password?</button>
+                          <div className="flex justify-end">
+                             <button type="button" className="text-xs font-bold text-primary hover:underline transition-colors">Forgot Password?</button>
+                          </div>
                         </div>
-                      )}
-
-                      {authMode === 'signup' && (
-                         <AuthInput icon={<TrendingUp size={18} />} label="Referral Code (Optional)" placeholder="Referral Code (Optional)" value={referralCode} onChange={setReferralCode} />
                       )}
 
                       <button 
                         disabled={loading}
                         type="submit"
-                        className="w-full py-4.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 mt-4 text-base"
+                        className={cn(
+                          "w-full bg-gradient-to-r from-primary to-secondary text-white font-bold shadow-[0_0_20px_rgba(0,158,66,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50",
+                          authMode === 'signup' ? "py-3 sm:py-3.5 lg:py-3.5 rounded-xl sm:rounded-2xl mt-2 sm:mt-3 lg:mt-3 text-sm sm:text-base" : "py-4.5 rounded-2xl mt-4 text-base"
+                        )}
                       >
                         {loading ? 'Processing...' : authMode === 'signup' ? 'Create Account' : 'Sign In'}
                       </button>
                     </form>
 
-                    <p className="text-center text-sm font-medium text-slate-500 dark:text-aura-muted">
+                    <p className={cn("text-center font-medium text-slate-500 dark:text-aura-muted", authMode === 'signup' ? "text-xs sm:text-sm mt-2 sm:mt-3 lg:mt-3" : "text-sm")}>
                       {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"} {' '}
                       <button 
                         onClick={() => {
@@ -2433,8 +3135,14 @@ export default function LandingPage() {
 
         <div className="relative w-full overflow-hidden py-4">
           {/* Shadow overlays on edge for elegant fade effect */}
-          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#050608] to-transparent z-10 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#050608] to-transparent z-10 pointer-events-none" />
+          <div className={cn(
+            "absolute inset-y-0 left-0 w-32 bg-gradient-to-r to-transparent z-10 pointer-events-none transition-colors duration-200",
+            isDark ? "from-[#050608]" : "from-[#f8fafc]"
+          )} />
+          <div className={cn(
+            "absolute inset-y-0 right-0 w-32 bg-gradient-to-l to-transparent z-10 pointer-events-none transition-colors duration-200",
+            isDark ? "from-[#050608]" : "from-[#f8fafc]"
+          )} />
 
           <motion.div 
             className="flex gap-6 w-max"
@@ -2571,10 +3279,13 @@ function AuthInput({
   const inputType = showPasswordToggle ? (isPasswordVisible ? 'text' : 'password') : type;
 
   return (
-    <div className={cn("space-y-2", compact && "space-y-0.5")}>
+    <div className={cn("space-y-1.5", compact && "space-y-0.5")}>
       <div className="relative group">
         {icon && (
-          <div className="absolute inset-y-0 left-4 flex items-center text-slate-400 group-focus-within:text-primary dark:text-white/30 dark:group-focus-within:text-secondary transition-colors pointer-events-none">
+          <div className={cn(
+            "absolute inset-y-0 flex items-center text-slate-400 group-focus-within:text-primary dark:text-white/30 dark:group-focus-within:text-secondary transition-colors pointer-events-none",
+            compact ? "left-3.5" : "left-4"
+          )}>
             {icon}
           </div>
         )}
@@ -2587,21 +3298,26 @@ function AuthInput({
           onChange={(e) => onChange(e.target.value)}
           required={required}
           className={cn(
-            "w-full rounded-2xl transition-all outline-none",
+            "w-full transition-all outline-none",
             "bg-slate-100 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-primary/50 focus:bg-white",
             "dark:bg-white/[0.04] dark:border-white/10 dark:text-white dark:placeholder:text-white/30 dark:focus:border-white/20 dark:focus:bg-white/[0.06] backdrop-blur-md",
-            compact ? "py-2 px-4 text-xs font-semibold" : "py-4 text-base md:text-sm font-medium",
-            icon ? "pl-12" : "pl-4",
-            showPasswordToggle ? "pr-12" : "pr-4"
+            compact 
+              ? "py-2.5 sm:py-3.5 px-3.5 text-xs sm:text-sm font-medium rounded-xl sm:rounded-2xl min-h-[42px] sm:min-h-[46px]" 
+              : "py-4 text-base md:text-sm font-medium rounded-2xl min-h-[50px]",
+            compact ? (icon ? "pl-11 sm:pl-12" : "pl-3.5") : (icon ? "pl-12" : "pl-4"),
+            showPasswordToggle ? (compact ? "pr-10 sm:pr-12" : "pr-12") : (compact ? "pr-3.5" : "pr-4")
           )}
         />
         {showPasswordToggle && (
           <button
             type="button"
             onClick={onTogglePassword}
-            className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-700 dark:text-white/30 dark:hover:text-white transition-colors focus:outline-none"
+            className={cn(
+              "absolute inset-y-0 flex items-center text-slate-400 hover:text-slate-700 dark:text-white/30 dark:hover:text-white transition-colors focus:outline-none",
+              compact ? "right-3.5" : "right-4"
+            )}
           >
-            {isPasswordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+            {isPasswordVisible ? <EyeOff size={compact ? 16 : 18} /> : <Eye size={compact ? 16 : 18} />}
           </button>
         )}
       </div>

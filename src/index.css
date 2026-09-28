@@ -201,12 +201,45 @@ html.light .brutalist-card {
   @apply !w-full;
 }
 
-html.dark .nexus-phone-input {
+html.dark .nexus-phone-input,
+.dark .nexus-phone-input {
   @apply !w-full !bg-[#0c0f14] !border !border-white/10 !rounded-2xl !py-4 !pr-4 !pl-14 !h-auto !transition-all !outline-none focus:!border-primary/50 !text-base md:!text-sm !font-medium !text-white placeholder:!text-aura-muted !font-sans;
 }
 
-html.light .nexus-phone-input {
+html.light .nexus-phone-input,
+:root:not(.dark) .nexus-phone-input {
   @apply !w-full !bg-slate-100 !border !border-slate-200 !rounded-2xl !py-4 !pr-4 !pl-14 !h-auto !transition-all !outline-none focus:!border-primary/50 !text-base md:!text-sm !font-medium !text-slate-900 placeholder:!text-slate-400 !font-sans;
+}
+
+html.dark .nexus-phone-input-signup,
+.dark .nexus-phone-input-signup {
+  @apply !w-full !bg-[#0c0f14] !border !border-white/10 !rounded-xl sm:!rounded-2xl !py-2.5 sm:!py-3.5 !pr-4 !pl-13 sm:!pl-14 !h-auto !transition-all !outline-none focus:!border-primary/50 !text-xs sm:!text-sm !font-medium !text-white placeholder:!text-aura-muted !font-sans;
+  min-height: 42px;
+}
+
+html.light .nexus-phone-input-signup,
+:root:not(.dark) .nexus-phone-input-signup {
+  @apply !w-full !bg-slate-100 !border !border-slate-200 !rounded-xl sm:!rounded-2xl !py-2.5 sm:!py-3.5 !pr-4 !pl-13 sm:!pl-14 !h-auto !transition-all !outline-none focus:!border-primary/50 !text-xs sm:!text-sm !font-medium !text-slate-900 placeholder:!text-slate-400 !font-sans;
+  min-height: 42px;
+}
+
+@media (min-width: 640px) {
+  html.dark .nexus-phone-input-signup,
+  .dark .nexus-phone-input-signup,
+  html.light .nexus-phone-input-signup,
+  :root:not(.dark) .nexus-phone-input-signup {
+    min-height: 46px;
+  }
+}
+
+html.dark .nexus-phone-button-signup,
+.dark .nexus-phone-button-signup {
+  @apply !bg-transparent !border-r !border-white/10 !rounded-l-xl sm:!rounded-l-2xl !w-11 sm:!w-12 !h-full !transition-colors hover:!bg-white/5;
+}
+
+html.light .nexus-phone-button-signup,
+:root:not(.dark) .nexus-phone-button-signup {
+  @apply !bg-transparent !border-r !border-slate-200 !rounded-l-xl sm:!rounded-l-2xl !w-11 sm:!w-12 !h-full !transition-colors hover:!bg-slate-200/50;
 }
 
 .is-compact .nexus-phone-input {
@@ -215,11 +248,13 @@ html.light .nexus-phone-input {
   border-radius: 1rem !important;
 }
 
-html.dark .nexus-phone-button {
+html.dark .nexus-phone-button,
+.dark .nexus-phone-button {
   @apply !bg-transparent !border-r !border-white/10 !rounded-l-2xl !w-12 !h-full !transition-colors hover:!bg-white/5;
 }
 
-html.light .nexus-phone-button {
+html.light .nexus-phone-button,
+:root:not(.dark) .nexus-phone-button {
   @apply !bg-transparent !border-r !border-slate-200 !rounded-l-2xl !w-12 !h-full !transition-colors hover:!bg-slate-200/50;
 }
 
@@ -230,13 +265,15 @@ html.light .nexus-phone-button {
   height: 32px !important;
 }
 
-html.dark .nexus-phone-dropdown {
+html.dark .nexus-phone-dropdown,
+.dark .nexus-phone-dropdown {
   @apply !bg-[#0c0f14] !border !border-white/10 !rounded-xl !mt-2 !text-white !shadow-2xl;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-html.light .nexus-phone-dropdown {
+html.light .nexus-phone-dropdown,
+:root:not(.dark) .nexus-phone-dropdown {
   @apply !bg-white !border !border-slate-200 !rounded-xl !mt-2 !text-slate-900 !shadow-xl;
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -246,11 +283,13 @@ html.light .nexus-phone-dropdown {
   display: none;
 }
 
-html.dark .nexus-phone-dropdown .country {
+html.dark .nexus-phone-dropdown .country,
+.dark .nexus-phone-dropdown .country {
   @apply hover:!bg-white/5 !transition-colors !py-3 !px-4 !text-sm;
 }
 
-html.light .nexus-phone-dropdown .country {
+html.light .nexus-phone-dropdown .country,
+:root:not(.dark) .nexus-phone-dropdown .country {
   @apply hover:!bg-slate-100 !transition-colors !py-3 !px-4 !text-sm;
 }
 

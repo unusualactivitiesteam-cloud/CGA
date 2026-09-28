@@ -137,10 +137,10 @@ export default function App() {
                   <ThemedToaster />
                   <Routes>
               <Route path="/welcome" element={<LandingPage />} />
-              <Route path="/country-selection" element={<CountrySelection />} />
-              <Route path="/select-country" element={<CountrySelection />} />
-              <Route path="/cga-traits" element={<CountrySelection />} />
-              <Route path="/traits" element={<CountrySelection />} />
+              <Route path="/country-selection" element={<LandingPage />} />
+              <Route path="/select-country" element={<LandingPage />} />
+              <Route path="/cga-traits" element={<LandingPage />} />
+              <Route path="/traits" element={<LandingPage />} />
               <Route path="/signup" element={<LandingPage />} />
               <Route path="/about" element={<About />} />
               <Route path="/how-it-works" element={<HowItWorks />} />

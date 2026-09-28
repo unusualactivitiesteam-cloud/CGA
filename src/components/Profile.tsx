@@ -37,6 +37,7 @@ import { db, storage } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { AnimatePresence } from 'motion/react';
+import { normalizePhoneNumber } from '../utils/phone';
 
 const compressImage = (dataUrl: string, maxWidth = 400, maxHeight = 400): Promise<string> => {
   return new Promise((resolve) => {
@@ -109,9 +110,10 @@ export default function Profile() {
     setIsUploading(true);
     try {
       const userRef = doc(db, 'users', profile.uid);
+      const normalizedPhone = editPhone ? normalizePhoneNumber(editPhone, profile.countryCode || profile.country_code || profile.countryName || profile.country) : '';
       await updateDoc(userRef, {
         name: editName,
-        phone: editPhone,
+        phone: normalizedPhone,
         photoURL: editPhotoURL,
         profile_edited: true
       });
