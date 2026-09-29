@@ -69,7 +69,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 import { useLanguage, LANGUAGES } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { normalizePhoneNumber, getPhoneLookupCandidates } from '../utils/phone';
+import { normalizePhoneNumber, getPhoneLookupCandidates, getCountryDialCode, getCountryMaxNationalLength } from '../utils/phone';
 
 // --- HELPERS ---
 const generateReferralCode = () => {
@@ -609,6 +609,65 @@ export default function LandingPage() {
   const [userOtp, setUserOtp] = useState('');
   const [tempUser, setTempUser] = useState<FirebaseUser | null>(null);
 
+  // Username: automatic lowercase conversion
+  const handleUsernameChange = (val: string) => {
+    setUsername(val.toLowerCase());
+  };
+
+  // Country-specific phone digit management
+  const activeCountryCode = (selectedCountry?.countryCode || detectedCountry || 'NG').toUpperCase();
+  const currentDialCode = getCountryDialCode(activeCountryCode);
+  const maxPhoneDigits = getCountryMaxNationalLength(activeCountryCode);
+
+  const handlePhoneChange = (val: string, countryData?: any) => {
+    const code = (countryData?.countryCode || activeCountryCode).toUpperCase();
+    const dialCode = countryData?.dialCode || getCountryDialCode(code);
+    const maxDigits = getCountryMaxNationalLength(code);
+
+    if (!val) {
+      setPhone('');
+      return;
+    }
+
+    const clean = val.replace(/\D/g, '');
+    let national = '';
+    if (clean.startsWith(dialCode)) {
+      national = clean.slice(dialCode.length);
+    } else {
+      national = clean;
+    }
+
+    if (national.startsWith('0') && national.length > 1) {
+      national = national.replace(/^0+/, '');
+    }
+
+    if (national.length > maxDigits) {
+      national = national.slice(0, maxDigits);
+    }
+
+    setPhone(`${dialCode}${national}`);
+  };
+
+  const handlePhonePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text');
+    if (!pasted) return;
+
+    const dialCode = currentDialCode;
+    const maxDigits = maxPhoneDigits;
+    const cleanDigits = pasted.replace(/\D/g, '');
+
+    let national = cleanDigits;
+    if (cleanDigits.startsWith(dialCode)) {
+      national = cleanDigits.slice(dialCode.length);
+    } else if (cleanDigits.startsWith('0')) {
+      national = cleanDigits.replace(/^0+/, '');
+    }
+
+    const clampedNational = national.slice(0, maxDigits);
+    setPhone(`${dialCode}${clampedNational}`);
+  };
+
   const handleSelectCountry = (country: Country) => {
     const signupContext = {
       countryName: country.name,
@@ -627,6 +686,21 @@ export default function LandingPage() {
     }
 
     setSelectedCountry(signupContext);
+    const newDialCode = getCountryDialCode(country.code);
+    const newMaxDigits = getCountryMaxNationalLength(country.code);
+    setPhone((prev) => {
+      if (!prev) return '';
+      const raw = prev.replace(/\D/g, '');
+      const prevDial = getCountryDialCode(selectedCountry?.countryCode || detectedCountry);
+      let national = raw.startsWith(prevDial) ? raw.slice(prevDial.length) : raw;
+      if (national.startsWith('0') && national.length > 1) {
+        national = national.replace(/^0+/, '');
+      }
+      if (national.length > newMaxDigits) {
+        national = national.slice(0, newMaxDigits);
+      }
+      return `${newDialCode}${national}`;
+    });
     setAuthMode('signup');
     setIsModalOpen(true);
     setShowCountrySelection(false);
@@ -712,9 +786,13 @@ export default function LandingPage() {
       toast.error("Full name is required.");
       return;
     }
-    if (!username.trim()) {
+    const cleanUsername = username.trim().toLowerCase();
+    if (!cleanUsername) {
       toast.error("Username is required.");
       return;
+    }
+    if (username !== cleanUsername) {
+      setUsername(cleanUsername);
     }
     if (!email.trim()) {
       toast.error("Email address is required.");
@@ -787,7 +865,7 @@ export default function LandingPage() {
       const newUserProfile = {
         uid: firebaseUser.uid,
         name: fullName.trim() || 'Nexus User',
-        username: username.trim() || 'user',
+        username: cleanUsername || 'user',
         email: email.trim().toLowerCase(),
         phone: normalizedPhone,
         country: countryContext.countryName,
@@ -877,7 +955,7 @@ export default function LandingPage() {
       try {
         const pendingData = {
           fullName: fullName.trim(),
-          username: username.trim(),
+          username: cleanUsername,
           phone: normalizedPhone,
           referralCode: referralCode.trim(),
           email: email.trim().toLowerCase(),
@@ -1813,7 +1891,7 @@ export default function LandingPage() {
 
                         {/* 2. Username */}
                         {authMode === 'signup' && (
-                          <AuthInput icon={<UserPlus size={16} />} label="Username" placeholder="Username" value={username} onChange={setUsername} required compact={true} />
+                          <AuthInput icon={<UserPlus size={16} />} label="Username" placeholder="Username" value={username} onChange={handleUsernameChange} required compact={true} />
                         )}
 
                         {/* 3. Email Address (or Phone Number on signin) */}
@@ -1845,11 +1923,16 @@ export default function LandingPage() {
                         {authMode === 'signup' && (
                           <div className="space-y-0.5 sm:space-y-1">
                             <PhoneInput
-                              country={selectedCountry ? selectedCountry.countryCode.toLowerCase() : detectedCountry}
+                              country={activeCountryCode.toLowerCase()}
                               value={phone}
-                              onChange={(val) => setPhone(val)}
+                              onChange={handlePhoneChange}
                               disableDropdown={true}
                               countryCodeEditable={false}
+                              enableLongNumbers={currentDialCode.length + maxPhoneDigits}
+                              inputProps={{
+                                onPaste: handlePhonePaste,
+                                maxLength: currentDialCode.length + maxPhoneDigits + 5,
+                              }}
                               containerClass="nexus-phone-container"
                               inputClass="nexus-phone-input-signup"
                               buttonClass="nexus-phone-button-signup"
@@ -2853,7 +2936,7 @@ export default function LandingPage() {
                           {/* Row 1 — Three fields horizontally on desktop: Full Name | Username | Email Address */}
                           <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-2.5 lg:gap-3">
                             <AuthInput icon={<User size={16} />} label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required compact={true} />
-                            <AuthInput icon={<UserPlus size={16} />} label="Username" placeholder="Username" value={username} onChange={setUsername} required compact={true} />
+                            <AuthInput icon={<UserPlus size={16} />} label="Username" placeholder="Username" value={username} onChange={handleUsernameChange} required compact={true} />
                             <AuthInput 
                               icon={<Mail size={16} />} 
                               label="Email Address" 
@@ -2870,11 +2953,16 @@ export default function LandingPage() {
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-2.5 lg:gap-3">
                             <div className="w-full">
                               <PhoneInput
-                                country={selectedCountry ? selectedCountry.countryCode.toLowerCase() : detectedCountry}
+                                country={activeCountryCode.toLowerCase()}
                                 value={phone}
-                                onChange={(val) => setPhone(val)}
+                                onChange={handlePhoneChange}
                                 disableDropdown={true}
                                 countryCodeEditable={false}
+                                enableLongNumbers={currentDialCode.length + maxPhoneDigits}
+                                inputProps={{
+                                  onPaste: handlePhonePaste,
+                                  maxLength: currentDialCode.length + maxPhoneDigits + 5,
+                                }}
                                 containerClass="nexus-phone-container"
                                 inputClass="nexus-phone-input-signup"
                                 buttonClass="nexus-phone-button-signup"

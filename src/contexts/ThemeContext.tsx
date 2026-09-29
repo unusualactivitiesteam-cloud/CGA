@@ -21,13 +21,6 @@ function getSystemTheme(): EffectiveTheme {
   return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-function resolveEffectiveTheme(pref: ThemePreference): EffectiveTheme {
-  if (pref === 'system') {
-    return getSystemTheme();
-  }
-  return pref;
-}
-
 function applyThemeClasses(effective: EffectiveTheme) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
@@ -43,25 +36,24 @@ function applyThemeClasses(effective: EffectiveTheme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemePreference>(() => {
-    if (typeof window === 'undefined') return 'system';
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark' || stored === 'system') {
-      return stored as ThemePreference;
-    }
-    return 'system';
+  // Device/system theme is the authoritative theme
+  const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>(() => {
+    return getSystemTheme();
   });
 
-  const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>(() => {
-    return resolveEffectiveTheme(theme);
-  });
+  const [theme, setThemeState] = useState<ThemePreference>('system');
 
   const setTheme = useCallback((newTheme: ThemePreference) => {
     setThemeState(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-    const resolved = resolveEffectiveTheme(newTheme);
-    setEffectiveTheme(resolved);
-    applyThemeClasses(resolved);
+    // If explicit preference provided, update state for compatibility while maintaining system responsiveness
+    if (newTheme === 'system') {
+      const sys = getSystemTheme();
+      setEffectiveTheme(sys);
+      applyThemeClasses(sys);
+    } else {
+      setEffectiveTheme(newTheme);
+      applyThemeClasses(newTheme);
+    }
   }, []);
 
   const toggleTheme = useCallback(() => {
@@ -71,23 +63,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Synchronize on mount and apply classes immediately
   useEffect(() => {
-    const resolved = resolveEffectiveTheme(theme);
-    setEffectiveTheme(resolved);
-    applyThemeClasses(resolved);
-  }, [theme]);
+    const current = getSystemTheme();
+    setEffectiveTheme(current);
+    applyThemeClasses(current);
+  }, []);
 
-  // Listen for device / system appearance changes live
+  // Listen for device / system appearance changes live while app is running
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-      const currentPref = (localStorage.getItem(THEME_STORAGE_KEY) as ThemePreference) || 'system';
-      if (currentPref === 'system') {
-        const newEffective: EffectiveTheme = e.matches ? 'dark' : 'light';
-        setEffectiveTheme(newEffective);
-        applyThemeClasses(newEffective);
-      }
+    // Immediate sync
+    const initial = mediaQuery.matches ? 'dark' : 'light';
+    setEffectiveTheme(initial);
+    applyThemeClasses(initial);
+
+    const handleSystemThemeChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      const newEffective: EffectiveTheme = e.matches ? 'dark' : 'light';
+      setEffectiveTheme(newEffective);
+      applyThemeClasses(newEffective);
     };
 
     if (mediaQuery.addEventListener) {
