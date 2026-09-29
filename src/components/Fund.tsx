@@ -32,6 +32,7 @@ import { cn, formatCurrency, isWithdrawalAllowed, formatNumberWithCommas, parseF
 import { QRCodeCanvas } from 'qrcode.react';
 import { useAuth } from '../contexts/AuthContext';
 import { useMode } from '../contexts/ModeContext';
+import { getRegionalLimits } from '../utils/regionalLimits';
 import { DynamicBalance } from './DynamicBalance';
 import { 
   collection, 
@@ -71,7 +72,8 @@ const PRE_FIXED_AMOUNTS = [100, 1000, 5000, 10000, 50000, 100000];
 
 export default function Fund() {
   const { user, profile } = useAuth();
-  const { isBeta } = useMode();
+  const { isLite, isBeta } = useMode();
+  const { minDeposit } = getRegionalLimits(profile, isLite);
   const { tab } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -316,6 +318,12 @@ export default function Fund() {
       const amount = parseFormattedNumber(depositAmount);
       const depositMethodValue = depositMethod || 'crypto';
 
+      if (isNaN(amount) || amount < minDeposit) {
+        toast.error(`Minimum deposit is $${minDeposit}`);
+        setIsSubmitting(false);
+        return;
+      }
+
       if (depositMethodValue === 'bank' && !isUserInNigeria) {
         toast.error("Bank transfer is restricted to accounts registered in Nigeria.");
         setIsSubmitting(false);
@@ -535,8 +543,8 @@ export default function Fund() {
 
   const renderDepositSection = () => {
     const amountNum = parseFormattedNumber(depositAmount);
-    const isBelowDepositMin = depositAmount && (amountNum < 100);
-    const isDepositAmountValid = depositAmount && !isNaN(amountNum) && amountNum >= 100;
+    const isBelowDepositMin = depositAmount && (amountNum < minDeposit);
+    const isDepositAmountValid = depositAmount && !isNaN(amountNum) && amountNum >= minDeposit;
 
     if (depositStep === 'input') {
       return (
@@ -585,7 +593,7 @@ export default function Fund() {
                     const formatted = formatNumberWithCommas(e.target.value, false);
                     setDepositAmount(formatted);
                   }}
-                  placeholder="100"
+                  placeholder={minDeposit.toString()}
                   className={cn(
                     "w-full bg-black/40 border rounded-2xl py-5 pl-12 pr-6 text-xl md:text-2xl font-bold outline-none transition-all text-white font-mono",
                     isBelowDepositMin ? "border-red-500 text-red-500 focus:bg-red-500/5 shadow-[0_0_20px_rgba(239,68,68,0.1)]" : "border-white/10 focus:border-[#009e42]/50"
@@ -594,9 +602,9 @@ export default function Fund() {
               </div>
               <div className="flex justify-between items-center px-2">
                 <p className="text-[9px] font-bold text-aura-muted uppercase tracking-widest">
-                  Minimum funding: $100
+                  Minimum funding: ${minDeposit}
                 </p>
-                {amountNum >= 100 && (
+                {amountNum >= minDeposit && (
                   <p className="text-[9px] font-bold text-[#009e42] uppercase tracking-widest font-mono">
                     ${amountNum.toLocaleString()}
                   </p>
@@ -604,7 +612,7 @@ export default function Fund() {
               </div>
               {isBelowDepositMin && (
                 <p className="text-red-500 text-[10px] font-bold uppercase text-center animate-pulse">
-                  Minimum deposit is $100
+                  Minimum deposit is ${minDeposit}
                 </p>
               )}
             </div>
@@ -612,7 +620,7 @@ export default function Fund() {
             {/* Quick Prefixed Figures */}
             <div className="space-y-2">
               <div className="grid grid-cols-3 gap-2.5">
-                {PRE_FIXED_AMOUNTS.map((amt) => (
+                {(minDeposit === 10 ? [10, 50, 100, 1000, 5000, 10000] : PRE_FIXED_AMOUNTS).map((amt) => (
                   <button
                     key={amt}
                     type="button"

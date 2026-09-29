@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
 import { 
   PlusCircle, 
@@ -56,6 +56,7 @@ import { broadcastActivity } from '../lib/activity_logger';
 import InvestProcessingView from './InvestProcessingView';
 import BetaInvestmentStepIndicator from './BetaInvestmentStepIndicator';
 import { useMode } from '../contexts/ModeContext';
+import { getRegionalLimits, applyRegionalPlanLimits } from '../utils/regionalLimits';
 import { 
   isNigeriaRegion, 
   NIGERIA_BANK_ACCOUNTS, 
@@ -248,7 +249,11 @@ export default function Invest() {
   } = useUI();
   const { config: uiConfig } = useUIConfig();
   const { t } = useLanguage();
-  const { isBeta } = useMode();
+  const { isLite, isBeta } = useMode();
+  const { isRegisteredNigeria, regularPlanMin } = getRegionalLimits(profile, isLite);
+  const effectivePlans = useMemo(() => {
+    return applyRegionalPlanLimits(plans, profile, isLite);
+  }, [plans, profile, isLite]);
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
   const [selectedWallet, setSelectedWallet] = useState<'funding_balance' | 'available_balance' | 'referral_earnings' | 'reward_dollar_balance'>('funding_balance');
@@ -367,13 +372,13 @@ export default function Invest() {
 
   // Preselection from AI Bot Marketplace
   useEffect(() => {
-    if (!plans || plans.length === 0) return;
+    if (!effectivePlans || effectivePlans.length === 0) return;
     
     const preselectPlanId = sessionStorage.getItem('preselectPlanId');
     const preselectAmount = sessionStorage.getItem('preselectAmount');
     
     if (preselectPlanId && preselectAmount) {
-      const matchedPlan = plans.find((p: any) => p.id === preselectPlanId);
+      const matchedPlan = effectivePlans.find((p: any) => p.id === preselectPlanId);
       const amtVal = parseFloat(preselectAmount);
       
       if (matchedPlan && !isNaN(amtVal)) {
@@ -392,7 +397,7 @@ export default function Invest() {
       sessionStorage.removeItem('preselectPlanId');
       sessionStorage.removeItem('preselectAmount');
     }
-  }, [plans]);
+  }, [effectivePlans]);
 
   // Automatically switch plans when the amount falls into a different plan's range
   useEffect(() => {
@@ -401,11 +406,11 @@ export default function Invest() {
     if (isNaN(amountVal) || amountVal <= 0) return;
 
     // Check if the current amount fits in a different plan
-    const fittingPlan = plans.find((p: any) => p.active_status !== false && amountVal >= p.min && amountVal <= p.max);
+    const fittingPlan = effectivePlans.find((p: any) => p.active_status !== false && amountVal >= p.min && amountVal <= p.max);
     if (fittingPlan && fittingPlan.id !== modalPlan.id) {
       setModalPlan(fittingPlan);
     }
-  }, [modalAmount, plans, modalPlan]);
+  }, [modalAmount, effectivePlans, modalPlan]);
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -434,6 +439,11 @@ export default function Invest() {
 
   const submitInvestment = async () => {
     if (!user || !profile || !selectedPlan || !paymentMethod) return;
+
+    if (confirmedAmount < selectedPlan.min || confirmedAmount > selectedPlan.max) {
+      toast.error(`Please enter a valid amount between ${formatCurrency(selectedPlan.min)} and ${formatCurrency(selectedPlan.max)}.`);
+      return;
+    }
 
     if (paymentMethod === "bank" && !isUserInNigeria) {
       toast.error("Bank transfer is restricted to accounts registered in Nigeria.");
@@ -680,7 +690,7 @@ export default function Invest() {
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                   className="max-w-md mx-auto px-4 py-8"
                 >
-                  {plans.filter((p: any) => p.active_status !== false && p.id === collapsedPlanId).map((plan: any) => {
+                  {effectivePlans.filter((p: any) => p.active_status !== false && p.id === collapsedPlanId).map((plan: any) => {
                     const customCardStyle: React.CSSProperties = {};
                     if (plan.card_background) {
                       customCardStyle.backgroundColor = plan.card_background;
@@ -796,7 +806,7 @@ export default function Invest() {
                   className="w-full relative"
                 >
                   <div className="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 max-w-6xl mx-auto py-8 px-4 items-stretch">
-                    {plans.filter((p: any) => p.active_status !== false).map((plan: any) => {
+                    {effectivePlans.filter((p: any) => p.active_status !== false).map((plan: any) => {
                       const isPremium = plan.id === 'premium';
                       
                       let minMaxText = "";
@@ -804,7 +814,7 @@ export default function Invest() {
                       let descriptionText = plan.description;
 
                       if (plan.id === 'regular') {
-                        minMaxText = "$100 - $90k";
+                        minMaxText = `${plan.min === 10 ? '$10' : '$100'} - $90k`;
                         descriptionText = "Steady growth for smart investors";
                         planIcon = (
                           <svg width="64" height="72" viewBox="0 0 64 72" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-4 drop-shadow-[0_0_15px_rgba(164,209,0,0.35)]">
@@ -969,7 +979,7 @@ export default function Invest() {
 
                   {/* Mobile-Only Horizontal Cards (lg:hidden) */}
                   <div className="flex flex-col lg:hidden gap-4 max-w-md mx-auto py-4 px-4 items-stretch w-full">
-                    {plans.filter((p: any) => p.active_status !== false).map((plan: any) => {
+                    {effectivePlans.filter((p: any) => p.active_status !== false).map((plan: any) => {
                       const isPremium = plan.id === 'premium';
                       
                       let minMaxText = "";
@@ -977,7 +987,7 @@ export default function Invest() {
                       let descriptionText = plan.description;
 
                       if (plan.id === 'regular') {
-                        minMaxText = "$100 - $90k";
+                        minMaxText = `${plan.min === 10 ? '$10' : '$100'} - $90k`;
                         descriptionText = "Steady growth for smart investors";
                         planIcon = (
                           <svg width="44" height="50" viewBox="0 0 64 72" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-[0_0_8px_rgba(164,209,0,0.35)]">
@@ -1172,7 +1182,7 @@ export default function Invest() {
                           </div>
 
                           <div className="grid grid-cols-3 gap-1.5">
-                            {PLAN_PRESETS[modalPlan.id]?.map((preset) => (
+                            {(modalPlan.id === 'regular' ? [modalPlan.min, 10000, 40000] : (PLAN_PRESETS[modalPlan.id] || [])).map((preset) => (
                               <button
                                 key={preset}
                                 type="button"
@@ -1608,7 +1618,7 @@ export default function Invest() {
                                  const balance = walletBalanceToShow;
                                  const cleanBalance = parseFloat(balance.toFixed(2));
                                  
-                                 const appropriatePlan = (plans || []).filter((p: any) => p.active_status !== false).find((p: any) => cleanBalance >= p.min && cleanBalance <= p.max);
+                                 const appropriatePlan = (effectivePlans || []).filter((p: any) => p.active_status !== false).find((p: any) => cleanBalance >= p.min && cleanBalance <= p.max);
                                  
                                  if (appropriatePlan) {
                                    if (appropriatePlan.id !== selectedPlan?.id) {
@@ -1618,7 +1628,7 @@ export default function Invest() {
                                    setConfirmedAmount(cleanBalance);
                                  } else {
                                    setConfirmedAmount(cleanBalance);
-                                   const activePlans = (plans || []).filter((p: any) => p.active_status !== false);
+                                   const activePlans = (effectivePlans || []).filter((p: any) => p.active_status !== false);
                                    if (activePlans.length > 0) {
                                      if (cleanBalance < activePlans[0].min) {
                                        toast.error(`Minimum investment is ${formatCurrency(activePlans[0].min)}`);
@@ -1645,7 +1655,7 @@ export default function Invest() {
                                Allocation outside {selectedPlan.name} limits ({formatCurrency(selectedPlan.min)} - {formatCurrency(selectedPlan.max)})
                              </p>
                              <div className="mt-2 grid grid-cols-1 gap-1.5">
-                               {(plans || []).filter((p: any) => p.active_status !== false).map((p: any) => (
+                               {(effectivePlans || []).filter((p: any) => p.active_status !== false).map((p: any) => (
                                  confirmedAmount >= p.min && confirmedAmount <= p.max && (
                                    <button 
                                      type="button"

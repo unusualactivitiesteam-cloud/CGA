@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { 
   Zap, 
@@ -22,6 +22,8 @@ import {
 import { cn, formatCurrency } from '../lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useMode } from '../contexts/ModeContext';
+import { applyRegionalPlanLimits } from '../utils/regionalLimits';
 
 const PLAN_ICONS: Record<string, React.ReactNode> = {
   regular: <BarChart3 className="w-6 h-6" />,
@@ -48,7 +50,9 @@ const SectionHeader = ({ title, subtitle, icon: Icon, badge }: { title: string; 
 );
 
 const HowItWorks = () => {
-  const { plans } = useAuth();
+  const { profile, plans } = useAuth();
+  const { isLite } = useMode();
+  const effectivePlans = useMemo(() => applyRegionalPlanLimits(plans, profile, isLite), [plans, profile, isLite]);
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-[#050608] text-white relative overflow-hidden">
@@ -361,7 +365,7 @@ const HowItWorks = () => {
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {(plans || []).filter((p: any) => p.active_status !== false).map((plan: any, i) => (
+              {(effectivePlans || []).filter((p: any) => p.active_status !== false).map((plan: any, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, scale: 0.95 }}

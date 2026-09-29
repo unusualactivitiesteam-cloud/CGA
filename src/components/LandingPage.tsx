@@ -678,13 +678,7 @@ export default function LandingPage() {
       flag: country.flag
     };
 
-    try {
-      localStorage.setItem('cga_signup_country', JSON.stringify(signupContext));
-      sessionStorage.setItem('cga_signup_country', JSON.stringify(signupContext));
-    } catch (e) {
-      console.warn("Storage quota / error saving selected country:", e);
-    }
-
+    // 1. Immediately update UI state so country, flag, and phone adapt instantly
     setSelectedCountry(signupContext);
     const newDialCode = getCountryDialCode(country.code);
     const newMaxDigits = getCountryMaxNationalLength(country.code);
@@ -704,6 +698,14 @@ export default function LandingPage() {
     setAuthMode('signup');
     setIsModalOpen(true);
     setShowCountrySelection(false);
+
+    // 2. Perform non-blocking persistence
+    try {
+      localStorage.setItem('cga_signup_country', JSON.stringify(signupContext));
+      sessionStorage.setItem('cga_signup_country', JSON.stringify(signupContext));
+    } catch (e) {
+      console.warn("Storage quota / error saving selected country:", e);
+    }
 
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref') || referralCode;
@@ -1547,17 +1549,18 @@ export default function LandingPage() {
         <div className="fixed top-[15%] left-[-10%] w-[320px] h-[320px] rounded-full bg-primary/10 blur-[100px] pointer-events-none -z-0" />
         <div className="fixed bottom-[15%] right-[-10%] w-[320px] h-[320px] rounded-full bg-secondary/10 blur-[100px] pointer-events-none -z-0" />
 
-        <AnimatePresence mode="wait">
-          {showCountrySelection ? (
+        {/* Mobile Country Selection Overlay */}
+        <AnimatePresence>
+          {showCountrySelection && (
             <motion.div
               key="mobile-country-selection-view"
-              initial={shouldReduceMotion ? { opacity: 0 } : { y: '-100%', opacity: 1 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { y: '-100%', opacity: 0.95 }}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0 }}
               transition={
                 shouldReduceMotion 
                   ? { duration: 0 } 
-                  : { duration: 0.32, ease: [0.22, 1, 0.36, 1] }
+                  : { duration: 0.15, ease: 'easeOut' }
               }
               className={cn(
                 "fixed inset-0 z-[250] flex flex-col justify-between overflow-y-auto transition-colors duration-200",
@@ -1654,7 +1657,7 @@ export default function LandingPage() {
                         onClick={() => handleSelectCountry(country)}
                         type="button"
                         className={cn(
-                          "w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left group select-none cursor-pointer",
+                          "w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left group select-none cursor-pointer touch-manipulation active:scale-[0.99]",
                           isDark
                             ? "bg-white/[0.02] border-white/5 hover:border-primary/40 hover:bg-white/[0.06] active:bg-white/[0.08]"
                             : "bg-white border-slate-200 hover:border-primary/50 hover:bg-slate-50 active:bg-slate-100 shadow-sm"
@@ -1717,17 +1720,13 @@ export default function LandingPage() {
               </main>
               <Footer />
             </motion.div>
-          ) : (
-            <motion.div
-              key="mobile-auth-card"
-              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
-              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full flex justify-center z-10"
-            >
-              {/* The Approved Authentication Card */}
-              <div className="relative w-full max-w-md bg-white border border-slate-200 text-slate-900 dark:bg-[#0c0f14] dark:border-white/10 dark:text-white rounded-3xl overflow-hidden shadow-2xl transition-colors duration-200 my-auto">
+          )}
+        </AnimatePresence>
+
+        {/* Mobile Auth Card - Continuously mounted in the DOM to eliminate remount freezes */}
+        <div className="w-full flex justify-center z-10">
+          {/* The Approved Authentication Card */}
+          <div className="relative w-full max-w-md bg-white border border-slate-200 text-slate-900 dark:bg-[#0c0f14] dark:border-white/10 dark:text-white rounded-3xl overflow-hidden shadow-2xl transition-colors duration-200 my-auto">
                 <div className={cn(
                   "overflow-y-auto scrollbar-hide",
                   authMode === 'signup' ? "p-4 sm:p-6 max-h-[94vh] sm:max-h-[92vh]" : "p-6 sm:p-8 max-h-[92vh]"
@@ -1877,7 +1876,7 @@ export default function LandingPage() {
                             <button
                               type="button"
                               onClick={handleOpenCountrySelection}
-                              className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+                              className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors touch-manipulation active:opacity-70"
                             >
                               Change
                             </button>
@@ -2031,9 +2030,7 @@ export default function LandingPage() {
                   )}
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </div>
       </div>
     );
   }
