@@ -822,22 +822,22 @@ export default function Fund() {
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
-          className="max-w-lg mx-auto bg-[#11141b]/95 border border-white/10 rounded-[32px] p-6 md:p-10 shadow-[0_30px_60px_rgba(0,0,0,0.85)] backdrop-blur-md space-y-8 text-white relative overflow-hidden"
+          className="max-w-lg mx-auto bg-white dark:bg-[#11141b]/95 border border-slate-200 dark:border-white/10 rounded-[32px] p-6 md:p-10 shadow-xl dark:shadow-[0_30px_60px_rgba(0,0,0,0.85)] backdrop-blur-md space-y-8 text-slate-900 dark:text-white relative overflow-hidden"
         >
           {/* Tech lines background */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff01_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff01_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
           <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#009e42]/20 to-transparent pointer-events-none" />
 
-          <div className="flex items-center gap-4 pb-5 border-b border-white/5 relative z-10">
+          <div className="flex items-center gap-4 pb-5 border-b border-slate-100 dark:border-white/5 relative z-10">
             <button 
               onClick={() => setDepositStep('method')} 
-              className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 rounded-xl transition-all cursor-pointer"
+              className="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/15 rounded-xl transition-all cursor-pointer text-slate-700 dark:text-white/80"
             >
-              <ChevronLeft size={16} className="text-white/80" />
+              <ChevronLeft size={16} />
             </button>
             <div>
-              <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight font-serif italic">Crypto Transfer</h2>
-              <p className="text-[10px] font-black uppercase tracking-widest text-aura-muted">Total amount: ${parseFormattedNumber(depositAmount).toLocaleString()}</p>
+              <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight font-serif italic text-slate-900 dark:text-white">Crypto Transfer</h2>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-aura-muted">Total amount: ${parseFormattedNumber(depositAmount).toLocaleString()}</p>
             </div>
           </div>
 
@@ -850,7 +850,9 @@ export default function Fund() {
                   onClick={() => setDepositCryptoType(t)}
                   className={cn(
                     "flex-1 py-3.5 rounded-xl text-[10px] font-black uppercase border transition-all cursor-pointer",
-                    depositCryptoType === t ? "bg-[#009e42]/20 border-[#009e42] text-[#009e42] shadow-[0_0_12px_rgba(0,158,66,0.12)]" : "bg-white/5 border-white/5 text-white/50 hover:text-white"
+                    depositCryptoType === t 
+                      ? "bg-[#009e42]/10 dark:bg-[#009e42]/20 border-[#009e42] text-[#009e42] shadow-[0_0_12px_rgba(0,158,66,0.12)]" 
+                      : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10"
                   )}
                 >
                   {t === 'usdt' ? 'USDT (TRC20)' : 'BTC (Native)'}
@@ -858,33 +860,34 @@ export default function Fund() {
               ))}
             </div>
 
-            <div className="p-6 bg-gradient-to-b from-[#009e42]/10 to-[#0c0d12]/95 border border-[#009e42]/20 rounded-3xl flex flex-col items-center gap-5 shadow-[0_15px_30px_rgba(0,0,0,0.5)] relative overflow-hidden backdrop-blur-md">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-[#009e42]/5 rounded-full blur-2xl -z-10" />
-              <div className="p-3 bg-white rounded-2xl shadow-[0_10px_25px_rgba(255,255,255,0.05)] border border-white/20">
+            <div className="p-6 bg-white dark:bg-gradient-to-b dark:from-[#009e42]/10 dark:to-[#0c0d12]/95 border border-slate-200 dark:border-[#009e42]/20 rounded-3xl flex flex-col items-center gap-5 shadow-sm dark:shadow-[0_15px_30px_rgba(0,0,0,0.5)] relative overflow-hidden backdrop-blur-md">
+              <div className="hidden dark:block absolute top-0 right-0 w-24 h-24 bg-[#009e42]/5 rounded-full blur-2xl -z-10" />
+              <div className="p-3.5 bg-white rounded-2xl shadow-sm border border-slate-200/90 dark:border-white/20">
                 <QRCodeCanvas value={CRYPTO_ADDRESSES[depositCryptoType]} size={120} />
               </div>
-              <div className="w-full space-y-2">
-                <p className="text-[9px] text-center text-aura-muted uppercase tracking-widest font-bold">Scan QR or Copy Address</p>
-                <div className="bg-black/40 border border-white/10 rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3 overflow-hidden shadow-inner">
-                  <code className="text-[10px] font-mono text-[#009e42] truncate tracking-wide">{CRYPTO_ADDRESSES[depositCryptoType]}</code>
+              <div className="w-full space-y-2.5">
+                <p className="text-[10px] text-center text-slate-700 dark:text-aura-muted uppercase tracking-widest font-black">Scan QR or Copy Address</p>
+                <div className="bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3 overflow-hidden shadow-sm dark:shadow-inner">
+                  <code className="text-xs font-mono text-slate-900 dark:text-[#009e42] font-bold truncate tracking-wide">{CRYPTO_ADDRESSES[depositCryptoType]}</code>
                   <button 
                     onClick={() => handleCopy(CRYPTO_ADDRESSES[depositCryptoType], 'wallet')} 
-                    className="flex-shrink-0 p-2 hover:bg-white/5 rounded-lg text-aura-muted hover:text-white transition-all active:scale-95"
+                    className="flex-shrink-0 p-2 bg-white hover:bg-slate-100 dark:bg-transparent dark:hover:bg-white/5 border border-slate-200/80 dark:border-transparent rounded-xl text-slate-700 hover:text-slate-900 dark:text-aura-muted dark:hover:text-white transition-all active:scale-95 cursor-pointer shadow-xs dark:shadow-none"
+                    aria-label="Copy wallet address"
                   >
-                    {copiedField === 'wallet' ? <Check size={13} className="text-[#009e42]" /> : <Copy size={13} />}
+                    {copiedField === 'wallet' ? <Check size={14} className="text-[#009e42]" /> : <Copy size={14} />}
                   </button>
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-aura-muted ml-2">Transaction Hash / Sender ID</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-aura-muted ml-2">Transaction Hash / Sender ID</label>
               <input 
                 type="text"
                 value={depositTxId}
                 onChange={(e) => setDepositTxId(e.target.value)}
                 placeholder="Input transaction details or sending wallet"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm font-mono focus:border-[#009e42] outline-none transition-all text-white"
+                className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-5 py-4 text-sm font-mono focus:border-[#009e42] outline-none transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30"
               />
             </div>
           </div>

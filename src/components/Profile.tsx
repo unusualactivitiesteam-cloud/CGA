@@ -283,7 +283,7 @@ export default function Profile() {
   return (
     <div className="space-y-4 md:space-y-6 pb-24 max-w-7xl mx-auto">
       {/* Mobile Sticky/Floating Profile bar with Glassmorphism */}
-      <div className="lg:hidden sticky top-2 z-[40] mx-0 p-3.5 rounded-2xl bg-[#0b0d14]/75 border border-white/[0.08] backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.05)] flex items-center justify-between gap-4">
+      <div className="lg:hidden sticky top-2 z-[40] mx-0 p-3.5 rounded-2xl bg-white/85 dark:bg-[#0b0d14]/75 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-[0_12px_40px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.05)] flex items-center justify-between gap-4 transition-colors">
         <div className="flex items-center gap-3.5 min-w-0">
           {/* Profile picture at the extreme far left */}
           <button 
@@ -293,14 +293,14 @@ export default function Profile() {
             }}
             className="relative group flex-shrink-0 cursor-pointer focus:outline-none"
           >
-            <div className="w-12 h-12 rounded-full border border-white/10 p-0.5 overflow-hidden bg-white/5 backdrop-blur-sm shadow-md hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-full border border-slate-200 dark:border-white/10 p-0.5 overflow-hidden bg-slate-100 dark:bg-white/5 backdrop-blur-sm shadow-md hover:scale-105 transition-transform">
               <img 
                 src={(isEditing ? editPhotoURL : profile?.photoURL) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.username || 'nexus'}`} 
                 alt="Avatar" 
                 className="w-full h-full object-cover rounded-full" 
               />
             </div>
-            <div className="absolute -bottom-1 -right-1 p-1 bg-white text-slate-900 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center">
+            <div className="absolute -bottom-1 -right-1 p-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center">
               <Camera size={10} />
             </div>
           </button>
@@ -308,15 +308,15 @@ export default function Profile() {
           {/* Display name & Username (@handle) stacked tightly beside name */}
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-extrabold text-white tracking-tight truncate max-w-[150px] sm:max-w-[200px]">
+              <span className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight truncate max-w-[150px] sm:max-w-[200px]">
                 {profile?.name}
               </span>
               {/* Green tick icon only for verified status */}
-              <div className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]">
-                <Check size={10} strokeWidth={3.5} className="text-emerald-400 animate-pulse" />
+              <div className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]">
+                <Check size={10} strokeWidth={3.5} className="text-emerald-600 dark:text-emerald-400 animate-pulse" />
               </div>
             </div>
-            <span className="text-[10px] font-semibold text-white/50 tracking-wide mt-0.5">
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-white/50 tracking-wide mt-0.5">
               @{profile?.username}
             </span>
           </div>
@@ -341,7 +341,7 @@ export default function Profile() {
                     setEditPhone(profile?.phone || '');
                     setEditPhotoURL(profile?.photoURL || '');
                   }}
-                  className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white rounded-xl text-[10px] font-bold tracking-wider transition-all cursor-pointer"
+                  className="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 dark:text-white/80 rounded-xl text-[10px] font-bold tracking-wider transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -354,7 +354,7 @@ export default function Profile() {
               </div>
             )
           ) : (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[9px] font-bold text-slate-400 tracking-wider whitespace-nowrap">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[9px] font-bold text-slate-500 dark:text-slate-400 tracking-wider whitespace-nowrap">
               <Lock size={10} /> Profile Locked
             </div>
           )}
@@ -362,7 +362,7 @@ export default function Profile() {
       </div>
 
       {/* Desktop Profile Header Card (Keep exact original layout on desktop) */}
-      <div className="hidden lg:block relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#051937] via-[#004d7a] to-[#008793] p-8 lg:p-12 text-white shadow-xl">
+      <div className="hidden lg:block relative overflow-hidden rounded-3xl bg-white dark:bg-gradient-to-br dark:from-[#051937] dark:via-[#004d7a] dark:to-[#008793] border border-slate-200/80 dark:border-transparent p-8 lg:p-12 text-slate-900 dark:text-white shadow-sm dark:shadow-xl transition-colors">
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="relative group">
@@ -371,7 +371,7 @@ export default function Profile() {
                   setPhotoMode('options');
                   setShowPhotoModal(true);
                 }}
-                className="w-28 h-28 lg:w-32 lg:h-32 rounded-full border-4 border-white/20 p-1.5 overflow-hidden bg-white/10 hover:bg-white/20 backdrop-blur-sm shadow-2xl cursor-pointer hover:opacity-95 active:scale-95 transition-all focus:outline-none text-left"
+                className="w-28 h-28 lg:w-32 lg:h-32 rounded-full border-4 border-slate-200 dark:border-white/20 p-1.5 overflow-hidden bg-slate-100 dark:bg-white/10 hover:bg-slate-200/60 dark:hover:bg-white/20 backdrop-blur-sm shadow-md dark:shadow-2xl cursor-pointer hover:opacity-95 active:scale-95 transition-all focus:outline-none text-left"
               >
                 <img 
                   src={(isEditing ? editPhotoURL : profile?.photoURL) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.username || 'nexus'}`} 
@@ -384,18 +384,18 @@ export default function Profile() {
                   setPhotoMode('options');
                   setShowPhotoModal(true);
                 }}
-                className="absolute bottom-1 right-1 p-2 bg-white text-slate-900 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center cursor-pointer"
+                className="absolute bottom-1 right-1 p-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center cursor-pointer"
               >
                 <Camera size={14} />
               </button>
             </div>
             <div className="text-center md:text-left space-y-2">
               <div className="flex items-center justify-center md:justify-start gap-2">
-                <h1 className="text-2xl lg:text-4xl font-bold tracking-tight">{profile?.name}</h1>
-                <BadgeCheck size={24} className="text-blue-400 fill-blue-400/20" />
+                <h1 className="text-2xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">{profile?.name}</h1>
+                <BadgeCheck size={24} className="text-blue-500 fill-blue-500/15 dark:text-blue-400 dark:fill-blue-400/20" />
               </div>
-              <p className="text-white/60 text-sm font-medium tracking-wide">@{profile?.username}</p>
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full text-[10px] font-bold uppercase tracking-widest text-green-400 mt-2">
+              <p className="text-slate-500 dark:text-white/60 text-sm font-medium tracking-wide">@{profile?.username}</p>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/25 dark:bg-green-500/20 dark:border-green-500/30 rounded-full text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-green-400 mt-2">
                 <Check size={12} strokeWidth={3} /> Verified Account
               </div>
             </div>
@@ -403,8 +403,8 @@ export default function Profile() {
         </div>
 
         {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl pointer-events-none" />
+        <div className="hidden dark:block absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
+        <div className="hidden dark:block absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl pointer-events-none" />
       </div>
 
       {/* Dashboard Action Buttons - Side-by-Side Mobile Layout */}
@@ -433,10 +433,10 @@ export default function Profile() {
           <section className="space-y-4">
             <div className="px-2 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <User size={18} className="text-[#009e42]" /> Account Information
                 </h3>
-                <p className="text-slate-400 text-xs mt-0.5">View and manage your personal account details</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">View and manage your personal account details</p>
               </div>
               
               {!profile?.profile_edited ? (
@@ -456,7 +456,7 @@ export default function Profile() {
                         setEditPhone(profile?.phone || '');
                         setEditPhotoURL(profile?.photoURL || '');
                       }}
-                      className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white rounded-xl text-[10px] font-bold tracking-wider transition-all cursor-pointer"
+                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 dark:text-white/80 rounded-xl text-[10px] font-bold tracking-wider transition-all cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -469,24 +469,24 @@ export default function Profile() {
                   </div>
                 )
               ) : (
-                <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-xl text-[9px] font-bold text-slate-400 tracking-wider">
+                <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[9px] font-bold text-slate-500 dark:text-slate-400 tracking-wider">
                   <Lock size={10} /> Profile Locked
                 </div>
               )}
             </div>
             
-            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm shadow-sm transition-colors">
-              <div className="divide-y divide-white/5">
+            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm shadow-sm transition-colors">
+              <div className="divide-y divide-slate-100 dark:divide-white/5">
                 {isEditing && (
-                  <div className="grid grid-cols-12 gap-4 p-5 items-center bg-white/5 border-b border-white/5">
+                  <div className="grid grid-cols-12 gap-4 p-5 items-center bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                     <div className="col-span-1 text-blue-500">
                       <Camera size={16} />
                     </div>
                     <div className="col-span-11 md:col-span-3">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Profile Photo</p>
+                      <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">Profile Photo</p>
                     </div>
                     <div className="col-span-12 md:col-span-8 flex flex-col sm:flex-row items-center gap-4">
-                      <div className="w-14 h-14 rounded-full border border-white/10 overflow-hidden bg-white/5 flex-shrink-0">
+                      <div className="w-14 h-14 rounded-full border border-slate-200 dark:border-white/10 overflow-hidden bg-slate-100 dark:bg-white/5 flex-shrink-0">
                         <img 
                           src={editPhotoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.username || 'nexus'}`} 
                           alt="Avatar Preview" 
@@ -501,7 +501,7 @@ export default function Profile() {
                             setShowPhotoModal(true);
                             await startCamera();
                           }}
-                          className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-bold tracking-wider text-white transition-all cursor-pointer"
+                          className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-bold tracking-wider text-slate-800 dark:text-white transition-all cursor-pointer"
                         >
                           <Camera size={12} /> Take with Camera
                         </button>
@@ -510,7 +510,7 @@ export default function Profile() {
                           onClick={() => {
                             fileInputRef.current?.click();
                           }}
-                          className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-bold tracking-wider text-white transition-all cursor-pointer"
+                          className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-bold tracking-wider text-slate-800 dark:text-white transition-all cursor-pointer"
                         >
                           <Upload size={12} /> Upload Photo
                         </button>
@@ -519,12 +519,12 @@ export default function Profile() {
                   </div>
                 )}
                 {isEditing ? (
-                  <div className="grid grid-cols-12 gap-3 p-5 items-center bg-white/5">
+                  <div className="grid grid-cols-12 gap-3 p-5 items-center bg-slate-50/50 dark:bg-white/5">
                     <div className="col-span-1 text-blue-500">
                       <User size={16} />
                     </div>
                     <div className="col-span-4 md:col-span-3">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Full Name</p>
+                      <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">Full Name</p>
                     </div>
                     <div className="col-span-7 md:col-span-8">
                       <input 
@@ -532,7 +532,7 @@ export default function Profile() {
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         placeholder="John Doe"
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-500 transition-all font-bold"
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-all font-bold placeholder:text-slate-400"
                       />
                     </div>
                   </div>
@@ -554,12 +554,12 @@ export default function Profile() {
                   value={profile?.email || 'N/A'} 
                 />
                 {isEditing ? (
-                  <div className="grid grid-cols-12 gap-3 p-5 items-center bg-white/5">
+                  <div className="grid grid-cols-12 gap-3 p-5 items-center bg-slate-50/50 dark:bg-white/5">
                     <div className="col-span-1 text-blue-500">
                       <Phone size={16} />
                     </div>
                     <div className="col-span-4 md:col-span-3">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Phone Number</p>
+                      <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">Phone Number</p>
                     </div>
                     <div className="col-span-7 md:col-span-8">
                       <input 
@@ -567,7 +567,7 @@ export default function Profile() {
                         value={editPhone}
                         onChange={(e) => setEditPhone(e.target.value)}
                         placeholder="+1 234 567 890"
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-500 transition-all font-bold"
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-all font-bold placeholder:text-slate-400"
                       />
                     </div>
                   </div>
@@ -608,32 +608,32 @@ export default function Profile() {
           <div className="w-full">
             <button 
               onClick={() => navigate('/settings')}
-              className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between group hover:bg-white/10 hover:border-blue-500/30 transition-all cursor-pointer shadow-sm"
+              className="w-full p-5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-white/10 hover:border-blue-500/30 transition-all cursor-pointer shadow-sm"
             >
               <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400 group-hover:scale-110 transition-transform flex items-center justify-center">
+                <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform flex items-center justify-center">
                   <Settings size={18} />
                 </div>
                 <div className="text-left">
-                  <span className="block text-xs font-bold text-white tracking-wide">Account Settings</span>
-                  <span className="block text-[10px] text-slate-400 mt-0.5">Manage password, devices, and security preferences</span>
+                  <span className="block text-xs font-bold text-slate-900 dark:text-white tracking-wide">Account Settings</span>
+                  <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Manage password, devices, and security preferences</span>
                 </div>
               </div>
-              <ChevronRight size={16} className="text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              <ChevronRight size={16} className="text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white group-hover:translate-x-1 transition-all" />
             </button>
           </div>
 
           {/* Interface Mode Switch at the Bottom of Profile */}
-          <div className="w-full p-4 sm:p-5 bg-white/[0.03] border border-white/10 rounded-2xl flex items-center justify-between shadow-sm">
+          <div className="w-full p-4 sm:p-5 bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-between shadow-sm transition-colors">
             <div className="flex items-center gap-3.5 min-w-0">
               <div className={cn(
                 "p-2.5 rounded-xl transition-colors flex items-center justify-center flex-shrink-0",
-                isBeta ? "bg-purple-500/10 text-purple-400" : "bg-emerald-500/10 text-emerald-400"
+                isBeta ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
               )}>
                 {isBeta ? <Sparkles size={18} /> : <Zap size={18} />}
               </div>
               <div className="text-left min-w-0">
-                <span className="block text-xs sm:text-sm font-bold text-white tracking-wide">
+                <span className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-wide">
                   {isBeta ? 'Switch to Lite' : 'Switch to Beta'}
                 </span>
               </div>
@@ -652,14 +652,14 @@ export default function Profile() {
               className={cn(
                 "relative inline-flex h-8 w-15 sm:w-16 flex-shrink-0 cursor-pointer rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none border shadow-inner active:scale-95",
                 isBeta
-                  ? "bg-purple-950/70 border-purple-500/40 shadow-purple-900/30"
-                  : "bg-emerald-950/40 border-emerald-500/30 shadow-emerald-900/20"
+                  ? "bg-purple-100 border-purple-300 dark:bg-purple-950/70 dark:border-purple-500/40 shadow-purple-900/30"
+                  : "bg-emerald-100 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-500/30 shadow-emerald-900/20"
               )}
             >
               {/* Subtle track indicator dots without text labels */}
               <div className="w-full h-full flex items-center justify-between px-1.5 pointer-events-none">
-                <span className={cn("w-1.5 h-1.5 rounded-full transition-opacity", !isBeta ? "bg-emerald-400 opacity-80" : "bg-white/20 opacity-30")} />
-                <span className={cn("w-1.5 h-1.5 rounded-full transition-opacity", isBeta ? "bg-purple-400 opacity-80" : "bg-white/20 opacity-30")} />
+                <span className={cn("w-1.5 h-1.5 rounded-full transition-opacity", !isBeta ? "bg-emerald-600 dark:bg-emerald-400 opacity-80" : "bg-slate-300 dark:bg-white/20 opacity-30")} />
+                <span className={cn("w-1.5 h-1.5 rounded-full transition-opacity", isBeta ? "bg-purple-600 dark:bg-purple-400 opacity-80" : "bg-slate-300 dark:bg-white/20 opacity-30")} />
               </div>
 
               {/* Sliding Knob */}
@@ -705,16 +705,16 @@ export default function Profile() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-xl bg-[#11141b] border border-white/10 rounded-[32px] overflow-hidden shadow-2xl"
+              className="relative w-full max-w-xl bg-white dark:bg-[#11141b] border border-slate-200 dark:border-white/10 rounded-[32px] overflow-hidden shadow-2xl"
             >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                <h3 className="text-xl font-black italic font-serif text-white">Profile Photo</h3>
+              <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                <h3 className="text-xl font-black italic font-serif text-slate-900 dark:text-white">Profile Photo</h3>
                 <button 
                   onClick={() => {
                     stopCamera();
                     setShowPhotoModal(false);
                   }}
-                  className="p-2 text-aura-muted hover:text-white transition-colors"
+                  className="p-2 text-slate-400 hover:text-slate-700 dark:text-aura-muted dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <X size={20} />
                 </button>
@@ -724,46 +724,46 @@ export default function Profile() {
                 {isUploading ? (
                   <div className="flex flex-col items-center justify-center py-12 space-y-4">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                    <p className="text-xs font-black text-aura-muted uppercase tracking-widest">Processing Node...</p>
+                    <p className="text-xs font-black text-slate-500 dark:text-aura-muted uppercase tracking-widest">Processing Node...</p>
                   </div>
                 ) : photoMode === 'options' ? (
                   <div className="grid grid-cols-1 gap-4">
                     <button 
                       onClick={() => setPhotoMode('avatar')}
-                      className="flex items-center gap-4 p-6 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all text-left"
+                      className="flex items-center gap-4 p-6 bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 rounded-2xl transition-all text-left cursor-pointer"
                     >
                       <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
                         <UserCircle size={24} />
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-white">Choose Avatar</h4>
-                        <p className="text-[10px] text-aura-muted uppercase tracking-widest mt-1">Select from our premium 3D collection</p>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">Choose Avatar</h4>
+                        <p className="text-[10px] text-slate-500 dark:text-aura-muted uppercase tracking-widest mt-1">Select from our premium 3D collection</p>
                       </div>
                     </button>
 
                     <button 
                       onClick={startCamera}
-                      className="flex items-center gap-4 p-6 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all text-left"
+                      className="flex items-center gap-4 p-6 bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 rounded-2xl transition-all text-left cursor-pointer"
                     >
                       <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
                         <Camera size={24} />
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-white">Take Photo</h4>
-                        <p className="text-[10px] text-aura-muted uppercase tracking-widest mt-1">Use your device camera</p>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">Take Photo</h4>
+                        <p className="text-[10px] text-slate-500 dark:text-aura-muted uppercase tracking-widest mt-1">Use your device camera</p>
                       </div>
                     </button>
 
                     <button 
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center gap-4 p-6 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all text-left"
+                      className="flex items-center gap-4 p-6 bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 rounded-2xl transition-all text-left cursor-pointer"
                     >
                       <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
                         <Upload size={24} />
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-white">Upload Photo</h4>
-                        <p className="text-[10px] text-aura-muted uppercase tracking-widest mt-1">Choose from your files</p>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">Upload Photo</h4>
+                        <p className="text-[10px] text-slate-500 dark:text-aura-muted uppercase tracking-widest mt-1">Choose from your files</p>
                       </div>
                     </button>
                     <input 
@@ -778,15 +778,15 @@ export default function Profile() {
                   <div className="space-y-8">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-[10px] font-black text-aura-muted uppercase tracking-[0.3em]">Institutional Male</h4>
-                        <span className="h-px bg-white/5 flex-1 mx-4" />
+                        <h4 className="text-[10px] font-black text-slate-500 dark:text-aura-muted uppercase tracking-[0.3em]">Institutional Male</h4>
+                        <span className="h-px bg-slate-200 dark:bg-white/5 flex-1 mx-4" />
                       </div>
                       <div className="grid grid-cols-5 gap-4">
                         {MALE_AVATARS.map(avatar => (
                           <button 
                             key={avatar.id}
                             onClick={() => updatePhotoURL(avatar.url)}
-                            className="aspect-square bg-white/5 rounded-xl border border-white/5 hover:border-primary transition-all overflow-hidden group p-1"
+                            className="aspect-square bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 hover:border-primary transition-all overflow-hidden group p-1 cursor-pointer"
                           >
                             <img src={avatar.url} alt="Avatar" className="w-full h-full object-cover rounded-lg group-hover:scale-110 transition-transform" />
                           </button>
@@ -796,15 +796,15 @@ export default function Profile() {
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-[10px] font-black text-aura-muted uppercase tracking-[0.3em]">Institutional Female</h4>
-                        <span className="h-px bg-white/5 flex-1 mx-4" />
+                        <h4 className="text-[10px] font-black text-slate-500 dark:text-aura-muted uppercase tracking-[0.3em]">Institutional Female</h4>
+                        <span className="h-px bg-slate-200 dark:bg-white/5 flex-1 mx-4" />
                       </div>
                       <div className="grid grid-cols-5 gap-4">
                         {FEMALE_AVATARS.map(avatar => (
                           <button 
                             key={avatar.id}
                             onClick={() => updatePhotoURL(avatar.url)}
-                            className="aspect-square bg-white/5 rounded-xl border border-white/5 hover:border-secondary transition-all overflow-hidden group p-1"
+                            className="aspect-square bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 hover:border-secondary transition-all overflow-hidden group p-1 cursor-pointer"
                           >
                             <img src={avatar.url} alt="Avatar" className="w-full h-full object-cover rounded-lg group-hover:scale-110 transition-transform" />
                           </button>
@@ -814,7 +814,7 @@ export default function Profile() {
 
                     <button 
                       onClick={() => setPhotoMode('options')}
-                      className="w-full py-4 text-[10px] font-black text-aura-muted uppercase tracking-widest hover:text-white transition-colors"
+                      className="w-full py-4 text-[10px] font-black text-slate-500 dark:text-aura-muted uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                     >
                       Back to options
                     </button>
@@ -890,22 +890,22 @@ export default function Profile() {
               initial={{ scale: 0.95, y: 15 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 15 }}
-              className="relative w-full max-w-md bg-[#11141b] border border-white/10 rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-6"
+              className="relative w-full max-w-md bg-white dark:bg-[#11141b] border border-slate-200 dark:border-white/10 rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-6"
             >
               <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-500">
                 <ShieldCheck size={28} className="animate-pulse" />
               </div>
 
               <div className="space-y-2 text-center">
-                <h3 className="text-xl font-black text-white italic font-serif leading-none">Confirm Profile Lock</h3>
-                <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Verify identity credentials</p>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white italic font-serif leading-none">Confirm Profile Lock</h3>
+                <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">Verify identity credentials</p>
               </div>
 
-              <div className="space-y-4 text-xs font-bold text-aura-muted leading-relaxed uppercase tracking-wider text-center">
-                <p className="text-slate-300">
+              <div className="space-y-4 text-xs font-bold text-slate-600 dark:text-aura-muted leading-relaxed uppercase tracking-wider text-center">
+                <p className="text-slate-600 dark:text-slate-300">
                   Please ensure the information entered matches your government-issued ID to avoid withdrawal issues in the future.
                 </p>
-                <p className="text-[10px] text-red-400 font-extrabold text-center border border-red-500/10 bg-red-500/5 p-3 rounded-xl">
+                <p className="text-[10px] text-red-500 dark:text-red-400 font-extrabold text-center border border-red-500/20 bg-red-500/5 p-3 rounded-xl">
                   WARNING: Under fintech protocol rules, this update is ONE-TIME PERMANENT. Further edits will be locked.
                 </p>
               </div>
@@ -913,7 +913,7 @@ export default function Profile() {
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <button 
                   onClick={() => setShowWarningModal(false)}
-                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-aura-muted hover:text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-xl transition-all border border-white/5"
+                  className="w-full py-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-aura-muted hover:text-slate-900 dark:hover:text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-xl transition-all border border-slate-200 dark:border-white/5 cursor-pointer"
                 >
                   Go Back
                 </button>
@@ -922,7 +922,7 @@ export default function Profile() {
                     setShowWarningModal(false);
                     await handleSaveProfile();
                   }}
-                  className="w-full py-4 bg-amber-500 text-slate-950 font-black uppercase tracking-[0.2em] text-[10px] rounded-xl shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.99] transition-all"
+                  className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black uppercase tracking-[0.2em] text-[10px] rounded-xl shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
                 >
                   Confirm & Save
                 </button>
@@ -963,12 +963,12 @@ function SettingsSidebar({ navigate, logout }: { navigate: any, logout?: any }) 
       {/* Quick Actions Card */}
       <section className="space-y-4">
         <div className="px-2">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Zap size={18} className="text-blue-500" /> Quick Actions
           </h3>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden transition-colors shadow-sm">
-          <ul className="divide-y divide-white/5">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden transition-colors shadow-sm">
+          <ul className="divide-y divide-slate-100 dark:divide-white/5">
             <QuickAction label="Change Password" icon={<Lock size={14} />} onClick={() => navigate('/settings')} />
             <QuickAction label="Enable Two-Factor Auth" icon={<ShieldCheck size={14} />} onClick={() => navigate('/settings')} />
             <QuickAction label="Manage Devices" icon={<Monitor size={14} />} onClick={() => navigate('/settings')} />
@@ -996,23 +996,23 @@ function InfoRow({
   truncate?: boolean
 }) {
   return (
-    <div className="grid grid-cols-12 gap-3 p-5 items-center hover:bg-slate-500/5 transition-colors">
-      <div className="col-span-1 text-blue-500 opacity-80">
+    <div className="grid grid-cols-12 gap-3 p-5 items-center hover:bg-slate-50 dark:hover:bg-slate-500/5 transition-colors">
+      <div className="col-span-1 text-blue-500 opacity-90">
         {icon}
       </div>
       <div className="col-span-4 md:col-span-3">
-        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">{label}</p>
+        <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">{label}</p>
       </div>
       <div className="col-span-7 md:col-span-8 flex items-center justify-between gap-3 overflow-hidden">
-        <p className={cn("text-xs font-bold text-slate-200", truncate ? "truncate" : "break-words")}>
+        <p className={cn("text-xs font-bold text-slate-900 dark:text-slate-200", truncate ? "truncate" : "break-words")}>
           {value}
         </p>
         {onCopy && (
           <button 
             onClick={onCopy}
-            className="flex-shrink-0 p-1.5 text-slate-400 hover:text-blue-500 transition-colors"
+            className="flex-shrink-0 p-1.5 text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
           >
-            {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+            {isCopied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
           </button>
         )}
       </div>
@@ -1027,14 +1027,16 @@ function QuickAction({ label, icon, onClick, isDanger }: { label: string, icon?:
         onClick={onClick}
         className={cn(
           "w-full px-6 py-4.5 flex items-center justify-between text-xs font-bold transition-all group",
-          isDanger ? "text-red-500 hover:bg-red-500/10" : "text-white/80 hover:text-white hover:bg-white/5"
+          isDanger 
+            ? "text-red-500 hover:bg-red-500/10" 
+            : "text-slate-700 dark:text-white/80 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5"
         )}
       >
         <div className="flex items-center gap-3">
           {icon && <span className="opacity-50">{icon}</span>}
           <span>{label}</span>
         </div>
-        <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+        <ChevronRight size={14} className="text-slate-400 dark:text-slate-300 group-hover:translate-x-1 transition-transform" />
       </button>
     </li>
   );

@@ -1526,45 +1526,46 @@ export default function Invest() {
                                 onClick={() => setCryptoType(t)}
                                 className={cn(
                                   "flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all cursor-pointer",
-                                  cryptoType === t ? "bg-[#009e42] border-[#009e42] text-white" : "bg-white/5 border-white/5 text-aura-muted hover:bg-white/10"
-                                 )}
+                                  cryptoType === t ? "bg-[#009e42] border-[#009e42] text-white" : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-600 dark:text-aura-muted hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10"
+                                )}
                               >
                                 {t === 'usdt' ? 'USDT (TRC20)' : 'BTC (Native)'}
                               </button>
                             ))}
                           </div>
-                          <div className="p-4 bg-white/5 border border-white/5 rounded-2xl flex flex-col items-center gap-4">
-                            <div className="p-2 bg-white rounded-xl shadow-xl">
+                          <div className="p-5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl flex flex-col items-center gap-4 shadow-sm">
+                            <div className="p-3 bg-white rounded-xl shadow-sm border border-slate-200/80 dark:border-transparent">
                               <QRCodeCanvas value={CRYPTO_ADDRESSES[cryptoType]} size={110} />
                             </div>
-                            <div className="w-full space-y-2">
-                              <div className="bg-white/5 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-4 shadow-inner">
-                                <code className="text-[10px] font-mono text-white truncate">{CRYPTO_ADDRESSES[cryptoType]}</code>
+                            <div className="w-full space-y-2.5">
+                              <p className="text-[10px] text-center text-slate-700 dark:text-aura-muted uppercase tracking-widest font-black">Scan QR or Copy Address</p>
+                              <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-4 shadow-sm dark:shadow-inner">
+                                <code className="text-xs font-mono text-slate-900 dark:text-white font-bold truncate">{CRYPTO_ADDRESSES[cryptoType]}</code>
                                 <button 
                                   type="button"
                                   onClick={() => handleCopy(CRYPTO_ADDRESSES[cryptoType], 'wallet')} 
-                                  className="text-[9px] font-black text-white bg-[#009e42] px-3 py-1.5 rounded-lg uppercase tracking-widest cursor-pointer whitespace-nowrap"
+                                  className="text-[9px] font-black text-white bg-[#009e42] hover:bg-[#02d147] px-3 py-1.5 rounded-lg uppercase tracking-widest cursor-pointer whitespace-nowrap active:scale-95 transition-all shadow-xs"
                                 >
                                   {copiedField === 'wallet' ? 'Copied' : 'Copy'}
                                 </button>
                               </div>
 
                               {/* Warning network notifications */}
-                              <div className="p-2 bg-amber-500/10 border border-amber-500/25 rounded-xl text-center">
+                              <div className="p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-xl text-center">
                                 {cryptoType === 'usdt' && (
-                                  <p className="text-[9px] font-medium text-amber-400 leading-normal">
+                                  <p className="text-[9px] font-medium text-amber-600 dark:text-amber-400 leading-normal">
                                     Please send only USDT TRC-20 to this address. Transferring to any other network will result in permanent loss of your funds.
                                   </p>
                                 )}
                                 {cryptoType === 'btc' && (
-                                  <p className="text-[9px] font-medium text-amber-400 leading-normal">
+                                  <p className="text-[9px] font-medium text-amber-600 dark:text-amber-400 leading-normal">
                                     Please send only Bitcoin (BTC) to this address. Transferring to any other network will result in permanent loss of your funds.
                                   </p>
                                 )}
                               </div>
 
                               <div className="text-center pt-1">
-                                <span className="text-[9px] text-aura-muted uppercase tracking-widest font-black block mb-1">Amount to invest</span>
+                                <span className="text-[9px] text-slate-500 dark:text-aura-muted uppercase tracking-widest font-black block mb-1">Amount to invest</span>
                                 <span className="text-sm font-black text-[#009e42] font-mono">{formatCurrency(confirmedAmount)}</span>
                               </div>
                             </div>
@@ -1575,7 +1576,7 @@ export default function Invest() {
                               value={transactionId}
                               onChange={(e) => setTransactionId(e.target.value)}
                               placeholder="Input Transaction ID / Sender Address"
-                              className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-mono focus:bg-white/10 focus:border-[#009e42]/50 outline-none transition-all text-white"
+                              className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-xs font-mono focus:bg-white dark:focus:bg-white/10 focus:border-[#009e42] outline-none transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30"
                             />
                           </div>
                         </motion.div>
