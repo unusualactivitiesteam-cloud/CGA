@@ -59,6 +59,7 @@ import { useMode } from '../contexts/ModeContext';
 import { getRegionalLimits, applyRegionalPlanLimits } from '../utils/regionalLimits';
 import { 
   isNigeriaRegion, 
+  isAccountCountryNigeria,
   NIGERIA_BANK_ACCOUNTS, 
   fetchPaymentEligibility,
   getWhatsAppBankTransferUrl 
@@ -281,49 +282,8 @@ export default function Invest() {
   const [searchQuery, setSearchQuery] = useState('');
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
   const [detectedCode, setDetectedCode] = useState<string | null>(null);
-  const [isVerifiedNigeria, setIsVerifiedNigeria] = useState<boolean>(() => {
-    return isNigeriaRegion(profile?.country || profile?.countryName, profile?.country_code);
-  });
-
-  const isUserInNigeria = isVerifiedNigeria || isNigeriaRegion(
-    profile?.country || profile?.countryName,
-    profile?.country_code
-  ) || isNigeriaRegion(selectedCountry) || isNigeriaRegion(detectedCountry, detectedCode);
-
-  useEffect(() => {
-    async function loadDetectedLocation() {
-      try {
-        const result = await detectUserLocation();
-        setDetectedCountry(result.country);
-        setDetectedCode(result.code);
-        console.log("[Invest] Detected geographic location:", result.country, result.code, result.method);
-      } catch (err) {
-        console.error("[Invest] Failed to run dynamic geolocation protocol:", err);
-      }
-    }
-    loadDetectedLocation();
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    async function verifyServerEligibility() {
-      try {
-        const token = await user?.getIdToken();
-        const res = await fetchPaymentEligibility(
-          token,
-          profile?.country || profile?.countryName || selectedCountry || detectedCountry,
-          profile?.country_code || detectedCode
-        );
-        if (mounted) {
-          setIsVerifiedNigeria(res.isNigeria);
-        }
-      } catch (err) {
-        console.warn("[Invest] Payment eligibility check error:", err);
-      }
-    }
-    verifyServerEligibility();
-    return () => { mounted = false; };
-  }, [user, profile, selectedCountry, detectedCountry, detectedCode]);
+  // Authoritative check based strictly on the user's stored/verified account country:
+  const isUserInNigeria = isAccountCountryNigeria(profile);
 
   useEffect(() => {
     if (!isUserInNigeria && paymentMethod === 'bank') {
@@ -1409,7 +1369,7 @@ export default function Invest() {
                       </>
                     ) : (
                       <>
-                        {/* Non-Nigeria OPTION 1 — PAY WITH CRYPTO */}
+                        {/* Non-Nigeria Option 1: Crypto Payment */}
                         <button
                           type="button"
                           onClick={() => {
@@ -1433,7 +1393,7 @@ export default function Invest() {
                           <ArrowRight size={16} className="text-aura-muted group-hover:text-white group-hover:translate-x-1 transition-all" />
                         </button>
 
-                        {/* Non-Nigeria OPTION 2 — REQUEST BANK TRANSFER */}
+                        {/* Non-Nigeria Option 2: Request Bank Transfer Details */}
                         <a
                           href={getWhatsAppBankTransferUrl(confirmedAmount)}
                           target="_blank"
@@ -1441,15 +1401,11 @@ export default function Invest() {
                           className="w-full p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#009e42]/50 transition-all flex items-center justify-between cursor-pointer group text-left"
                         >
                           <div className="flex items-center gap-3.5">
-                            <div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#009e42] group-hover:scale-105 transition-transform">
+                            <div className="w-11 h-11 rounded-2xl bg-[#009e42]/10 border border-[#009e42]/20 flex items-center justify-center text-[#009e42] group-hover:scale-105 transition-transform">
                               <Building2 size={22} />
                             </div>
                             <div>
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-black uppercase tracking-wide text-white">Request Bank Transfer</p>
-                                <span className="px-2 py-0.5 rounded-full text-[8px] font-black bg-white/10 text-white/90 border border-white/15">DIRECT DESK</span>
-                              </div>
-                              <p className="text-[10px] text-aura-muted font-mono mt-0.5">Contact settlement desk for account details</p>
+                              <p className="text-sm font-black uppercase tracking-wide text-white">Request Bank Transfer Details</p>
                             </div>
                           </div>
                           <ArrowRight size={16} className="text-aura-muted group-hover:text-white group-hover:translate-x-1 transition-all" />

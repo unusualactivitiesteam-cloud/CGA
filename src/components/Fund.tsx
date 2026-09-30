@@ -56,6 +56,7 @@ import PinProtocolModal from './PinProtocolModal';
 import { TransactionTicket } from './TransactionTicket';
 import { 
   isNigeriaRegion, 
+  isAccountCountryNigeria,
   NIGERIA_BANK_ACCOUNTS, 
   fetchPaymentEligibility,
   getWhatsAppBankTransferUrl 
@@ -87,51 +88,8 @@ export default function Fund() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'deposit' | 'withdrawal' | 'investment' | 'transfer'>('all');
 
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
-  const [detectedCode, setDetectedCode] = useState<string | null>(null);
-  const [isVerifiedNigeria, setIsVerifiedNigeria] = useState<boolean>(() => {
-    return isNigeriaRegion(profile?.country || profile?.countryName, profile?.country_code);
-  });
-
-  const isUserInNigeria = isVerifiedNigeria || isNigeriaRegion(
-    profile?.country || profile?.countryName,
-    profile?.country_code
-  ) || isNigeriaRegion(detectedCountry, detectedCode);
-
-  useEffect(() => {
-    async function loadDetectedLocation() {
-      try {
-        const result = await detectUserLocation();
-        setDetectedCountry(result.country);
-        setDetectedCode(result.code);
-      } catch (err) {
-        console.error("[Fund] Failed to run dynamic geolocation protocol:", err);
-      }
-    }
-    loadDetectedLocation();
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    async function verifyServerEligibility() {
-      try {
-        const token = await user?.getIdToken();
-        const res = await fetchPaymentEligibility(
-          token,
-          profile?.country || profile?.countryName || detectedCountry,
-          profile?.country_code || detectedCode
-        );
-        if (mounted) {
-          setIsVerifiedNigeria(res.isNigeria);
-        }
-      } catch (err) {
-        console.warn("[Fund] Payment eligibility check error:", err);
-      }
-    }
-    verifyServerEligibility();
-    return () => { mounted = false; };
-  }, [user, profile, detectedCountry, detectedCode]);
+  // Authoritative check based strictly on the user's stored/verified account country:
+  const isUserInNigeria = isAccountCountryNigeria(profile);
 
   useEffect(() => {
     if (location.state && location.state.prefillAmount) {
@@ -170,6 +128,13 @@ export default function Fund() {
   // Updated minimum withdrawal limit to $200 per user instructions
   const withdrawalThreshold = 200;
   const withdrawalFeePercent = 20;
+
+  useEffect(() => {
+    if (!isUserInNigeria) {
+      if (depositMethod === 'bank') setDepositMethod('crypto');
+      if (withdrawMethod === 'bank') setWithdrawMethod('crypto');
+    }
+  }, [isUserInNigeria, depositMethod, withdrawMethod]);
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -271,18 +236,11 @@ export default function Fund() {
 
   useEffect(() => {
     if (tab === 'deposit' || !tab) {
-      let country = profile?.country || profile?.countryName;
-      if (!country && profile?.country_code) {
-        const found = COUNTRIES.find(c => c.code.toUpperCase() === profile.country_code.toUpperCase());
-        if (found) country = found.name;
+      if (!isUserInNigeria) {
+        setDepositMethod('crypto');
       }
-      if (!country) {
-        country = detectedCountry || 'Nigeria';
-      }
-      setSelectedCountry(country);
-      setDepositMethod('crypto');
     }
-  }, [tab, detectedCountry, profile]);
+  }, [tab, isUserInNigeria]);
 
   const filteredTransactions = transactions.filter(tx => {
     if (activeFilter === 'all') return true;
@@ -426,6 +384,11 @@ export default function Fund() {
       return;
     }
     if (withdrawMethod === 'bank') {
+      if (!isUserInNigeria) {
+        toast.error("Bank transfer is restricted to accounts registered in Nigeria. Please use Crypto.");
+        setWithdrawMethod('crypto');
+        return;
+      }
       const profileName = profile?.name || '';
       if (bankDetails.accName.trim().toLowerCase() !== profileName.toLowerCase()) {
         setWithdrawError(`Account name must match profile: ${profileName}`);
@@ -722,7 +685,7 @@ export default function Fund() {
               </>
             ) : (
               <>
-                {/* Non-Nigeria OPTION 1: Pay with Crypto */}
+                {/* Non-Nigeria: Crypto Payments ONLY */}
                 <button
                   type="button"
                   onClick={() => {
@@ -737,7 +700,7 @@ export default function Fund() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-black uppercase tracking-wide text-white">Pay with Crypto</p>
+                        <p className="text-sm font-black uppercase tracking-wide text-white">Crypto Payments</p>
                         <span className="px-2 py-0.5 rounded-full text-[8px] font-black bg-[#009e42]/20 text-[#009e42] border border-[#009e42]/30">INSTANT</span>
                       </div>
                       <p className="text-[10px] text-aura-muted font-mono mt-0.5">Bitcoin (BTC) & USDT (TRC20)</p>
@@ -745,28 +708,6 @@ export default function Fund() {
                   </div>
                   <ArrowRight size={16} className="text-aura-muted group-hover:text-white group-hover:translate-x-1 transition-all" />
                 </button>
-
-                {/* Non-Nigeria OPTION 2: Request Bank Transfer */}
-                <a
-                  href={getWhatsAppBankTransferUrl(depositAmount || amountNum)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#009e42]/50 transition-all flex items-center justify-between cursor-pointer group text-left"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#009e42] group-hover:scale-105 transition-transform">
-                      <Building2 size={22} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-black uppercase tracking-wide text-white">Request Bank Transfer</p>
-                        <span className="px-2 py-0.5 rounded-full text-[8px] font-black bg-white/10 text-white/90 border border-white/15">DIRECT DESK</span>
-                      </div>
-                      <p className="text-[10px] text-aura-muted font-mono mt-0.5">Contact settlement desk for account details</p>
-                    </div>
-                  </div>
-                  <ArrowRight size={16} className="text-aura-muted group-hover:text-white group-hover:translate-x-1 transition-all" />
-                </a>
               </>
             )}
           </div>

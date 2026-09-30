@@ -1,8 +1,11 @@
 import React from 'react';
 import { motion } from 'motion/react';
 
+// Single authoritative source of truth for the CGA WhatsApp Support Contact
+export const CGA_WHATSAPP_SUPPORT_NUMBER = '19376002568';
+
 export default function WhatsAppCommunitySlider() {
-  const phoneNumber = '19376002568';
+  const phoneNumber = CGA_WHATSAPP_SUPPORT_NUMBER;
   const prefilledMessage = 'Hello, I would like to speak with customer service. Please assist me.';
   const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(prefilledMessage)}`;
 

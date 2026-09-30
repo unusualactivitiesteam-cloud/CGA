@@ -1,3 +1,5 @@
+import { CGA_WHATSAPP_SUPPORT_NUMBER } from '../components/WhatsAppCommunitySlider';
+
 /**
  * Payment Routing & Region-Based Method Determination Service
  * 
@@ -52,6 +54,7 @@ export type AllowedCryptoType = keyof typeof CRYPTO_PAYMENT_OPTIONS;
 
 /**
  * Deterministically checks if a country or country code qualifies as Nigeria.
+ * Strictly matches Nigeria and excludes all other countries.
  */
 export function isNigeriaRegion(country?: string | null, code?: string | null): boolean {
   if (!country && !code) return false;
@@ -59,9 +62,57 @@ export function isNigeriaRegion(country?: string | null, code?: string | null): 
   const cd = (code || '').trim().toUpperCase();
 
   if (cd === 'NG' || cd === 'NGA') return true;
-  if (c === 'nigeria') return true;
-  if (c.includes('nigeria') || c.includes('lagos')) return true;
+  if (c === 'nigeria' || c === 'the federal republic of nigeria' || c === 'ng' || c === 'nga') return true;
 
+  return false;
+}
+
+/**
+ * Authoritative check based strictly on the user's stored/verified account country.
+ * MUST NOT be overridden by phone number dial codes or IP geolocation.
+ * 
+ * Rules:
+ * - If user's stored account country is Nigeria: return true.
+ * - For ANY other registered country (e.g. UK, USA, Singapore, Canada, Australia, Kuwait, etc.): return false.
+ * - Phone numbers must NEVER override account country.
+ * - IP geolocation must NEVER override stored account country.
+ */
+export function isAccountCountryNigeria(profile?: any | null): boolean {
+  if (!profile) return false;
+
+  const country = (
+    profile.country || 
+    profile.countryName || 
+    profile.registered_country || 
+    profile.account_country || 
+    profile.country_name || 
+    ''
+  ).trim().toLowerCase();
+
+  const code = (
+    profile.country_code || 
+    profile.countryCode || 
+    profile.registered_country_code || 
+    profile.isoCode || 
+    ''
+  ).trim().toUpperCase();
+
+  // If user has a registered country name, strictly evaluate it
+  if (country) {
+    return (
+      country === 'nigeria' ||
+      country === 'the federal republic of nigeria' ||
+      country === 'ng' ||
+      country === 'nga'
+    );
+  }
+
+  // If only country code is stored
+  if (code) {
+    return code === 'NG' || code === 'NGA';
+  }
+
+  // Any non-Nigeria or unspecified account is NOT Nigeria (Crypto only)
   return false;
 }
 
@@ -123,26 +174,29 @@ export async function fetchPaymentEligibility(
 
 /**
  * Non-Nigeria Bank Transfer Request WhatsApp Configuration
- * Phone: +2349065244842
- * Deep link text: "I want to request for account details to settle this payment. Amount: $[EXACT AMOUNT]"
+ * Authoritative single source of truth from Home floating WhatsApp button
  */
-export const WHATSAPP_BANK_REQUEST_PHONE = '+2349065244842';
-export const WHATSAPP_BANK_REQUEST_NUMBER_CLEAN = '2349065244842';
+export const WHATSAPP_BANK_REQUEST_NUMBER_CLEAN = CGA_WHATSAPP_SUPPORT_NUMBER;
+export const WHATSAPP_BANK_REQUEST_PHONE = `+${CGA_WHATSAPP_SUPPORT_NUMBER}`;
 
 export function formatTransferAmount(amount: number | string): string {
   if (typeof amount === 'number') {
-    return amount.toLocaleString('en-US');
+    return Number.isInteger(amount)
+      ? amount.toLocaleString('en-US')
+      : amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   const clean = String(amount).trim();
   const num = Number(clean.replace(/,/g, '').replace(/^\$/, ''));
   if (!isNaN(num) && num > 0) {
-    return num.toLocaleString('en-US');
+    return Number.isInteger(num)
+      ? num.toLocaleString('en-US')
+      : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   return clean.replace(/^\$/, '');
 }
 
 export function getWhatsAppBankTransferUrl(amount: number | string): string {
   const formatted = formatTransferAmount(amount);
-  const message = `I want to request for account details to settle this payment. Amount: $${formatted}`;
+  const message = `Kindly give me bank details to settle this payment. I want to invest $${formatted}.`;
   return `https://wa.me/${WHATSAPP_BANK_REQUEST_NUMBER_CLEAN}?text=${encodeURIComponent(message)}`;
 }

@@ -223,14 +223,11 @@ async function startServer() {
     if (!country && !code) return false;
     const c = (country || '').trim().toLowerCase();
     const cd = (code || '').trim().toUpperCase();
-    return cd === 'NG' || cd === 'NGA' || c === 'nigeria' || c.includes('nigeria') || c.includes('lagos');
+    return cd === 'NG' || cd === 'NGA' || c === 'nigeria' || c === 'the federal republic of nigeria' || c === 'ng' || c === 'nga';
   };
 
   const getRegionFromUser = async (req: Request): Promise<{ country: string; code: string; isNigeria: boolean }> => {
-    let country = (req.query.country as string) || (req.body?.country as string) || '';
-    let code = (req.query.code as string) || (req.body?.code as string) || (req.headers['cf-ipcountry'] as string) || '';
-
-    // Check Firebase ID Token if supplied
+    // 1. Authoritative: Check Firebase ID Token and fetch verified account country from database
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
@@ -240,20 +237,29 @@ async function startServer() {
           const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
           if (userDoc.exists) {
             const data = userDoc.data();
-            if (data?.country) country = data.country;
-            if (data?.country_code) code = data.country_code;
-            if (data?.countryName && !country) country = data.countryName;
+            const storedCountry = data?.country || data?.countryName || '';
+            const storedCode = data?.country_code || data?.countryCode || '';
+            const isNigeria = verifyNigeriaRegion(storedCountry, storedCode);
+            return {
+              country: isNigeria ? 'Nigeria' : storedCountry || 'Global',
+              code: isNigeria ? 'NG' : storedCode || 'GL',
+              isNigeria
+            };
           }
         }
       } catch (e) {
-        // Token decode failed silently, fallback to params/headers
+        // Token decode failed silently, fallback to params
       }
     }
 
-    const isNigeria = verifyNigeriaRegion(country, code);
+    // 2. Unauthenticated check from params without defaulting to Nigeria
+    const paramCountry = (req.query.country as string) || (req.body?.country as string) || '';
+    const paramCode = (req.query.code as string) || (req.body?.code as string) || '';
+    const isNigeria = verifyNigeriaRegion(paramCountry, paramCode);
+
     return {
-      country: isNigeria ? 'Nigeria' : country || 'Global',
-      code: isNigeria ? 'NG' : code || 'GL',
+      country: isNigeria ? 'Nigeria' : paramCountry || 'Global',
+      code: isNigeria ? 'NG' : paramCode || 'GL',
       isNigeria
     };
   };
@@ -288,12 +294,12 @@ async function startServer() {
 
   // --- DEPOSIT REQUEST ---
   app.post("/api/transactions/deposit", authenticate, async (req: AuthenticatedRequest, res) => {
-    const { amount, method, referenceId, country, countryCode } = req.body;
+    const { amount, method, referenceId } = req.body;
     try {
-      // If bank method attempted, strictly enforce Nigeria region
+      // If bank method attempted, strictly enforce Nigeria region from authoritative account record
       if (method === 'bank' || method === 'bank_transfer') {
         const region = await getRegionFromUser(req);
-        if (!region.isNigeria && !verifyNigeriaRegion(country, countryCode)) {
+        if (!region.isNigeria) {
           return res.status(403).json({ 
             error: "Bank transfer payment method is strictly available only for accounts registered in Nigeria." 
           });

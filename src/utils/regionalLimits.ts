@@ -1,4 +1,4 @@
-import { isNigeriaRegion } from '../services/paymentRouting';
+import { isAccountCountryNigeria } from '../services/paymentRouting';
 
 export interface RegionalLimits {
   isRegisteredNigeria: boolean;
@@ -26,10 +26,7 @@ export interface RegionalLimits {
  *     Existing behavior ($100 minimum deposit, $100 regular plan minimum)
  */
 export function getRegionalLimits(profile: any, isLite: boolean): RegionalLimits {
-  const isRegisteredNigeria = isNigeriaRegion(
-    profile?.country || profile?.countryName,
-    profile?.country_code
-  );
+  const isRegisteredNigeria = isAccountCountryNigeria(profile);
 
   const minDeposit = (isRegisteredNigeria && isLite) ? 10 : 100;
   const regularPlanMin = (isRegisteredNigeria && isLite) ? 10 : 100;
